@@ -1,0 +1,8 @@
+.font-selector .dropdown-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 23px 23px;
+}
+
+.font-selector .dropdown-item:first-child {
+  border-radius: 23px 23px 0 0;
+}

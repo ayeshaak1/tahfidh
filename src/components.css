@@ -1,0 +1,2861 @@
+/* Surah List Styles */
+.surah-list {
+  padding: 2rem 1rem;
+  padding-bottom: 6rem;
+  background: var(--cream);
+  min-height: 100vh;
+}
+
+.surah-header {
+  margin-bottom: 2rem;
+}
+
+.search-section {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Collapsible Search Container */
+.search-container {
+  flex: 1;
+  max-width: 500px;
+  transition: all 0.3s ease;
+}
+
+.search-container.expanded {
+  max-width: 500px;
+}
+
+.search-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: var(--beige);
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.search-toggle-btn:hover {
+  border-color: var(--rose);
+  background: var(--cream);
+}
+
+.search-toggle-btn span {
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.search-bar {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text);
+  opacity: 0.5;
+  z-index: 2;
+}
+
+.search-input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3rem;
+  border: 2px solid var(--rose);
+  border-radius: 25px;
+  background: var(--beige);
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--lavender);
+  background: var(--cream);
+}
+
+.clear-search {
+  position: absolute;
+  right: 3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 25px;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.clear-search:hover {
+  opacity: 1;
+}
+
+.close-search {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 25px;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.close-search:hover {
+  opacity: 1;
+}
+
+.filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--beige);
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.filter-toggle-btn:hover {
+  border-color: var(--rose);
+  background: var(--cream);
+}
+
+.filter-toggle-btn.active {
+  background: var(--rose);
+  color: white;
+  border-color: var(--rose);
+}
+
+.filter-section {
+  display: flex;
+  gap: 3rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 2rem 2.5rem;
+  background: var(--beige);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 200px;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
+}
+
+.status-filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.status-filter {
+  padding: 0.625rem 1.25rem;
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: fit-content;
+}
+
+.status-filter:hover {
+  border-color: var(--rose);
+  background: rgba(226, 182, 179, 0.05);
+  transform: translateY(-1px);
+}
+
+.status-filter.active {
+  background: var(--rose);
+  color: white;
+  border-color: var(--rose);
+  box-shadow: 0 2px 8px rgba(226, 182, 179, 0.3);
+}
+
+/* Modern Select Styling */
+.modern-select {
+  position: relative;
+  display: inline-block;
+  min-width: 160px;
+}
+
+
+.juz-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0.75rem 2.5rem 0.75rem 1.25rem;
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  background: var(--beige);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 160px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.juz-select:hover {
+  border-color: var(--rose);
+  background: var(--cream);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.juz-select:focus {
+  outline: none;
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(226, 182, 179, 0.1);
+}
+
+/* Custom dropdown styling to override browser defaults */
+.juz-select option {
+  background: var(--beige);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 0;
+}
+
+/* Style the dropdown options container */
+.juz-select:focus option:checked {
+  background: var(--rose);
+  color: white;
+}
+
+.juz-select:focus option:hover {
+  background: var(--lavender);
+  color: white;
+}
+
+/* Firefox specific styling */
+.juz-select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--text);
+}
+
+/* Webkit specific styling */
+.juz-select::-webkit-select-placeholder {
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.select-arrow {
+  position: absolute;
+  right: 3.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text);
+  opacity: 0.6;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  width: 16px;
+  height: 16px;
+  z-index: 1;
+}
+
+.modern-select:hover .select-arrow {
+  opacity: 0.8;
+  transform: translateY(-50%) rotate(180deg);
+}
+
+/* Custom scrollbar for the dropdown */
+.juz-select::-webkit-scrollbar {
+  width: 8px;
+}
+
+.juz-select::-webkit-scrollbar-track {
+  background: var(--beige);
+  border-radius: 4px;
+}
+
+.juz-select::-webkit-scrollbar-thumb {
+  background: var(--rose);
+  border-radius: 4px;
+}
+
+.juz-select::-webkit-scrollbar-thumb:hover {
+  background: var(--lavender);
+}
+
+.surah-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.surah-card {
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.surah-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px var(--shadow);
+}
+
+.surah-card.completed {
+  border-color: var(--lavender);
+  box-shadow: 0 0 20px rgba(154, 134, 164, 0.3);
+}
+
+.surah-card.in-progress {
+  border-color: #F59E0B;
+}
+
+.surah-card.not-started {
+  opacity: 0.8;
+}
+
+.surah-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.surah-number {
+  width: 40px;
+  height: 40px;
+  background: var(--rose);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.surah-arabic-name {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  direction: rtl;
+  margin-bottom: 0.5rem;
+  
+  /* Force proper Arabic rendering */
+  direction: rtl !important;
+  text-align: right !important;
+  
+  /* Use authentic Uthmani font by default */
+  font-family: 'Uthmani', 'Scheherazade New', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  
+  /* Ensure proper font loading and display */
+  font-display: swap;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Advanced Arabic text rendering properties */
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1;
+  unicode-bidi: bidi-override;
+  font-variant-numeric: oldstyle-nums;
+  font-variant-ligatures: common-ligatures;
+  text-orientation: mixed;
+  writing-mode: horizontal-tb;
+  
+  /* Uthmani-specific styling */
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+  line-height: 1.8;
+}
+
+.surah-arabic-name.uthmani {
+  font-family: 'Uthmani', 'Scheherazade New', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+  line-height: 1.8;
+}
+
+.surah-arabic-name.indopak {
+  font-family: 'IndoPak', 'Scheherazade New', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  letter-spacing: 0.01em;
+  word-spacing: 0.05em;
+  line-height: 1.6;
+}
+
+.surah-body {
+  margin-bottom: 1.5rem;
+}
+
+.surah-english-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.surah-details {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.verse-count {
+  background: var(--cream);
+  color: var(--text);
+  padding: 0.25rem 0.75rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.location-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: white;
+}
+
+.location-badge.meccan {
+  background: var(--rose) !important;
+}
+
+.location-badge.medinan {
+  background: var(--lavender) !important;
+}
+
+/* Location Badge Styling - More Specific Selectors */
+.surah-details .location-badge.meccan {
+  background-color: var(--rose) !important;
+  color: white !important;
+}
+
+.surah-details .location-badge.medinan {
+  background-color: var(--lavender) !important;
+  color: white !important;
+}
+
+/* Alternative approach using data attributes */
+.location-badge[data-location="makkah"] {
+  background-color: var(--rose) !important;
+  color: white !important;
+}
+
+.location-badge[data-location="madinah"] {
+  background-color: var(--lavender) !important;
+  color: white !important;
+}
+
+/* Force location badge colors with higher specificity */
+.surah-card .surah-details .location-badge.meccan {
+  background-color: var(--rose) !important;
+  color: white !important;
+}
+
+.surah-card .surah-details .location-badge.medinan {
+  background-color: var(--lavender) !important;
+  color: white !important;
+}
+
+.surah-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.progress-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-icon {
+  border-radius: 50%;
+  padding: 4px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-icon.completed {
+  color: white;
+  background: linear-gradient(135deg, #10B981, #059669);
+  filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3));
+}
+
+.status-icon.in-progress {
+  color: white;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
+}
+
+.status-icon.not-started {
+  color: white;
+  background: linear-gradient(135deg, #9CA3AF, #6B7280);
+  filter: drop-shadow(0 2px 4px rgba(156, 163, 175, 0.3));
+}
+
+.status-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.progress-bar {
+  flex: 1;
+  min-width: 180px;
+  height: 8px;
+  background: var(--border);
+  border-radius: 25px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.progress-bar:hover {
+  background: var(--cream);
+  transform: scaleY(1.2);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--rose), var(--lavender));
+  border-radius: 25px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  min-width: 80px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.progress-verses {
+  font-size: 0.8rem;
+  color: var(--text);
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.progress-percentage {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.resume-button {
+  background: var(--rose);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.resume-button:hover {
+  background: var(--lavender);
+}
+
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.surah-card:hover .card-overlay {
+  opacity: 1;
+}
+
+.resume-overlay-btn {
+  background: var(--rose);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resume-overlay-btn:hover {
+  background: var(--lavender);
+  transform: scale(1.05);
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  background: var(--beige);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+}
+
+.empty-icon {
+  margin-bottom: 1rem;
+  color: var(--text);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.empty-state p {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.reset-filters-btn {
+  background: var(--rose);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.reset-filters-btn:hover {
+  background: var(--lavender);
+}
+
+/* Surah Detail Styles */
+.surah-detail {
+  padding: 2rem 1rem;
+  padding-bottom: 6rem;
+  background: var(--cream);
+  min-height: 100vh;
+}
+
+.surah-header.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem;
+  min-height: auto;
+  border-radius: 0 0 1rem 1rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin-top: -1rem;
+}
+
+.surah-header.sticky.scrolled {
+  background: var(--beige);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.surah-title-section {
+  padding: 2rem 2rem 1rem 2rem;
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.settings-toggle-btn-top {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: var(--beige);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text);
+}
+
+.settings-toggle-btn-top:hover {
+  background: var(--rose);
+  color: white;
+  border-color: var(--rose);
+  transform: scale(1.05);
+}
+
+.settings-toggle-btn-top:active {
+  transform: scale(0.95);
+}
+
+.progress-text {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  color: var(--text);
+  text-align: left !important;
+  margin-right: 2rem;
+}
+
+.progress-percentage-display {
+  font-size: 2rem !important;
+  font-weight: 500 !important;
+  color: var(--text);
+  text-align: right !important;
+}
+
+.surah-arabic-title {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  direction: rtl;
+  
+  /* Use authentic Uthmani font by default */
+  font-family: 'Uthmani', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  
+  /* Ensure proper font loading and display */
+  font-display: swap;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Advanced Arabic text rendering properties */
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1;
+  unicode-bidi: bidi-override;
+  font-variant-numeric: oldstyle-nums;
+  font-variant-ligatures: common-ligatures;
+  text-orientation: mixed;
+  writing-mode: horizontal-tb;
+  
+  /* Uthmani-specific styling */
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+  line-height: 1.8;
+}
+
+.surah-english-title {
+  font-size: 1.5rem;
+  color: var(--text);
+  text-align: center;
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+}
+
+.surah-meta {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.meta-item {
+  background: var(--beige);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+}
+
+.surah-progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.progress-container {
+  flex: 1;
+  min-width: 200px;
+  height: 12px;
+  background: var(--cream);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  transition: width 0.3s ease;
+  border-radius: 6px;
+}
+
+.progress-info-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  min-width: fit-content;
+}
+
+.progress-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.progress-percentage-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--rose);
+}
+
+
+
+.contextual-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--beige);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+}
+
+.verse-jump {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.verse-input {
+  width: 80px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.go-btn {
+  padding: 0.5rem 1rem;
+  background: var(--rose);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.go-btn:hover {
+  background: var(--lavender);
+}
+
+.navigation-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  background: var(--cream);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-btn:hover:not(:disabled) {
+  border-color: var(--rose);
+  background: var(--beige);
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.verses-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.verse-card {
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.verse-card.memorized {
+  border-left: 3px solid var(--rose);
+  background: rgba(226, 182, 179, 0.1);
+}
+
+.verse-card.selected {
+  border: 2px solid var(--rose);
+  background: rgba(226, 182, 179, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(226, 182, 179, 0.2);
+}
+
+.verse-card.selected .verse-header {
+  background: rgba(226, 182, 179, 0.1);
+  border-color: var(--rose);
+}
+
+.verse-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--cream);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+}
+
+.verse-number {
+  background: var(--rose);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.verse-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.verse-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--cream);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  order: -1; /* Move checkbox to the left */
+}
+
+.verse-checkbox:hover {
+  border-color: var(--rose);
+  transform: scale(1.05);
+}
+
+.verse-checkbox:checked {
+  background: var(--rose);
+  border-color: var(--rose);
+}
+
+.verse-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.verse-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(226, 182, 179, 0.3);
+}
+
+.memorize-btn {
+  background: none;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.memorize-btn:hover {
+  border-color: var(--rose);
+  color: var(--rose);
+  transform: scale(1.05);
+  justify-content: center;
+  align-items: center;
+}
+
+.memorize-btn.memorized {
+  background: var(--rose);
+  border-color: var(--rose);
+  color: white;
+  justify-content: center;
+  align-items: center;
+}
+
+.memorize-btn.memorized:hover {
+  background: var(--lavender);
+  border-color: var(--lavender);
+  transform: scale(1.05);
+  justify-content: center;
+  align-items: center;
+}
+
+/* Book icon styling */
+.memorize-btn .lucide {
+  transition: all 0.2s ease;
+}
+
+.memorize-btn:hover .lucide {
+  transform: scale(1.05);
+}
+
+/* Specific styling for BookOpenCheck icon when memorized */
+.memorize-btn.memorized .lucide {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.audio-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.audio-btn:hover {
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
+.verse-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.arabic-text {
+  font-size: 2.5rem;
+  line-height: 2.2;
+  color: var(--text);
+  text-align: right;
+  direction: rtl;
+  margin-bottom: 1rem;
+  
+  /* Ensure proper font loading and display */
+  font-display: swap;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Force proper Arabic text rendering */
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1;
+  unicode-bidi: bidi-override;
+  font-variant-numeric: oldstyle-nums;
+  font-variant-ligatures: common-ligatures;
+  text-orientation: mixed;
+  writing-mode: horizontal-tb;
+}
+
+.arabic-text.uthmani {
+  /* Force Uthmani font display - ensure authentic Uthmani font is used */
+  font-family: 'Uthmani', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif !important;
+  font-weight: 400;
+  
+  /* Additional Uthmani-specific properties */
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+  
+  /* Ensure proper diacritical marks rendering */
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1, 'ss01' 1, 'ss02' 1, 'ss03' 1;
+  
+  /* Force font loading */
+  font-display: swap;
+  font-synthesis: none;
+  
+  /* Uthmani-specific styling */
+  line-height: 2.5;
+  text-rendering: optimizeLegibility;
+}
+
+.arabic-text.indopak {
+  /* Force IndoPak font display - ensure authentic IndoPak font is used */
+  font-family: 'IndoPak', 'IndoPak-Fallback', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif !important;
+  font-weight: 400;
+  
+  /* Additional IndoPak-specific properties */
+  letter-spacing: 0.01em;
+  word-spacing: 0.05em;
+  
+  /* Ensure proper diacritical marks rendering */
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1, 'ss01' 1, 'ss02' 1;
+  
+  /* Force font loading */
+  font-display: swap;
+  font-synthesis: none;
+  
+  /* IndoPak-specific styling */
+  line-height: 2.2;
+  text-rendering: optimizeLegibility;
+  
+  /* Additional properties for proper Unicode character display */
+  font-variant-ligatures: common-ligatures contextual;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1, 'ss01' 1, 'ss02' 1, 'ss03' 1, 'ss04' 1, 'ss05' 1, 'ss06' 1, 'ss07' 1, 'ss08' 1, 'ss09' 1, 'ss10' 1, 'ss11' 1, 'ss12' 1, 'ss13' 1, 'ss14' 1, 'ss15' 1, 'ss16' 1, 'ss17' 1, 'ss18' 1, 'ss19' 1, 'ss20' 1;
+  
+  /* Ensure all Unicode characters are displayed */
+  unicode-bidi: embed;
+  text-orientation: mixed;
+  writing-mode: horizontal-tb;
+  
+  /* Force proper character rendering */
+  -webkit-font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1, 'ss01' 1, 'ss02' 1, 'ss03' 1, 'ss04' 1, 'ss05' 1, 'ss06' 1, 'ss07' 1, 'ss08' 1, 'ss09' 1, 'ss10' 1, 'ss11' 1, 'ss12' 1, 'ss13' 1, 'ss14' 1, 'ss15' 1, 'ss16' 1, 'ss17' 1, 'ss18' 1, 'ss19' 1, 'ss20' 1;
+  -moz-font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1, 'ss01' 1, 'ss02' 1, 'ss03' 1, 'ss04' 1, 'ss05' 1, 'ss06' 1, 'ss07' 1, 'ss08' 1, 'ss09' 1, 'ss10' 1, 'ss11' 1, 'ss12' 1, 'ss13' 1, 'ss14' 1, 'ss15' 1, 'ss16' 1, 'ss17' 1, 'ss18' 1, 'ss19' 1, 'ss20' 1;
+}
+
+/* Fallback for any Unicode characters not supported by the font */
+.arabic-text.indopak::before,
+.arabic-text.indopak::after {
+  font-family: 'IndoPak', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1;
+}
+
+/* Ensure verse markers and special characters are visible */
+.arabic-text.indopak {
+  /* Force display of all characters including private use area */
+  font-variant-numeric: normal;
+  font-variant-east-asian: normal;
+  font-variant-caps: normal;
+  
+  /* Additional Unicode support */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Handle any remaining Unicode characters that might appear as squares */
+.arabic-text.indopak {
+  /* Force display of all characters */
+  font-synthesis: none;
+  
+  /* Ensure proper character spacing for verse markers */
+  letter-spacing: 0.02em;
+  
+  /* Additional Unicode rendering properties */
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1, 'ss01' 1, 'ss02' 1, 'ss03' 1, 'ss04' 1, 'ss05' 1, 'ss06' 1, 'ss07' 1, 'ss08' 1, 'ss09' 1, 'ss10' 1, 'ss11' 1, 'ss12' 1, 'ss13' 1, 'ss14' 1, 'ss15' 1, 'ss16' 1, 'ss17' 1, 'ss18' 1, 'ss19' 1, 'ss20' 1;
+}
+
+.transliteration {
+  font-style: italic;
+  color: var(--text);
+  opacity: 0.8;
+  font-size: 1rem;
+  padding: 1rem;
+  background: var(--cream);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+  margin-top: 0.5rem;
+  line-height: 1.6;
+}
+
+.translation {
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 1rem;
+  padding: 1rem;
+  background: var(--cream);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  background: var(--cream);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: var(--rose);
+  background: var(--beige);
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: var(--text);
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+}
+
+/* Profile Styles */
+.profile-page {
+  padding: 2rem 1rem;
+  padding-bottom: 6rem;
+  background: var(--cream);
+  min-height: 100vh;
+}
+
+.guest-warning-bar {
+  background: var(--rose);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.create-account-btn {
+  background: white;
+  color: var(--rose);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.create-account-btn:hover {
+  background: var(--beige);
+}
+
+.profile-section {
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.user-avatar {
+  width: 80px;
+  height: 80px;
+  background: var(--rose);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-info h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.user-info p {
+  color: var(--text);
+  opacity: 0.7;
+  font-size: 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--cream);
+  border-radius: 25px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.stat-value {
+  font-size: 2rem !important;
+  font-weight: 700;
+  color: var(--rose);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--text);
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.visualization-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.juz-heatmap h3,
+.surah-chart h3 {
+  margin-bottom: 1rem;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+}
+
+.heatmap-square {
+  width: 25px;
+  height: 25px;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.heatmap-square:hover {
+  transform: scale(1.1);
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chart-bar {
+  height: 20px;
+  background: var(--border);
+  border-radius: 25px;
+  overflow: hidden;
+}
+
+.chart-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--rose), var(--lavender));
+  border-radius: 25px;
+  transition: width 0.3s ease;
+}
+
+.chart-label {
+  font-size: 0.9rem;
+  color: var(--text);
+  text-align: center;
+}
+
+.settings-panel {
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+}
+
+.settings-panel h3 {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  font-size: 1.5rem;
+}
+
+.setting-group {
+  margin-bottom: 2rem;
+}
+
+.setting-group h4 {
+  margin-bottom: 1rem;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-item label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  background: var(--cream);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--rose);
+  background: var(--beige);
+}
+
+.color-swatches {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.color-swatch.active {
+  border-color: var(--text);
+  transform: scale(1.1);
+}
+
+.radio-group,
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.radio-option,
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.setting-input {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  background: var(--cream);
+  color: var(--text);
+  font-size: 0.9rem;
+  min-width: 200px;
+}
+
+.subscription-status {
+  color: var(--rose);
+  font-weight: 600;
+}
+
+.data-management {
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+}
+
+.data-management h3 {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  font-size: 1.5rem;
+}
+
+.data-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.data-action {
+  background: var(--cream);
+  border-radius: 25px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.data-action h4 {
+  margin-bottom: 0.5rem;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.data-action p {
+  margin-bottom: 1rem;
+  color: var(--text);
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--lavender);
+  color: white;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.file-upload-btn:hover {
+  background: var(--rose);
+}
+
+.danger-zone {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 25px;
+  padding: 1.5rem;
+}
+
+.danger-zone h4 {
+  margin-bottom: 1rem;
+  color: #DC2626;
+  font-size: 1.2rem;
+}
+
+.btn-danger {
+  background: #DC2626;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-danger:hover {
+  background: #B91C1C;
+}
+
+.achievements-section {
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+}
+
+.achievements-section h3 {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  font-size: 1.5rem;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.achievement-badge {
+  background: var(--cream);
+  border-radius: 25px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.achievement-badge:hover {
+  transform: translateY(-2px);
+}
+
+.achievement-badge.locked {
+  opacity: 0.6;
+}
+
+.badge-icon {
+  font-size: 2.5rem;
+  width: 70px;
+  height: 70px;
+  background: var(--beige);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-content {
+  flex: 1;
+}
+
+.badge-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  font-size: 1rem !important;
+}
+
+.badge-description {
+  font-size: 0.9rem;
+  color: var(--text);
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+
+.badge-date {
+  font-size: 0.8rem;
+  color: var(--rose);
+  font-weight: 500;
+}
+
+.badge-lock {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  opacity: 0.7;
+}
+
+.profile-footer {
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 2rem;
+  border: 1px solid var(--border);
+}
+
+.footer-content {
+  text-align: center;
+}
+
+.mandatory-disclaimer {
+  margin-bottom: 1rem;
+}
+
+.mandatory-disclaimer p {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.app-version {
+  color: var(--text);
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+/* Utility Classes */
+.btn-secondary {
+  background: var(--lavender);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary:hover {
+  background: var(--rose);
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--cream) 0%, var(--beige) 100%);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-state::before,
+.error-state::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23E2B6B3' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.loading-icon,
+.error-icon {
+  margin-bottom: 1rem;
+  color: var(--rose);
+  animation: pulse 2s infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading-state h3,
+.error-state h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text);
+  font-size: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.loading-state p,
+.error-state p {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  opacity: 0.7;
+  position: relative;
+  z-index: 1;
+}
+
+.retry-btn {
+  background: var(--rose);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.retry-btn:hover {
+  background: var(--lavender);
+}
+
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Bismillah Display */
+.bismillah-display {
+  text-align: center;
+  margin: 2rem 0;
+  padding: 2rem;
+  background: var(--beige);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+}
+
+.bismillah-text {
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', serif;
+  font-size: 2.5rem;
+  color: var(--rose);
+  font-weight: 600;
+  line-height: 2.5;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  overflow: auto;
+}
+
+/* Progress Info Display */
+.progress-info-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  min-width: fit-content;
+}
+
+.progress-percentage-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--rose);
+}
+
+/* Font Selector Dropdown */
+.font-selector .custom-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.font-selector .dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background: var(--beige);
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  /* Remove display: none since we're using conditional rendering */
+  min-width: 100%;
+  width: 100%;
+  /* Add smooth animation */
+  animation: dropdownSlideIn 0.3s ease-out;
+  transform-origin: top center;
+}
+
+/* Remove the .show class since we're using conditional rendering */
+/* .font-selector .dropdown-menu.show {
+  display: block;
+} */
+
+.font-selector .dropdown-item {
+  padding: 0.75rem 1.25rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+}
+
+.font-selector .dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.font-selector .dropdown-item:hover {
+  background: var(--cream);
+  color: var(--rose);
+}
+
+.font-selector .dropdown-item.active {
+  background: var(--rose);
+  color: white;
+}
+
+/* Dropdown arrow rotation */
+.font-selector .dropdown-arrow {
+  transition: transform 0.2s ease;
+}
+
+.font-selector .dropdown-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+/* Scrollbar styling for dropdown */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: var(--rose);
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--lavender);
+}
+
+/* Custom Dropdown Styling */
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: var(--beige);
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 160px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-trigger:hover {
+  border-color: var(--rose);
+  background: var(--cream);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.dropdown-trigger:focus {
+  outline: none;
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(226, 182, 179, 0.1);
+}
+
+.dropdown-arrow {
+  transition: transform 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.dropdown-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100%);
+  left: 0;
+  right: 0;
+  background: var(--beige);
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+  /* Additional modern styling */
+  border: 1px solid var(--rose);
+  background: var(--beige);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  /* Smooth animations */
+  animation: dropdownSlideIn 0.3s ease-out;
+  transform-origin: top center;
+  /* Fix scrollbar positioning */
+  padding-right: 0;
+  box-sizing: border-box;
+  /* Ensure proper content area */
+  overflow-x: hidden;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0.5;
+    transform: translateY(-25px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-item {
+  padding: 0.75rem 1.25rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  /* Ensure consistent padding */
+  padding-right: 1.5rem;
+  box-sizing: border-box;
+  /* Ensure full width */
+  width: 100%;
+  display: block;
+}
+
+.dropdown-item:first-child {
+  border-radius: 23px 23px 0 0;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 23px 23px;
+}
+
+.dropdown-item:hover {
+  background: var(--cream);
+  color: var(--rose);
+  /* Ensure hover state covers full width */
+  width: 100%;
+}
+
+.dropdown-item.active {
+  background: var(--rose);
+  color: white;
+  padding-right: 1.5rem;
+  position: relative;
+  /* Ensure active state covers full width */
+  width: 100%;
+}
+
+/* Custom scrollbar for the dropdown menu */
+.dropdown-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+  margin: 0;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: var(--rose);
+  border-radius: 2px;
+  /* Ensure scrollbar doesn't extend beyond menu */
+  margin: 2px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--lavender);
+}
+
+/* Ensure proper scrollbar containment */
+.dropdown-menu {
+  /* Additional scrollbar fixes */
+  scrollbar-width: thin;
+  scrollbar-color: var(--rose) transparent;
+  /* Ensure proper content area */
+  padding-right: 0;
+  box-sizing: border-box;
+  /* Fix scrollbar overflow */
+  overflow: hidden;
+}
+
+.dropdown-menu:hover {
+  overflow-y: auto;
+}
+
+/* Ensure consistent item spacing */
+.dropdown-item:not(:last-child) {
+  margin-bottom: 0;
+}
+
+/* Fix the active item padding */
+.dropdown-item.active {
+  background: var(--rose);
+  color: white;
+  padding-right: 1.5rem;
+  position: relative;
+}
+
+/* Ensure the last item doesn't have extra padding */
+.dropdown-item:last-child {
+  padding-bottom: 0.75rem;
+}
+
+/* Additional scrollbar containment */
+.dropdown-menu::-webkit-scrollbar {
+  width: 4px;
+  background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+  margin: 0;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: var(--rose);
+  border-radius: 2px;
+  /* Ensure scrollbar doesn't extend beyond menu */
+  margin: 2px;
+  border: none;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--lavender);
+}
+
+/* Ensure scrollbar doesn't interfere with content */
+.dropdown-menu::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Additional fixes for dropdown consistency */
+.dropdown-menu {
+  /* Ensure proper width calculation */
+  min-width: 100%;
+  width: 100%;
+}
+
+.dropdown-item {
+  /* Ensure consistent width */
+  min-width: 100%;
+  width: 100%;
+  /* Remove any default margins/padding that could cause width issues */
+  margin: 0;
+  padding-left: 1.25rem;
+  padding-right: 1.5rem;
+  /* Ensure text doesn't wrap */
+  white-space: nowrap;
+  /* Ensure proper text alignment */
+  text-align: left;
+}
+
+/* Fix for the first and last items to maintain rounded corners */
+.dropdown-item:first-child {
+  border-radius: 23px 23px 0 0;
+  padding-top: 0.75rem;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 23px 23px;
+  padding-bottom: 0.75rem;
+}
+
+/* Ensure hover and active states maintain full width */
+.dropdown-item:hover,
+.dropdown-item.active {
+  width: 100%;
+  min-width: 100%;
+  /* Ensure background covers full width */
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 1.25rem;
+  padding-right: 1.5rem;
+}
+
+/* Responsive Design for Custom Dropdown */
+@media (max-width: 768px) {
+  .dropdown-trigger {
+    min-width: 140px;
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .dropdown-menu {
+    max-height: 250px;
+    left: 0;
+    right: 0;
+    min-width: 140px;
+  }
+  
+  .dropdown-item {
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Additional Arabic text rendering improvements */
+@font-face {
+  font-family: 'Amiri';
+  font-display: swap;
+  font-weight: 400 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Scheherazade New';
+  font-display: swap;
+  font-weight: 400 700;
+  font-style: normal;
+}
+
+/* Force Arabic text to render with proper diacritics */
+.surah-arabic-name {
+  /* Ensure proper font loading */
+  font-display: swap;
+  /* Force proper text rendering */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Arabic-specific properties */
+  unicode-bidi: bidi-override;
+  font-variant-ligatures: common-ligatures;
+  font-feature-settings: "liga" 1, "kern" 1, "calt" 1;
+  /* Additional Arabic text properties */
+  font-variant-east-asian: normal;
+  font-variant-caps: normal;
+  font-variant-alternates: normal;
+  /* Force proper text direction and alignment */
+  direction: rtl !important;
+  text-align: right !important;
+  /* Ensure proper font family */
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+}
+
+/* Settings Section */
+.settings-section {
+  margin-bottom: 1.5rem;
+}
+
+.settings-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--beige);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.settings-toggle-btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+.settings-toggle-btn.active {
+  background: var(--rose);
+  color: white;
+  border-color: var(--rose);
+}
+
+.settings-panel {
+  background: var(--beige);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  animation: settingsSlideIn 0.3s ease-out;
+}
+
+@keyframes settingsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.setting-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.settings-panel .font-selector,
+.settings-panel .display-toggles,
+.settings-panel .bulk-actions {
+  margin-bottom: 1.5rem;
+}
+
+.settings-panel .font-selector:last-child,
+.settings-panel .display-toggles:last-child,
+.settings-panel .bulk-actions:last-child {
+  margin-bottom: 0;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.settings-panel .toggle-btn {
+  padding: 0.5rem 1rem;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.settings-panel .toggle-btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+.settings-panel .toggle-btn.active {
+  background: var(--rose);
+  color: white;
+  border-color: var(--rose);
+}
+
+.settings-panel .bulk-mode-btn {
+  padding: 0.5rem 1rem;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.settings-panel .bulk-mode-btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+.settings-panel .bulk-mode-btn.active {
+  background: var(--rose);
+  color: white;
+  border-color: var(--rose);
+}
+
+.settings-panel .bulk-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.settings-panel .bulk-btn {
+  padding: 0.5rem 1rem;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.settings-panel .bulk-btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+/* Responsive design for settings */
+@media (max-width: 768px) {
+  .settings-panel {
+    padding: 1rem;
+  }
+  
+  .toggle-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .settings-panel .bulk-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .surah-header.sticky {
+    padding: 0.75rem 1rem;
+  }
+  
+  .surah-progress-bar {
+    gap: 0.5rem;
+  }
+  
+  .progress-container {
+    min-width: 150px;
+    height: 10px;
+  }
+  
+  .progress-info-display {
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .surah-title-section {
+    padding: 1.5rem 1rem 1rem 1rem;
+  }
+  
+  .settings-toggle-btn-top {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 35px;
+    height: 35px;
+  }
+  
+  .scroll-to-top-btn {
+    bottom: 1rem;
+    right: 1rem;
+    width: 45px;
+    height: 45px;
+  }
+}
+
+/* Scroll to top button */
+.scroll-to-top-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 50px;
+  height: 50px;
+  background: var(--rose);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(226, 182, 179, 0.4);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.scroll-to-top-btn:hover {
+  background: var(--lavender);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(226, 182, 179, 0.6);
+}
+
+/* Verse highlight effect */
+.verse-card.highlighted {
+  animation: verseHighlight 2s ease-out;
+}
+
+@keyframes verseHighlight {
+  0% {
+    background: rgba(226, 182, 179, 0.3);
+    transform: scale(1.02);
+  }
+  100% {
+    background: var(--cream);
+    transform: scale(1);
+  }
+}
+
+/* ==================== LOTTIE LOADER - MODERN ISLAMIC THEME ==================== */
+
+/* Lottie Loader Container */
+.lottie-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.lottie-loader-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Bismillah Section */
+.bismillah-section {
+  margin-bottom: 2rem;
+  z-index: 1;
+  position: relative;
+  font-size: large;
+}
+
+.lottie-loader-container .bismillah {
+  font-family: 'Uthmani', 'Amiri', 'Noto Nastaliq Urdu', serif;
+  font-size: 3rem;
+  color: var(--rose) !important;
+  text-align: center;
+  direction: rtl;
+  unicode-bidi: bidi-override;
+  font-weight: 400;
+  line-height: 1.6;
+  text-shadow: 0 2px 8px rgba(226, 182, 179, 0.3);
+  margin-bottom: 0.5rem;
+}
+
+/* Lottie Loader Sizes */
+.lottie-loader {
+  margin: 1rem auto;
+  filter: drop-shadow(0 4px 16px rgba(226, 182, 179, 0.2));
+  z-index: 1;
+  position: relative;
+}
+
+.lottie-small {
+  width: 80px;
+  height: 80px;
+}
+
+.lottie-medium {
+  width: 100px;
+  height: 100px;
+}
+
+.lottie-large {
+  width: 120px;
+  height: 120px;
+}
+
+.lottie-xl {
+  width: 160px;
+  height: 160px;
+}
+
+/* Loading Title */
+.loading-title {
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  z-index: 1;
+  position: relative;
+}
+
+/* Random Verse Display */
+.random-verse-display {
+  max-width: 600px;
+  margin: 1rem auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(226, 182, 179, 0.2);
+  box-shadow: 0 8px 32px rgba(226, 182, 179, 0.15);
+  z-index: 1;
+  position: relative;
+}
+
+.verse-arabic {
+  font-family: 'Uthmani', 'Amiri', 'Noto Nastaliq Urdu', serif;
+  font-size: 1.6rem;
+  line-height: 2;
+  color: var(--text);
+  text-align: center;
+  direction: rtl;
+  unicode-bidi: bidi-override;
+  margin-bottom: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+}
+
+.verse-translation {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: var(--text);
+  font-style: italic;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.verse-reference {
+  font-size: 1rem;
+  color: var(--rose);
+  font-weight: 500;
+  text-align: center;
+  opacity: 0.8;
+}
+
+/* Verse Loading Animation */
+.verse-loading {
+  margin: 2rem auto;
+  text-align: center;
+  z-index: 1;
+  position: relative;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rose);
+  animation: dot-pulse 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots span:nth-child(3) { animation-delay: 0; }
+
+@keyframes dot-pulse {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.verse-loading p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Loading Message */
+.loading-message {
+  margin-top: 2rem;
+  z-index: 1;
+  position: relative;
+}
+
+.loading-message p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Error Icon Container */
+.error-icon-container {
+  margin: 1rem auto;
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-icon-container .error-icon {
+  color: var(--rose);
+  filter: drop-shadow(0 4px 16px rgba(226, 182, 179, 0.3));
+}
+
+/* Dark Mode Adjustments for Lottie Loader */
+[data-theme="dark"] .lottie-loader-container {
+  background: linear-gradient(135deg, var(--cream) 0%, var(--beige) 100%);
+}
+
+[data-theme="dark"] .lottie-loader-container::before {
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FF9AA2' fill-opacity='0.08'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] .lottie-loader-container .bismillah {
+  color: var(--blush-pink);
+  text-shadow: 0 2px 8px rgba(255, 154, 162, 0.3);
+}
+
+[data-theme="dark"] .random-verse-display {
+  background: rgba(30, 21, 42, 0.9);
+  border: 1px solid rgba(255, 154, 162, 0.2);
+  box-shadow: 0 8px 32px rgba(255, 154, 162, 0.15);
+}
+
+[data-theme="dark"] .verse-reference {
+  color: var(--blush-pink);
+}
+
+[data-theme="dark"] .loading-dots span {
+  background: var(--blush-pink);
+}
+
+/* Responsive Design for Lottie Loader */
+@media (max-width: 768px) {
+  .lottie-loader-container {
+    padding: 1.5rem;
+    min-height: 50vh;
+  }
+
+  .lottie-loader-container .bismillah {
+    font-size: 1.4rem;
+  }
+
+  .random-verse-display {
+    margin: 1.5rem auto;
+    padding: 1.5rem;
+    max-width: 90%;
+  }
+
+  .verse-arabic {
+    font-size: 1.4rem;
+    line-height: 1.8;
+  }
+
+  .verse-translation {
+    font-size: 1rem;
+  }
+
+  .loading-title {
+    font-size: 1.3rem;
+  }
+
+  .lottie-large {
+    width: 100px;
+    height: 100px;
+  }
+
+  .lottie-xl {
+    width: 120px;
+    height: 120px;
+  }
+}

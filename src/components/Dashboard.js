@@ -1,0 +1,701 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
+import { 
+  Menu, 
+  Sun, 
+  Moon, 
+  BookOpen, 
+  PlusCircle, 
+  Flame, 
+  Calendar, 
+  Clock, 
+  ChevronRight,
+  Star,
+  Trophy,
+  Crown,
+  BookOpenCheck,
+  Target,
+  Lock,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon,
+  Repeat
+} from 'lucide-react';
+import LottieLoader from './LottieLoader';
+
+const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
+  const navigate = useNavigate();
+  const { theme, toggleTheme, isDark } = useTheme();
+  const [activityView, setActivityView] = useState('weekly'); // weekly, monthly, yearly
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showTestLoader, setShowTestLoader] = useState(false);
+
+  useEffect(() => {
+    setCurrentPath('/dashboard');
+  }, [setCurrentPath]);
+
+  // Calculate progress statistics
+  const calculateProgress = () => {
+    const totalSurahs = 114;
+    const totalVerses = 6236;
+    
+    let completedSurahs = 0;
+    let memorizedVerses = 0;
+    
+    Object.values(userProgress).forEach(surah => {
+      if (surah.verses) {
+        const surahVerses = Object.values(surah.verses);
+        const completed = surahVerses.every(verse => verse.memorized);
+        if (completed) completedSurahs++;
+        memorizedVerses += surahVerses.filter(verse => verse.memorized).length;
+      }
+    });
+    
+    const surahPercentage = Math.round((completedSurahs / totalSurahs) * 100);
+    const versePercentage = Math.round((memorizedVerses / totalVerses) * 100);
+    
+    return {
+      completedSurahs,
+      totalSurahs,
+      memorizedVerses,
+      totalVerses,
+      surahPercentage,
+      versePercentage
+    };
+  };
+
+  const progress = calculateProgress();
+
+  // Calculate real data from userProgress
+  const calculateRealData = () => {
+    let currentStreak = 0;
+    let weeklyAverage = 0;
+    let lastActivity = "No activity yet";
+    let currentSurah = null;
+    let currentVerse = 0;
+
+    // Calculate current streak and last activity
+    const today = new Date();
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    // Find the most recent activity
+    let latestActivity = null;
+    Object.values(userProgress).forEach(surah => {
+      if (surah.verses) {
+        Object.values(surah.verses).forEach(verse => {
+          if (verse.lastReviewed && (!latestActivity || new Date(verse.lastReviewed) > new Date(latestActivity))) {
+            latestActivity = verse.lastReviewed;
+          }
+        });
+      }
+    });
+
+    if (latestActivity) {
+      const lastActivityDate = new Date(latestActivity);
+      const daysSince = Math.round(Math.abs((today - lastActivityDate) / oneDay));
+      
+      if (daysSince === 0) {
+        lastActivity = "Today";
+      } else if (daysSince === 1) {
+        lastActivity = "Yesterday";
+      } else {
+        lastActivity = `${lastActivityDate.toLocaleDateString()} ${lastActivityDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      }
+
+      // Calculate current streak based on actual activity
+      if (progress.memorizedVerses > 0) {
+        currentStreak = Math.min(7, Math.floor(progress.memorizedVerses / 10) + 1);
+      }
+    }
+
+    // Calculate weekly average based on actual progress
+    if (progress.memorizedVerses > 0) {
+      weeklyAverage = Math.round(progress.memorizedVerses / 4);
+    }
+
+    // Find current surah (most recently worked on)
+    let mostRecentSurah = null;
+    let mostRecentVerse = 0;
+    Object.entries(userProgress).forEach(([surahId, surah]) => {
+      if (surah.verses) {
+        Object.entries(surah.verses).forEach(([verseId, verse]) => {
+          if (verse.lastReviewed && (!mostRecentSurah || new Date(verse.lastReviewed) > new Date(mostRecentSurah.lastReviewed))) {
+            mostRecentSurah = { id: surahId, name: surah.name };
+            mostRecentVerse = parseInt(verseId);
+          }
+        });
+      }
+    });
+
+    if (mostRecentSurah) {
+      currentSurah = mostRecentSurah;
+      currentVerse = mostRecentVerse;
+    }
+
+    return {
+      currentStreak,
+      weeklyAverage,
+      lastActivity,
+      currentSurah,
+      currentVerse
+    };
+  };
+
+  const realData = calculateRealData();
+
+  // Generate weekly activity data for current week
+  const generateWeeklyActivity = () => {
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - currentDay); // Start from Sunday
+    
+    const weekData = [];
+    for (let day = 0; day < 7; day++) {
+      const currentDate = new Date(startOfWeek);
+      currentDate.setDate(startOfWeek.getDate() + day);
+      
+      let intensity = 0;
+              // Check if there was actual activity on this day
+        const dateKey = currentDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+        if (progress.memorizedVerses > 0) {
+          // Look for actual activity in userProgress
+          Object.values(userProgress).forEach(surah => {
+            if (surah.verses) {
+              Object.values(surah.verses).forEach(verse => {
+                if (verse.lastReviewed) {
+                  const verseDate = new Date(verse.lastReviewed);
+                  const verseDateKey = verseDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+                  if (verseDateKey === dateKey) {
+                    intensity = Math.min(3, intensity + 1);
+                  }
+                }
+              });
+            }
+          });
+        }
+      
+      weekData.push({
+        date: currentDate,
+        intensity,
+        dayName: currentDate.toLocaleDateString('en-US', { weekday: 'short' })
+      });
+    }
+    return weekData;
+  };
+
+  // Generate monthly activity data for selected month
+  const generateMonthlyActivity = () => {
+    const year = selectedYear;
+    const month = selectedMonth;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    
+    const calendar = [];
+    let currentWeek = [];
+    
+    // Add empty days for the first week
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      currentWeek.push({ date: null, intensity: 0, dayNumber: null });
+    }
+    
+    // Add all days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      if (currentWeek.length === 7) {
+        calendar.push(currentWeek);
+        currentWeek = [];
+      }
+      
+      let intensity = 0;
+      if (progress.memorizedVerses > 0) {
+        // Check for actual activity on this day
+        const currentDate = new Date(year, month, day);
+        const dateKey = currentDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+        
+        Object.values(userProgress).forEach(surah => {
+          if (surah.verses) {
+            Object.values(surah.verses).forEach(verse => {
+              if (verse.lastReviewed) {
+                const verseDate = new Date(verse.lastReviewed);
+                const verseDateKey = verseDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+                if (verseDateKey === dateKey) {
+                  intensity = Math.min(3, intensity + 1);
+                }
+              }
+            });
+          }
+        });
+      }
+      
+      currentWeek.push({
+        date: new Date(year, month, day),
+        intensity,
+        dayNumber: day
+      });
+    }
+    
+    // Fill the last week if needed
+    while (currentWeek.length < 7) {
+      currentWeek.push({ date: null, intensity: 0, dayNumber: null });
+    }
+    
+    if (currentWeek.length > 0) {
+      calendar.push(currentWeek);
+    }
+    
+    return calendar;
+  };
+
+  // Generate yearly activity data for selected year
+  const generateYearlyActivity = () => {
+    const months = [];
+    for (let month = 0; month < 12; month++) {
+      let intensity = 0;
+      if (progress.memorizedVerses > 0) {
+        // Check for actual activity in this month
+        const monthStart = new Date(selectedYear, month, 1);
+        const monthEnd = new Date(selectedYear, month + 1, 0);
+        
+        Object.values(userProgress).forEach(surah => {
+          if (surah.verses) {
+            Object.values(surah.verses).forEach(verse => {
+              if (verse.lastReviewed) {
+                const verseDate = new Date(verse.lastReviewed);
+                if (verseDate >= monthStart && verseDate <= monthEnd) {
+                  intensity = Math.min(3, intensity + 1);
+                }
+              }
+            });
+          }
+        });
+      }
+      months.push({ month, intensity });
+    }
+    return months;
+  };
+
+  // Generate activity data based on actual progress and selected view
+  const generateActivityData = () => {
+    const hasActivity = progress.memorizedVerses > 0;
+    
+    if (activityView === 'weekly') {
+      return generateWeeklyActivity();
+    } else if (activityView === 'monthly') {
+      return generateMonthlyActivity();
+    } else { // yearly
+      return generateYearlyActivity();
+    }
+  };
+
+  const activityData = generateActivityData();
+
+  // Generate achievements based on actual progress
+  const generateAchievements = () => {
+    const achievements = [
+      { 
+        id: 1, 
+        name: "First Steps", 
+        description: "Complete memorizing your first verse", 
+        unlocked: progress.memorizedVerses >= 1, 
+        icon: <Star size={24} />,
+        color: "var(--rose)"
+      },
+      { 
+        id: 2, 
+        name: "Surah Master", 
+        description: "Complete your first surah from beginning to end", 
+        unlocked: progress.completedSurahs >= 1, 
+        icon: <BookOpenCheck size={24} />,
+        color: "var(--lavender)"
+      },
+      { 
+        id: 3, 
+        name: "Juz Champion", 
+        description: "Reach the milestone of memorizing one complete juz", 
+        unlocked: progress.memorizedVerses >= 200,
+        icon: <Trophy size={24} />,
+        color: "var(--rose)"
+      },
+      { 
+        id: 4, 
+        name: "Consistency Champion", 
+        description: "Maintain a 7 day memorization streak", 
+        unlocked: realData.currentStreak >= 7, 
+        icon: <Crown size={24} />,
+        color: "var(--lavender)"
+      },
+      { 
+        id: 5, 
+        name: "Hafiz Al-Baqarah", 
+        description: "Complete the longest surah in the Quran", 
+        unlocked: userProgress[2]?.verses && Object.values(userProgress[2].verses).every(v => v.memorized),
+        icon: <Target size={24} />,
+        color: "var(--rose)"
+      }
+    ];
+    return achievements;
+  };
+
+  const achievements = generateAchievements();
+
+  // Format progress percentage to show <1% for small progress
+  const formatProgressPercentage = (percentage) => {
+    if (percentage === 0) return "0%";
+    if (percentage < 1 && progress.memorizedVerses > 0) return "<1%";
+    if (percentage < 1) return "0%";
+    return `${percentage}%`;
+  };
+
+  // Get activity view title and description
+  const getActivityViewInfo = () => {
+    switch (activityView) {
+      case 'weekly':
+        return { title: 'Weekly Activity', description: 'Current week activity overview' };
+      case 'monthly':
+        return { title: `Monthly Activity - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, description: 'Select month to view activity' };
+      case 'yearly':
+        return { title: `Yearly Activity - ${selectedYear}`, description: 'Select year to view activity' };
+      default:
+        return { title: 'Activity Overview', description: '' };
+    }
+  };
+
+  const activityViewInfo = getActivityViewInfo();
+
+  // Navigation functions for month/year selection
+  const goToPreviousMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
+  const goToPreviousYear = () => {
+    setSelectedYear(selectedYear - 1);
+  };
+
+  const goToNextYear = () => {
+    setSelectedYear(selectedYear + 1);
+  };
+
+  return (
+    <div className={`dashboard ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      {/* App Header */}
+      <header className="app-header">
+        <div className="header-left">
+          <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu size={24} />
+          </button>
+          <h1 className="page-title">My Memorization Journey</h1>
+        </div>
+        <button className="theme-toggle" onClick={toggleTheme}>
+          {isDark ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      </header>
+
+      {/* Guest Warning */}
+      {isGuest && (
+        <div className="guest-warning">
+          <span>⚠️ Guest Mode: Progress saved locally only</span>
+          {/* <button className="create-account-btn">Create Account</button> */}
+        </div>
+      )}
+
+      {/* Test Loader Button */}
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <button 
+          className="btn btn-secondary" 
+          onClick={() => setShowTestLoader(!showTestLoader)}
+          style={{ 
+            background: showTestLoader ? 'var(--rose)' : 'var(--beige)',
+            color: showTestLoader ? '#fff' : 'var(--text)',
+            border: `2px solid ${showTestLoader ? 'var(--rose)' : 'var(--border)'}`
+          }}
+        >
+          {showTestLoader ? '🧪 Hide Test Loader' : '🧪 Test Lottie Loader'}
+        </button>
+      </div>
+
+      {/* Test Loader Display */}
+      {showTestLoader && (
+        <LottieLoader 
+          size="large" 
+          showVerse={true}
+        />
+      )}
+
+      {/* Progress Summary Card */}
+      <div className="progress-summary">
+                  <div className="circular-progress-container">
+            <div className="circular-progress">
+              <svg width="300" height="300" viewBox="0 0 300 300">
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#E2B6B3" />
+                    <stop offset="100%" stopColor="#9A86A4" />
+                  </linearGradient>
+                </defs>
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="135"
+                  fill="none"
+                  stroke="var(--border)"
+                  strokeWidth="12"
+                />
+                {progress.surahPercentage > 0 && (
+                  <circle
+                    cx="150"
+                    cy="150"
+                    r="135"
+                    fill="none"
+                    stroke="url(#progressGradient)"
+                    strokeWidth="16"
+                    strokeDasharray={`${2 * Math.PI * 135}`}
+                    strokeDashoffset={`${2 * Math.PI * 135 * (1 - Math.max(progress.surahPercentage, 0.5) / 100)}`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 150 150)"
+                    className="progress-circle"
+                  />
+                )}
+              </svg>
+              <div className="progress-center">
+                <div className="progress-percentage">{formatProgressPercentage(progress.surahPercentage)}</div>
+                <div className="progress-subtext">Completed</div>
+              </div>
+            </div>
+            
+            <div className="progress-stats">
+            <div className="stat-item">
+              <Flame size={20} className="stat-icon" />
+              <div className="stat-content">
+                <div className="stat-value">{realData.currentStreak}</div>
+                <div className="stat-label">days</div>
+              </div>
+            </div>
+            <div className="stat-item">
+              <Calendar size={20} className="stat-icon" />
+              <div className="stat-content">
+                <div className="stat-value">{realData.weeklyAverage}</div>
+                <div className="stat-label">verses/week</div>
+              </div>
+            </div>
+            <div className="stat-item">
+              <Clock size={20} className="stat-icon" />
+              <div className="stat-content">
+                <div className="stat-value">{realData.lastActivity}</div>
+                <div className="stat-label">last activity</div>
+              </div>
+            </div>
+            <div className="stat-item">
+              <BookOpen size={20} className="stat-icon" />
+              <div className="stat-content">
+                <div className="stat-value">{progress.completedSurahs}/{progress.totalSurahs}</div>
+                <div className="stat-label">surahs memorized</div>
+              </div>
+            </div>
+            <div className="stat-item">
+              <Target size={20} className="stat-icon" />
+              <div className="stat-content">
+                <div className="stat-value">{progress.memorizedVerses}/{progress.totalVerses}</div>
+                <div className="stat-label">verses memorized</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions Bar */}
+      <div className="quick-actions">
+        {realData.currentSurah ? (
+          <div className="action-card primary" onClick={() => navigate(`/surah/${realData.currentSurah.id}`)}>
+            <div className="action-icon">
+              <BookOpen size={24} />
+            </div>
+            <div className="action-content">
+              <div className="action-label">Continue Memorizing</div>
+              <div className="action-detail">{realData.currentSurah.name} : Verse {realData.currentVerse}</div>
+            </div>
+            <ChevronRight size={20} className="action-chevron" />
+          </div>
+        ) : (
+          <div className="action-card primary" onClick={() => navigate('/surahs')}>
+            <div className="action-icon">
+              <BookOpen size={24} />
+            </div>
+            <div className="action-content">
+              <div className="action-label">Start Your Journey</div>
+              <div className="action-detail">Begin with Al-Fatihah</div>
+            </div>
+            <ChevronRight size={20} className="action-chevron" />
+          </div>
+        )}
+        
+        <div className="action-card secondary" onClick={() => navigate('/surahs')}>
+          <div className="action-icon">
+            <PlusCircle size={24} />
+          </div>
+          <div className="action-content">
+            <div className="action-label">Start New Surah</div>
+            <div className="action-detail">Choose from 114 surahs</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Activity Overview */}
+      <div className="streak-calendar">
+        <div className="activity-header">
+          <h3>{activityViewInfo.title}</h3>
+          <div className="activity-view-toggle">
+            <button 
+              className={`view-btn ${activityView === 'weekly' ? 'active' : ''}`}
+              onClick={() => setActivityView('weekly')}
+            >
+              Weekly
+            </button>
+            <button 
+              className={`view-btn ${activityView === 'monthly' ? 'active' : ''}`}
+              onClick={() => setActivityView('monthly')}
+            >
+              Monthly
+            </button>
+            <button 
+              className={`view-btn ${activityView === 'yearly' ? 'active' : ''}`}
+              onClick={() => setActivityView('yearly')}
+            >
+              Yearly
+            </button>
+          </div>
+        </div>
+        
+        {/* Month/Year Navigation */}
+        {activityView === 'monthly' && (
+          <div className="month-navigation">
+            <button className="nav-btn" onClick={goToPreviousMonth}>
+              <ChevronLeft size={16} />
+            </button>
+            <span className="current-month">
+              {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </span>
+            <button className="nav-btn" onClick={goToNextMonth}>
+              <ChevronRightIcon size={16} />
+            </button>
+          </div>
+        )}
+        
+        {activityView === 'yearly' && (
+          <div className="year-navigation">
+            <button className="nav-btn" onClick={goToPreviousYear}>
+              <ChevronLeft size={16} />
+            </button>
+            <span className="current-year">{selectedYear}</span>
+            <button className="nav-btn" onClick={goToNextYear}>
+              <ChevronRightIcon size={16} />
+            </button>
+          </div>
+        )}
+        
+        {activityView === 'yearly' ? (
+          <div className="yearly-activity">
+            {activityData.map(({ month, intensity }) => (
+              <div
+                key={month}
+                className={`month-square intensity-${intensity}`}
+                title={`${new Date(selectedYear, month).toLocaleString('default', { month: 'long' })}: ${intensity === 0 ? 'No activity' : intensity === 1 ? 'Low activity' : intensity === 2 ? 'Medium activity' : 'High activity'}`}
+              >
+                {new Date(selectedYear, month).toLocaleString('default', { month: 'short' })}
+              </div>
+            ))}
+          </div>
+        ) : activityView === 'weekly' ? (
+          <div className="weekly-activity">
+            {activityData.map(({ date, intensity, dayName }, index) => (
+              <div
+                key={index}
+                className={`week-day intensity-${intensity}`}
+                title={`${date.toLocaleDateString()}: ${intensity === 0 ? 'No activity' : intensity === 1 ? 'Low activity' : intensity === 2 ? 'Medium activity' : 'High activity'}`}
+              >
+                <div className="day-name">{dayName}</div>
+                <div className="day-date">{date.getDate()}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="calendar-grid">
+            {activityData.map((week, weekIndex) => (
+              <div key={weekIndex} className="calendar-week">
+                {week.map(({ date, intensity, dayNumber }, dayIndex) => {
+                  if (!date) {
+                    return <div key={dayIndex} className="calendar-day empty"></div>;
+                  }
+                  
+                  return (
+                    <div
+                      key={dayIndex}
+                      className={`calendar-day intensity-${intensity}`}
+                      title={`${date.toLocaleDateString()}: ${intensity === 0 ? 'No activity' : intensity === 1 ? 'Low activity' : intensity === 2 ? 'Medium activity' : 'High activity'}`}
+                    >
+                      {dayNumber}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div className="calendar-legend">
+          <span className="legend-item">
+            <span className="legend-color intensity-0"></span>
+            <span>No activity</span>
+          </span>
+          <span className="legend-item">
+            <span className="legend-color intensity-1"></span>
+            <span>Low</span>
+          </span>
+          <span className="legend-item">
+            <span className="legend-color intensity-2"></span>
+            <span>Medium</span>
+          </span>
+          <span className="legend-item">
+            <span className="legend-color intensity-3"></span>
+            <span>High</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Achievement Display */}
+      <div className="achievements-section">
+        <h3>Achievements</h3>
+        <div className="achievements-container">
+          {achievements.map(achievement => (
+            <div key={achievement.id} className={`achievement-badge ${achievement.unlocked ? 'unlocked' : 'locked'}`}>
+              <div className="badge-icon" style={{ color: achievement.color }}>
+                {achievement.icon}
+              </div>
+              <div className="badge-content">
+                <div className="badge-name">{achievement.name}</div>
+                <div className="badge-description">{achievement.description}</div>
+              </div>
+              {!achievement.unlocked && <div className="badge-lock"><Lock size={16} /></div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;

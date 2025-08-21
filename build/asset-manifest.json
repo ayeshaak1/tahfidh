@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/static/css/main.fecf6f07.css",
+    "main.js": "/static/js/main.03dcba53.js",
+    "static/media/Uthmani.woff2": "/static/media/Uthmani.0df5b68911cb1ef98e98.woff2",
+    "static/media/IndoPak.woff2": "/static/media/IndoPak.9a31da7dedc32eb9bcd6.woff2",
+    "index.html": "/index.html",
+    "main.fecf6f07.css.map": "/static/css/main.fecf6f07.css.map",
+    "main.03dcba53.js.map": "/static/js/main.03dcba53.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.fecf6f07.css",
+    "static/js/main.03dcba53.js"
+  ]
+}
