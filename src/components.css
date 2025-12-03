@@ -624,55 +624,48 @@
   color: var(--text);
 }
 
-.resume-button {
-  background: var(--rose);
-  color: white;
+.surah-action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.action-btn {
+  flex: 1;
   padding: 0.5rem 1rem;
   border-radius: 25px;
   font-size: 0.9rem;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
-.resume-button:hover {
-  background: var(--lavender);
-}
-
-.card-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.surah-card:hover .card-overlay {
-  opacity: 1;
-}
-
-.resume-overlay-btn {
+.resume-btn,
+.start-btn {
   background: var(--rose);
   color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border-color: var(--rose);
 }
 
-.resume-overlay-btn:hover {
+.resume-btn:hover,
+.start-btn:hover {
   background: var(--lavender);
-  transform: scale(1.05);
+  border-color: var(--lavender);
+  transform: translateY(-1px);
+}
+
+.mark-done-btn {
+  background: var(--cream);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.mark-done-btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
 }
 
 .empty-state {
@@ -1159,7 +1152,7 @@
 .verse-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1rem; /* Default gap, will be overridden by inline style based on font size */
 }
 
 .arabic-text {
@@ -1282,7 +1275,7 @@
   background: var(--cream);
   border-radius: 25px;
   border: 1px solid var(--border);
-  margin-top: 0.5rem;
+  margin-top: 0.5rem; /* Will be overridden by inline style */
   line-height: 1.6;
 }
 
@@ -1294,7 +1287,7 @@
   background: var(--cream);
   border-radius: 25px;
   border: 1px solid var(--border);
-  margin-top: 0.5rem;
+  margin-top: 0.5rem; /* Will be overridden by inline style */
   font-weight: 500;
 }
 
@@ -3294,7 +3287,7 @@
 }
 
 .verse-arabic {
-  font-family: 'Uthmani', 'Amiri', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   font-size: 1.6rem;
   line-height: 2;
   color: var(--text);

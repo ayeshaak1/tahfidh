@@ -120,6 +120,25 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
     }
   };
 
+  const handleMarkAsDone = (surahId, totalVerses) => {
+    setUserProgress(prev => {
+      const newProgress = { ...prev };
+      if (!newProgress[surahId]) {
+        newProgress[surahId] = { verses: {} };
+      }
+      
+      // Mark all verses as memorized
+      for (let i = 1; i <= totalVerses; i++) {
+        if (!newProgress[surahId].verses[i]) {
+          newProgress[surahId].verses[i] = {};
+        }
+        newProgress[surahId].verses[i].memorized = true;
+      }
+      
+      return newProgress;
+    });
+  };
+
   const handleJuzSelect = async (juz) => {
     setJuzFilter(juz);
     setShowJuzDropdown(false);
@@ -410,17 +429,52 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                     </div>
                   </div>
 
-                  {isInProgress && (
-                    <div className="resume-button">
-                      Resume
+                  {!isCompleted && (
+                    <div className="surah-action-buttons" onClick={(e) => e.stopPropagation()}>
+                      {isInProgress ? (
+                        <>
+                          <button 
+                            className="action-btn resume-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/surah/${surah.id}`);
+                            }}
+                          >
+                            Resume
+                          </button>
+                          <button 
+                            className="action-btn mark-done-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsDone(surah.id, surah.verses_count);
+                            }}
+                          >
+                            Mark as Done
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button 
+                            className="action-btn start-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/surah/${surah.id}`);
+                            }}
+                          >
+                            Start
+                          </button>
+                          <button 
+                            className="action-btn mark-done-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsDone(surah.id, surah.verses_count);
+                            }}
+                          >
+                            Mark as Done
+                          </button>
+                        </>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                {/* Hover Effect Overlay */}
-                <div className="card-overlay">
-                  {isInProgress && (
-                    <button className="resume-overlay-btn">Resume</button>
                   )}
                 </div>
               </div>
@@ -433,9 +487,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
             </div>
             <h3>No surahs match filters</h3>
             <p>Try adjusting your search or filter criteria</p>
-            <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '0.5rem' }}>
-              Note: Test mode may show limited data
-            </p>
+           
             <button 
               className="reset-filters-btn"
               onClick={() => {

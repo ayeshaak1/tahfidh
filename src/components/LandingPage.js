@@ -84,7 +84,7 @@ const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">
-                <BookOpen size={32} />
+                <BookOpen size={24} />
               </div>
               <h3>Authentic Arabic Scripts</h3>
               <p>Experience the beauty of Quran with Uthmani and IndoPak scripts, ensuring accuracy and authenticity</p>
@@ -92,7 +92,7 @@ const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
             
             <div className="feature-card">
               <div className="feature-icon">
-                <BarChart3 size={32} />
+                <BarChart3 size={24} />
               </div>
               <h3>Comprehensive Progress Tracking</h3>
               <p>Monitor every step of your memorization journey with detailed analytics and visual progress indicators</p>
@@ -100,7 +100,7 @@ const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
             
             <div className="feature-card">
               <div className="feature-icon">
-                <Award size={32} />
+                <Award size={24} />
               </div>
               <h3>Motivational Achievements</h3>
               <p>Stay inspired with meaningful milestones and achievements that celebrate your dedication and progress</p>
@@ -109,45 +109,14 @@ const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
         </div>
       </section>
 
-      {/* Guest Disclaimer Bar */}
-      <div className="guest-disclaimer-bar">
-        <div className="container">
-          <p>
-            <strong>Guest Mode:</strong> Your progress will be saved locally on this device. 
-            For cloud backup and syncing across devices, consider creating an account.
-          </p>
-        </div>
-      </div>
-
       {/* Footer */}
       <footer className="landing-footer">
-        <div className="container">
-          <div className="footer-content">
-            <div className="footer-section disclaimer-section">
-              <h4>Important Disclaimer</h4>
-              <p>
-                Tahfidh is a digital tool designed to assist with Quran memorization tracking and progress monitoring. 
-                It serves as a supplementary aid and is not intended to replace traditional Islamic education, 
-                guidance from qualified scholars, or direct study of authentic Quranic sources. 
-                Always verify Quranic text with authoritative sources and consult with knowledgeable individuals 
-                for proper recitation and understanding.
-              </p>
-            </div>
-            
-            <div className="footer-section about-section">
-              <h4>About Tahfidh</h4>
-              <p>
-                Tahfidh is thoughtfully designed to support Muslims worldwide in their sacred Quran memorization journey. 
-                Our platform provides a modern, accessible, and respectful environment for tracking progress, 
-                maintaining consistency, and building lasting habits in the noble pursuit of memorizing Allah's words.
-              </p>
-            </div>
-          </div>
-          
-          <div className="footer-bottom">
-            <p>&copy; 2025 Tahfidh. All rights reserved.</p>
-            <p>Version 1.0.0</p>
-          </div>
+        <div className="footer-disclaimer">
+          <p>
+            <strong>Disclaimer:</strong> The Quran text displayed on this website is for reference only.
+            This website is designed to help you track your memorization progress.
+            Please use a trustworthy, verified copy of the Quran for your actual memorization and study.
+          </p>
         </div>
       </footer>
     </div>

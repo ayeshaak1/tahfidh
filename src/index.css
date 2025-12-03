@@ -139,23 +139,23 @@ p, span, div, a, button, input, textarea, select, label,
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 
-/* Quran Font Classes */
+/* Quran Font Classes - For UI Arabic text (not verses) */
 .arabic {
-  font-family: 'Amiri', 'Noto Nastaliq Urdu', 'Scheherazade New', serif;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   line-height: 2;
   text-align: right;
   direction: rtl;
 }
 
 .arabic.uthmani {
-  font-family: 'Amiri', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   font-size: 4rem;
   font-weight: 500;
   line-height: 2.2;
 }
 
 .arabic.indopak {
-  font-family: 'Scheherazade New', 'Amiri', serif;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   font-size: 1.4rem;
   font-weight: 400;
   line-height: 1.8;

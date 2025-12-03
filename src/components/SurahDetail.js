@@ -743,10 +743,18 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                 </div>
               </div>
 
-              <div className="verse-content">
+              <div 
+                className="verse-content"
+                style={{ 
+                  gap: `${Math.max(arabicFontSize, translationFontSize, transliterationFontSize) * 0.4}rem`
+                }}
+              >
                 <div 
                   className={`arabic-text ${selectedFont}`}
-                  style={{ fontSize: `${arabicFontSize}rem` }}
+                  style={{ 
+                    fontSize: `${arabicFontSize}rem`,
+                    marginBottom: `${arabicFontSize * 0.4}rem`
+                  }}
                 >
                   {selectedFont === 'uthmani' ? verse.text_uthmani : verse.text_indopak}
                 </div>
@@ -754,7 +762,11 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                 {showTransliteration && (
                   <div 
                     className="transliteration"
-                    style={{ fontSize: `${transliterationFontSize}rem` }}
+                    style={{ 
+                      fontSize: `${transliterationFontSize}rem`,
+                      marginTop: `${transliterationFontSize * 0.5}rem`,
+                      marginBottom: `${transliterationFontSize * 0.5}rem`
+                    }}
                   >
                     {verseTransliteration ? (
                       verseTransliteration.text
@@ -769,7 +781,11 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                 {showTranslation && (
                   <div 
                     className="translation"
-                    style={{ fontSize: `${translationFontSize}rem` }}
+                    style={{ 
+                      fontSize: `${translationFontSize}rem`,
+                      marginTop: `${translationFontSize * 0.5}rem`,
+                      marginBottom: `${translationFontSize * 0.5}rem`
+                    }}
                   >
                     {verseTranslation ? (
                       verseTranslation.text
