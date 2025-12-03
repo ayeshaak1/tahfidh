@@ -21,7 +21,6 @@ import {
   ChevronRight as ChevronRightIcon,
   Repeat
 } from 'lucide-react';
-import LottieLoader from './LottieLoader';
 
 const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -29,7 +28,6 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
   const [activityView, setActivityView] = useState('weekly'); // weekly, monthly, yearly
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [showTestLoader, setShowTestLoader] = useState(false);
 
   useEffect(() => {
     setCurrentPath('/dashboard');
@@ -411,29 +409,6 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
           <span>⚠️ Guest Mode: Progress saved locally only</span>
           {/* <button className="create-account-btn">Create Account</button> */}
         </div>
-      )}
-
-      {/* Test Loader Button */}
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => setShowTestLoader(!showTestLoader)}
-          style={{ 
-            background: showTestLoader ? 'var(--rose)' : 'var(--beige)',
-            color: showTestLoader ? '#fff' : 'var(--text)',
-            border: `2px solid ${showTestLoader ? 'var(--rose)' : 'var(--border)'}`
-          }}
-        >
-          {showTestLoader ? '🧪 Hide Test Loader' : '🧪 Test Lottie Loader'}
-        </button>
-      </div>
-
-      {/* Test Loader Display */}
-      {showTestLoader && (
-        <LottieLoader 
-          size="large" 
-          showVerse={true}
-        />
       )}
 
       {/* Progress Summary Card */}

@@ -1798,6 +1798,72 @@
   line-height: 1.5;
 }
 
+/* App Footer - General footer for all pages */
+.app-footer {
+  background: var(--beige);
+  border-top: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+  margin-top: 3rem;
+  box-sizing: border-box;
+  transition: margin-left 0.3s ease, padding 0.3s ease, width 0.3s ease;
+  overflow-x: hidden;
+}
+
+.app-footer .footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Footer adjustments for sidebar state on desktop */
+@media (min-width: 768px) {
+  .app-footer {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    padding: 1.5rem 2rem;
+  }
+
+  .app-footer.sidebar-open {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    padding: 1.5rem 2rem;
+  }
+
+  .app-footer.sidebar-closed {
+    margin-left: 0;
+    width: 100%;
+    padding: 1.5rem 1rem;
+  }
+}
+
+.footer-disclaimer {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.footer-disclaimer p {
+  margin: 0;
+  opacity: 0.85;
+}
+
+.footer-disclaimer strong {
+  color: var(--rose);
+  font-weight: 600;
+}
+
+/* Responsive design for app footer */
+@media (max-width: 768px) {
+  .app-footer {
+    padding: 1rem;
+    margin-top: 2rem;
+  }
+
+  .footer-disclaimer {
+    font-size: 0.85rem;
+  }
+}
+
 .app-version {
   color: var(--text);
   opacity: 0.7;

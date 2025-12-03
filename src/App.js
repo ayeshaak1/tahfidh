@@ -7,6 +7,7 @@ import SurahList from './components/SurahList';
 import SurahDetail from './components/SurahDetail';
 import Profile from './components/Profile';
 import Navigation from './components/Navigation';
+import Footer from './components/Footer';
 import versePreloader from './services/versePreloader';
 import './App.css';
 import './components.css';
@@ -114,6 +115,8 @@ function App() {
               } 
             />
           </Routes>
+          {/* Footer - Show on all pages except landing page */}
+          {currentPath !== '/' && <Footer sidebarOpen={sidebarOpen} />}
         </div>
       </Router>
     </ThemeProvider>
