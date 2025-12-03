@@ -2054,7 +2054,34 @@
 /* Font Selector Dropdown */
 .font-selector .custom-dropdown {
   position: relative;
-  display: inline-block;
+  display: block;
+  width: 100%;
+}
+
+.font-selector .dropdown-trigger {
+  padding: 0.5rem 1rem;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  min-width: 120px;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.font-selector .dropdown-trigger:hover {
+  background: var(--border);
+  transform: translateY(-1px);
 }
 
 .font-selector .dropdown-menu {
@@ -2509,7 +2536,7 @@
   background: var(--beige);
   border: 1px solid var(--border);
   border-radius: 25px;
-  max-width: 500px;
+  max-width: 90%;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
@@ -2612,6 +2639,38 @@
   margin-bottom: 0;
 }
 
+/* Settings Top Row - Horizontal Layout */
+.settings-top-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-top-row .font-selector,
+.settings-top-row .display-toggles,
+.settings-top-row .bulk-actions {
+  margin-bottom: 0;
+}
+
+.settings-top-row .setting-label {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.settings-top-row .toggle-buttons {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-top-row .toggle-btn {
+  width: 100%;
+  text-align: center;
+  min-width: 120px;
+}
+
 .toggle-buttons {
   display: flex;
   gap: 0.75rem;
@@ -2629,6 +2688,11 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
+  min-width: 120px;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .settings-panel .toggle-btn:hover,
@@ -2655,6 +2719,11 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
+  min-width: 120px;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .settings-panel .bulk-mode-btn:hover,
@@ -2676,6 +2745,184 @@
   gap: 0.75rem;
   margin-top: 0.75rem;
   flex-wrap: wrap;
+}
+
+/* Font Size Controls */
+.font-size-controls {
+  margin-bottom: 1.5rem;
+}
+
+.font-size-slider-group {
+  margin-bottom: 1.25rem;
+}
+
+.font-size-slider-group:last-child {
+  margin-bottom: 0;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.slider-value {
+  font-weight: 600;
+  color: var(--rose);
+  font-size: 0.85rem;
+}
+
+.font-size-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--cream);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.font-size-slider:hover {
+  background: var(--border);
+}
+
+.font-size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--rose);
+  cursor: pointer;
+  border: 2px solid var(--beige);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.font-size-slider::-webkit-slider-thumb:hover {
+  background: var(--lavender);
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.font-size-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--rose);
+  cursor: pointer;
+  border: 2px solid var(--beige);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.font-size-slider::-moz-range-thumb:hover {
+  background: var(--lavender);
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.font-size-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--cream);
+}
+
+.font-size-slider:focus {
+  outline: none;
+}
+
+.font-size-slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(226, 182, 179, 0.3);
+}
+
+.font-size-slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(226, 182, 179, 0.3);
+}
+
+/* Reset Font Sizes Button */
+.reset-font-sizes-btn {
+  padding: 0.4rem 0.9rem;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.reset-font-sizes-btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+.reset-font-sizes-btn:active {
+  transform: translateY(0);
+}
+
+/* Font Size Preview */
+.font-size-preview {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.preview-container {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.preview-arabic-text {
+  text-align: right;
+  direction: rtl;
+  color: var(--text);
+  line-height: 2.2;
+  margin-bottom: 1rem;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1;
+  unicode-bidi: bidi-override;
+}
+
+.preview-arabic-text.uthmani {
+  font-family: 'Uthmani', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif !important;
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+}
+
+.preview-arabic-text.indopak {
+  font-family: 'IndoPak', 'IndoPak-Fallback', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif !important;
+  letter-spacing: 0.01em;
+  word-spacing: 0.05em;
+}
+
+.preview-transliteration {
+  font-style: italic;
+  color: var(--text);
+  opacity: 0.8;
+  margin-bottom: 0.75rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+}
+
+.preview-translation {
+  color: var(--text);
+  line-height: 1.6;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
 .settings-panel .bulk-btn,
@@ -2702,6 +2949,21 @@
   .settings-popup {
     width: 95%;
     max-height: 85vh;
+  }
+
+  .settings-top-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .settings-top-row .toggle-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .settings-top-row .toggle-btn {
+    width: 100%;
+    min-width: 120px;
   }
 
   .settings-popup-header {
@@ -2758,10 +3020,40 @@
 .bulk-actions-popup-content {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
   padding: 1rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+}
+
+.bulk-actions-close-btn {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.bulk-actions-close-btn:hover {
+  background: var(--border);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.bulk-actions-close-btn:active {
+  transform: translateY(-50%) scale(0.95);
 }
 
 .bulk-action-btn {
@@ -2794,6 +3086,22 @@
     flex-direction: column;
     padding: 1rem;
     gap: 0.75rem;
+    position: relative;
+  }
+
+  .bulk-actions-close-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    transform: none;
+  }
+
+  .bulk-actions-close-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .bulk-actions-close-btn:active {
+    transform: scale(0.95);
   }
 
   .bulk-action-btn {

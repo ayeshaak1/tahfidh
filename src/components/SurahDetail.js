@@ -26,6 +26,22 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     return saved !== null ? JSON.parse(saved) : true;
   });
   
+  // Font size preferences
+  const [arabicFontSize, setArabicFontSize] = useState(() => {
+    const saved = localStorage.getItem('arabicFontSize');
+    return saved ? parseFloat(saved) : 2.5; // Default 2.5rem
+  });
+  
+  const [translationFontSize, setTranslationFontSize] = useState(() => {
+    const saved = localStorage.getItem('translationFontSize');
+    return saved ? parseFloat(saved) : 1.0; // Default 1rem
+  });
+  
+  const [transliterationFontSize, setTransliterationFontSize] = useState(() => {
+    const saved = localStorage.getItem('transliterationFontSize');
+    return saved ? parseFloat(saved) : 1.0; // Default 1rem
+  });
+  
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedVerses, setSelectedVerses] = useState(new Set());
   const [currentVerse, setCurrentVerse] = useState(1);
@@ -69,6 +85,19 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   useEffect(() => {
     localStorage.setItem('showTransliterationPreference', JSON.stringify(showTransliteration));
   }, [showTransliteration]);
+
+  // Save font sizes to localStorage
+  useEffect(() => {
+    localStorage.setItem('arabicFontSize', arabicFontSize.toString());
+  }, [arabicFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem('translationFontSize', translationFontSize.toString());
+  }, [translationFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem('transliterationFontSize', transliterationFontSize.toString());
+  }, [transliterationFontSize]);
 
   // Handle click outside to close font dropdown
   useEffect(() => {
@@ -459,75 +488,165 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
               </button>
             </div>
             <div className="settings-popup-content">
-              <div className="font-selector">
-                <label className="setting-label">Font</label>
-                <div className="custom-dropdown" ref={fontDropdownRef}>
+              <div className="settings-top-row">
+                <div className="font-selector">
+                  <label className="setting-label">Font</label>
+                  <div className="custom-dropdown" ref={fontDropdownRef}>
+                    <button
+                      className="dropdown-trigger"
+                      onClick={() => setShowFontDropdown(!showFontDropdown)}
+                    >
+                      <span>{selectedFont === 'uthmani' ? 'Uthmani' : 'IndoPak'}</span>
+                      <ChevronDown 
+                        size={16} 
+                        className={`dropdown-arrow ${showFontDropdown ? 'rotated' : ''}`} 
+                      />
+                    </button>
+                    {showFontDropdown && (
+                      <div className="dropdown-menu">
+                        <div 
+                          className={`dropdown-item ${selectedFont === 'uthmani' ? 'active' : ''}`}
+                          onClick={() => { handleFontChange('uthmani'); setShowFontDropdown(false); }}
+                        >
+                          Uthmani
+                        </div>
+                        <div 
+                          className={`dropdown-item ${selectedFont === 'indopak' ? 'active' : ''}`}
+                          onClick={() => { handleFontChange('indopak'); setShowFontDropdown(false); }}
+                        >
+                          IndoPak
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="display-toggles">
+                  <label className="setting-label">Display Options</label>
+                  <div className="toggle-buttons">
+                    <button 
+                      className={`toggle-btn ${showTranslation ? 'active' : ''}`}
+                      onClick={() => setShowTranslation(!showTranslation)}
+                    >
+                      Translation
+                    </button>
+                    <button 
+                      className={`toggle-btn ${showTransliteration ? 'active' : ''}`}
+                      onClick={() => setShowTransliteration(!showTransliteration)}
+                    >
+                      Transliteration
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bulk-actions">
+                  <label className="setting-label">Bulk Operations</label>
+                  <button 
+                    className={`bulk-mode-btn ${bulkMode ? 'active' : ''}`}
+                    onClick={() => {
+                      const newBulkMode = !bulkMode;
+                      setBulkMode(newBulkMode);
+                      if (newBulkMode) {
+                        // Turning bulk mode ON
+                        setShowSettings(false);
+                        setShowBulkActions(true);
+                      } else {
+                        // Turning bulk mode OFF
+                        setShowBulkActions(false);
+                      }
+                    }}
+                  >
+                    Bulk Mode
+                  </button>
+                </div>
+              </div>
+
+              <div className="font-size-controls">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <label className="setting-label" style={{ marginBottom: 0 }}>Font Sizes</label>
                   <button
-                    className="dropdown-trigger"
-                    onClick={() => setShowFontDropdown(!showFontDropdown)}
+                    className="reset-font-sizes-btn"
+                    onClick={() => {
+                      setArabicFontSize(2.5);
+                      setTranslationFontSize(1.0);
+                      setTransliterationFontSize(1.0);
+                    }}
                   >
-                    <span>{selectedFont === 'uthmani' ? 'Uthmani' : 'IndoPak'}</span>
-                    <ChevronDown 
-                      size={16} 
-                      className={`dropdown-arrow ${showFontDropdown ? 'rotated' : ''}`} 
-                    />
+                    Reset
                   </button>
-                  {showFontDropdown && (
-                    <div className="dropdown-menu">
-                      <div 
-                        className={`dropdown-item ${selectedFont === 'uthmani' ? 'active' : ''}`}
-                        onClick={() => { handleFontChange('uthmani'); setShowFontDropdown(false); }}
-                      >
-                        Uthmani
-                      </div>
-                      <div 
-                        className={`dropdown-item ${selectedFont === 'indopak' ? 'active' : ''}`}
-                        onClick={() => { handleFontChange('indopak'); setShowFontDropdown(false); }}
-                      >
-                        IndoPak
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
+                
+                <div className="font-size-slider-group">
+                  <label className="slider-label">
+                    Arabic Text
+                    <span className="slider-value">{arabicFontSize.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="1.0"
+                    max="4.0"
+                    step="0.1"
+                    value={arabicFontSize}
+                    onChange={(e) => setArabicFontSize(parseFloat(e.target.value))}
+                    className="font-size-slider"
+                  />
+                </div>
 
-              <div className="display-toggles">
-                <label className="setting-label">Display Options</label>
-                <div className="toggle-buttons">
-                  <button 
-                    className={`toggle-btn ${showTranslation ? 'active' : ''}`}
-                    onClick={() => setShowTranslation(!showTranslation)}
-                  >
+                <div className="font-size-slider-group">
+                  <label className="slider-label">
                     Translation
-                  </button>
-                  <button 
-                    className={`toggle-btn ${showTransliteration ? 'active' : ''}`}
-                    onClick={() => setShowTransliteration(!showTransliteration)}
-                  >
+                    <span className="slider-value">{translationFontSize.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0.7"
+                    max="2.0"
+                    step="0.1"
+                    value={translationFontSize}
+                    onChange={(e) => setTranslationFontSize(parseFloat(e.target.value))}
+                    className="font-size-slider"
+                  />
+                </div>
+
+                <div className="font-size-slider-group">
+                  <label className="slider-label">
                     Transliteration
-                  </button>
+                    <span className="slider-value">{transliterationFontSize.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0.7"
+                    max="2.0"
+                    step="0.1"
+                    value={transliterationFontSize}
+                    onChange={(e) => setTransliterationFontSize(parseFloat(e.target.value))}
+                    className="font-size-slider"
+                  />
                 </div>
               </div>
 
-              <div className="bulk-actions">
-                <label className="setting-label">Bulk Operations</label>
-                <button 
-                  className={`bulk-mode-btn ${bulkMode ? 'active' : ''}`}
-                  onClick={() => {
-                    const newBulkMode = !bulkMode;
-                    setBulkMode(newBulkMode);
-                    if (newBulkMode) {
-                      // Turning bulk mode ON
-                      setShowSettings(false);
-                      setShowBulkActions(true);
-                    } else {
-                      // Turning bulk mode OFF
-                      setShowBulkActions(false);
-                    }
-                  }}
-                >
-                  Bulk Mode
-                </button>
+              <div className="font-size-preview">
+                <label className="setting-label">Preview</label>
+                <div className="preview-container">
+                  <div 
+                    className={`preview-arabic-text ${selectedFont}`}
+                    style={{ fontSize: `${arabicFontSize}rem` }}
+                  >
+                    بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                  </div>
+                  <div 
+                    className="preview-transliteration"
+                    style={{ fontSize: `${transliterationFontSize}rem` }}
+                  >
+                    Bismillāhir-Raḥmānir-Raḥīm
+                  </div>
+                  <div 
+                    className="preview-translation"
+                    style={{ fontSize: `${translationFontSize}rem` }}
+                  >
+                    In the name of Allah, the Entirely Merciful, the Especially Merciful.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -562,6 +681,16 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                 );
                 return allMemorized ? 'Mark All Incomplete' : 'Mark All Complete';
               })()}
+            </button>
+            <button 
+              className="bulk-actions-close-btn"
+              onClick={() => {
+                setShowBulkActions(false);
+                setBulkMode(false);
+              }}
+              title="Close bulk actions"
+            >
+              <X size={20} />
             </button>
           </div>
         </div>
@@ -615,12 +744,18 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
               </div>
 
               <div className="verse-content">
-                <div className={`arabic-text ${selectedFont}`}>
+                <div 
+                  className={`arabic-text ${selectedFont}`}
+                  style={{ fontSize: `${arabicFontSize}rem` }}
+                >
                   {selectedFont === 'uthmani' ? verse.text_uthmani : verse.text_indopak}
                 </div>
                 
                 {showTransliteration && (
-                  <div className="transliteration">
+                  <div 
+                    className="transliteration"
+                    style={{ fontSize: `${transliterationFontSize}rem` }}
+                  >
                     {verseTransliteration ? (
                       verseTransliteration.text
                     ) : (
@@ -632,7 +767,10 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                 )}
                 
                 {showTranslation && (
-                  <div className="translation">
+                  <div 
+                    className="translation"
+                    style={{ fontSize: `${translationFontSize}rem` }}
+                  >
                     {verseTranslation ? (
                       verseTranslation.text
                     ) : (
