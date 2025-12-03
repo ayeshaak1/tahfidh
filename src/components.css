@@ -395,8 +395,8 @@
   direction: rtl !important;
   text-align: right !important;
   
-  /* Use authentic Uthmani font by default */
-  font-family: 'Uthmani', 'Scheherazade New', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  /* Use Amiri font for UI text */
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   
   /* Ensure proper font loading and display */
   font-display: swap;
@@ -413,21 +413,21 @@
   text-orientation: mixed;
   writing-mode: horizontal-tb;
   
-  /* Uthmani-specific styling */
+  /* Arabic UI text styling */
   letter-spacing: 0.02em;
   word-spacing: 0.1em;
   line-height: 1.8;
 }
 
 .surah-arabic-name.uthmani {
-  font-family: 'Uthmani', 'Scheherazade New', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   letter-spacing: 0.02em;
   word-spacing: 0.1em;
   line-height: 1.8;
 }
 
 .surah-arabic-name.indopak {
-  font-family: 'IndoPak', 'Scheherazade New', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   letter-spacing: 0.01em;
   word-spacing: 0.05em;
   line-height: 1.6;
@@ -438,6 +438,7 @@
 }
 
 .surah-english-name {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text);
@@ -797,8 +798,8 @@
   text-align: center;
   direction: rtl;
   
-  /* Use authentic Uthmani font by default */
-  font-family: 'Uthmani', 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  /* Use Amiri font for UI text */
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
   
   /* Ensure proper font loading and display */
   font-display: swap;
@@ -822,6 +823,7 @@
 }
 
 .surah-english-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1.5rem;
   color: var(--text);
   text-align: center;
@@ -1996,17 +1998,42 @@
   background: var(--beige);
   border-radius: 25px;
   border: 1px solid var(--border);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+.bismillah-display .bismillah-text,
 .bismillah-text {
-  font-family: 'Amiri', 'Noto Nastaliq Urdu', serif;
-  font-size: 2.5rem;
-  color: var(--rose);
-  font-weight: 600;
-  line-height: 2.5;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  overflow: auto;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
+  font-size: clamp(1.5rem, 3vw, 5rem) !important;
+  color: var(--rose) !important;
+  font-weight: 700 !important;
+  line-height: 2.2 !important;
+  text-shadow: 0 2px 4px rgba(25, 2, 2, 0.15) !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  direction: rtl !important;
+  unicode-bidi: bidi-override !important;
+  font-synthesis: none !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'calt' 1 !important;
+  word-wrap: break-word !important;
+  hyphens: auto !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure Amiri font is used - override any other rules */
+.bismillah-display .bismillah-text *,
+.bismillah-text * {
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
 }
 
 /* Progress Info Display */
@@ -2417,7 +2444,7 @@
   direction: rtl !important;
   text-align: right !important;
   /* Ensure proper font family */
-  font-family: 'Amiri', 'Noto Nastaliq Urdu', serif !important;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif !important;
 }
 
 /* Settings Section */
@@ -2894,7 +2921,7 @@
 }
 
 .lottie-loader-container .bismillah {
-  font-family: 'Uthmani', 'Amiri', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
   font-size: 3rem;
   color: var(--rose) !important;
   text-align: center;

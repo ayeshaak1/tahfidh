@@ -25,7 +25,11 @@ const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
     <div className="landing-page">
       {/* Header */}
       <header className="landing-header">
-        <div className="logo">
+        <div 
+          className="logo" 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{ cursor: 'pointer' }}
+        >
           <span className="arabic-logo">تحفيظ</span>
           <span className="english-logo">Tahfidh</span>
         </div>

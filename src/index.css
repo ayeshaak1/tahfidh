@@ -40,6 +40,25 @@ body {
   color: var(--text);
 }
 
+/* Consistent English font for all text elements */
+h1, h2, h3, h4, h5, h6,
+p, span, div, a, button, input, textarea, select, label,
+.english-logo, .english-title, .english-subtitle, .english-text,
+.hero-title, .hero-subtitle, .tahfidh-title .english,
+.surah-english-name, .surah-english-title,
+.page-title, .stat-label, .stat-value,
+.action-label, .action-detail, .badge-name, .badge-description,
+.verse-translation, .verse-reference,
+.btn, .btn-primary, .btn-secondary, .btn-ghost,
+.nav-item span, .footer-content, .footer-disclaimer,
+.progress-text, .meta-item, .verse-count,
+.loading-title, .loading-message,
+.settings-label, .settings-description,
+.bulk-action-btn,
+:not([class*="arabic"]):not([class*="bismillah"]):not([class*="verse-arabic"]):not([class*="arabic-text"]):not([class*="surah-arabic"]) {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+}
+
 #root {
   min-height: 100vh;
   width: 100%;

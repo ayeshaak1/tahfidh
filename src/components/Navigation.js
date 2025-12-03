@@ -1,20 +1,26 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { Home, BookOpen, User, Sun, Moon } from 'lucide-react';
 
 const Navigation = ({ sidebarOpen, setSidebarOpen }) => {
   const { theme, toggleTheme, isDark } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    navigate('/dashboard');
+  };
 
   return (
     <nav className={`navigation ${sidebarOpen ? '' : 'sidebar-closed'}`}>
       {/* Logo Section */}
       <div className="nav-logo">
-        <div className="logo">
+        <NavLink to="/dashboard" className="logo" onClick={handleLogoClick} style={{ textDecoration: 'none', cursor: 'pointer' }}>
           <span className="arabic-logo">تحفيظ</span>
           <span className="english-logo">Tahfidh</span>
-        </div>
+        </NavLink>
       </div>
 
       <div className="nav-list">

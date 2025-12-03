@@ -26,10 +26,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .arabic-logo {
-  font-family: 'Amiri', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
   font-size: 2.2rem;
   color: var(--rose);
   margin-bottom: 0.25rem;
@@ -38,6 +43,7 @@
 }
 
 .english-logo {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text);
@@ -102,6 +108,7 @@
 }
 
 .bismillah {
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
   font-size: 8vw;
   color: var(--rose);
   margin-bottom: 1.5rem;
@@ -123,6 +130,7 @@
 }
 
 .tahfidh-title .arabic {
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
   font-size: 3.5rem;
   color: var(--rose);
   font-weight: 700;
@@ -131,13 +139,15 @@
 }
 
 .tahfidh-title .english {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 2rem;
   color: var(--text);
   font-weight: 600;
-  letter-spacing: 2px;
+  letter-spacing: 0.5px;
 }
 
 .hero-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 2rem;
   font-weight: 600;
   color: var(--text);
@@ -146,6 +156,7 @@
 }
 
 .hero-subtitle {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1rem;
   color: var(--text);
   opacity: 0.8;
@@ -168,6 +179,7 @@
 }
 
 .verse-translation {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1rem;
   color: var(--text);
   opacity: 0.8;
@@ -176,6 +188,7 @@
 }
 
 .verse-reference {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 0.9rem;
   color: var(--rose);
   font-weight: 500;
@@ -1096,18 +1109,27 @@
   }
 
   .nav-logo .arabic-logo {
-    font-family: 'Amiri', 'Noto Nastaliq Urdu', serif;
-    font-size: 1.8rem;
+    font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
+    font-size: 1.5rem;
     color: var(--rose);
     font-weight: 600;
     line-height: 1;
   }
 
   .nav-logo .english-logo {
-    font-size: 1rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-size: 0.9rem;
     color: var(--text);
     font-weight: 500;
     letter-spacing: 0.5px;
+  }
+
+  .nav-logo .logo {
+    transition: transform 0.2s ease;
+  }
+
+  .nav-logo .logo:hover {
+    transform: scale(1.05);
   }
 
   .nav-list {
