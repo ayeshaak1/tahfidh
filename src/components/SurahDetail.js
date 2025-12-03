@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { ChevronLeft, ChevronRight, Play, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
 
@@ -34,10 +34,13 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const [error, setError] = useState(null);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showBulkActions, setShowBulkActions] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   
   // Ref for the font dropdown to handle click outside
   const fontDropdownRef = useRef(null);
+  // Ref for the settings popup to handle click outside
+  const settingsPopupRef = useRef(null);
 
   useEffect(() => {
     setCurrentPath(`/surah/${id}`);
@@ -78,6 +81,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     const handleEscapeKey = (event) => {
       if (event.key === 'Escape') {
         setShowFontDropdown(false);
+        setShowSettings(false);
       }
     };
 
@@ -89,6 +93,31 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, []);
+
+  // Handle click outside to close settings popup
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showSettings && settingsPopupRef.current && !settingsPopupRef.current.contains(event.target)) {
+        // Check if click is not on the settings button or its container
+        const settingsButton = event.target.closest('.settings-toggle-btn-top, .settings-toggle-container');
+        if (!settingsButton) {
+          setShowSettings(false);
+        }
+      }
+    };
+
+    if (showSettings) {
+      // Use a small delay to avoid immediate closing when opening
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showSettings]);
 
   const fetchSurah = async () => {
     try {
@@ -260,6 +289,8 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       
       localStorage.setItem('quranProgress', JSON.stringify(newProgress));
       setSelectedVerses(new Set());
+      setShowBulkActions(false);
+      setBulkMode(false);
       return newProgress;
     });
   };
@@ -288,6 +319,8 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       }
       
       localStorage.setItem('quranProgress', JSON.stringify(newProgress));
+      setShowBulkActions(false);
+      setBulkMode(false);
       return newProgress;
     });
   };
@@ -360,23 +393,73 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
           <span className="meta-item">{surah.revelation_place === 'makka' ? 'Meccan' : 'Medinan'}</span>
           <span className="meta-item">{surah.verses_count} verses</span>
         </div>
-
-        {/* Settings Icon */}
-        <button 
-          className="settings-toggle-btn-top"
-          onClick={() => setShowSettings(!showSettings)}
-        >
-          <Settings size={20} />
-        </button>
       </div>
 
       {/* Contextual Controls */}
       <div className="contextual-controls">
-        {/* Settings Section */}
-        <div className="settings-section">
-          {showSettings && (
-            <div className="settings-panel">
-          <div className="font-selector">
+        {/* Settings Toggle Button - Top Right */}
+        <div className="settings-toggle-container">
+          <button 
+            className="settings-toggle-btn-top"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Settings size={20} />
+          </button>
+        </div>
+        {/* Settings Section - Removed inline display */}
+
+        <div className="navigation-row">
+          <div className="verse-jump">
+            <input
+              type="number"
+              min="1"
+              max={totalVerses}
+              value={currentVerse}
+              onChange={(e) => setCurrentVerse(parseInt(e.target.value) || 1)}
+              className="verse-input"
+            />
+            <button className="go-btn" onClick={() => goToVerse(currentVerse)}>
+              Go
+            </button>
+          </div>
+
+          <div className="navigation-controls">
+            <button 
+              className="nav-btn nav-btn-prev"
+              onClick={goToPreviousSurah}
+              disabled={parseInt(id) <= 1}
+            >
+              <ChevronLeft size={16} />
+              {parseInt(id) > 1 ? `Surah ${parseInt(id) - 1}` : 'Previous'}
+            </button>
+            <button 
+              className="nav-btn nav-btn-next"
+              onClick={goToNextSurah}
+              disabled={parseInt(id) >= 114}
+            >
+              {parseInt(id) < 114 ? `Surah ${parseInt(id) + 1}` : 'Next'}
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Settings Popup */}
+      {showSettings && (
+        <>
+          <div className="settings-popup-overlay" onClick={() => setShowSettings(false)}></div>
+          <div className="settings-popup" ref={settingsPopupRef}>
+            <div className="settings-popup-header">
+              <h3>Settings</h3>
+              <button 
+                className="settings-close-btn"
+                onClick={() => setShowSettings(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <div className="font-selector">
                 <label className="setting-label">Font</label>
                 <div className="custom-dropdown" ref={fontDropdownRef}>
                   <button
@@ -406,95 +489,83 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     </div>
                   )}
                 </div>
-          </div>
+              </div>
 
-          <div className="display-toggles">
+              <div className="display-toggles">
                 <label className="setting-label">Display Options</label>
                 <div className="toggle-buttons">
-            <button 
-              className={`toggle-btn ${showTranslation ? 'active' : ''}`}
-              onClick={() => setShowTranslation(!showTranslation)}
-            >
-              Translation
-            </button>
-            <button 
-              className={`toggle-btn ${showTransliteration ? 'active' : ''}`}
-              onClick={() => setShowTransliteration(!showTransliteration)}
-            >
-              Transliteration
-            </button>
+                  <button 
+                    className={`toggle-btn ${showTranslation ? 'active' : ''}`}
+                    onClick={() => setShowTranslation(!showTranslation)}
+                  >
+                    Translation
+                  </button>
+                  <button 
+                    className={`toggle-btn ${showTransliteration ? 'active' : ''}`}
+                    onClick={() => setShowTransliteration(!showTransliteration)}
+                  >
+                    Transliteration
+                  </button>
                 </div>
-          </div>
+              </div>
 
-          <div className="bulk-actions">
+              <div className="bulk-actions">
                 <label className="setting-label">Bulk Operations</label>
-            <button 
-              className={`bulk-mode-btn ${bulkMode ? 'active' : ''}`}
-              onClick={() => setBulkMode(!bulkMode)}
-            >
-              Bulk Mode
-            </button>
-            {bulkMode && (
-              <div className="bulk-controls">
-                <button className="bulk-btn" onClick={handleMarkSelected}>
-                      {(() => {
-                        const selectedVersesArray = Array.from(selectedVerses);
-                        if (selectedVersesArray.length === 0) return 'Mark Selected (0)';
-                        
-                        const allSelectedMemorized = selectedVersesArray.every(verseId => 
-                          userProgress[id]?.verses?.[verseId]?.memorized === true
-                        );
-                        return allSelectedMemorized ? 'Mark Selected Incomplete' : 'Mark Selected Complete';
-                      })()}
-                </button>
-                <button className="bulk-btn" onClick={handleMarkAll}>
-                      {(() => {
-                        const allMemorized = Array.from({ length: totalVerses }, (_, i) => i + 1).every(verseNum => 
-                          userProgress[id]?.verses?.[verseNum]?.memorized === true
-                        );
-                        return allMemorized ? 'Mark All Incomplete' : 'Mark All Complete';
-                      })()}
+                <button 
+                  className={`bulk-mode-btn ${bulkMode ? 'active' : ''}`}
+                  onClick={() => {
+                    const newBulkMode = !bulkMode;
+                    setBulkMode(newBulkMode);
+                    if (newBulkMode) {
+                      // Turning bulk mode ON
+                      setShowSettings(false);
+                      setShowBulkActions(true);
+                    } else {
+                      // Turning bulk mode OFF
+                      setShowBulkActions(false);
+                    }
+                  }}
+                >
+                  Bulk Mode
                 </button>
               </div>
-            )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Bulk Actions Popup */}
+      {showBulkActions && (
+        <div className="bulk-actions-popup">
+          <div className="bulk-actions-popup-content">
+            <button 
+              className="bulk-action-btn"
+              onClick={handleMarkSelected}
+            >
+              {(() => {
+                const selectedVersesArray = Array.from(selectedVerses);
+                if (selectedVersesArray.length === 0) return 'Mark Selected (0)';
+                
+                const allSelectedMemorized = selectedVersesArray.every(verseId => 
+                  userProgress[id]?.verses?.[verseId]?.memorized === true
+                );
+                return allSelectedMemorized ? 'Mark Selected Incomplete' : 'Mark Selected Complete';
+              })()}
+            </button>
+            <button 
+              className="bulk-action-btn"
+              onClick={handleMarkAll}
+            >
+              {(() => {
+                const allMemorized = Array.from({ length: totalVerses }, (_, i) => i + 1).every(verseNum => 
+                  userProgress[id]?.verses?.[verseNum]?.memorized === true
+                );
+                return allMemorized ? 'Mark All Incomplete' : 'Mark All Complete';
+              })()}
+            </button>
           </div>
         </div>
-          )}
-        </div>
-
-        <div className="verse-jump">
-          <input
-            type="number"
-            min="1"
-            max={totalVerses}
-            value={currentVerse}
-            onChange={(e) => setCurrentVerse(parseInt(e.target.value) || 1)}
-            className="verse-input"
-          />
-          <button className="go-btn" onClick={() => goToVerse(currentVerse)}>
-            Go
-          </button>
-        </div>
-
-        <div className="navigation-controls">
-          <button 
-            className="nav-btn"
-            onClick={goToPreviousSurah}
-            disabled={parseInt(id) <= 1}
-          >
-            <ChevronLeft size={16} />
-            {parseInt(id) > 1 ? `Surah ${parseInt(id) - 1}` : 'Previous'}
-          </button>
-          <button 
-            className="nav-btn"
-            onClick={goToNextSurah}
-            disabled={parseInt(id) >= 114}
-          >
-            {parseInt(id) < 114 ? `Surah ${parseInt(id) + 1}` : 'Next'}
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Verses Display */}
       <div className="verses-container">
@@ -539,9 +610,6 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     title={isMemorized ? 'Verse memorized - Click to mark as incomplete' : 'Verse not memorized - Click to mark as complete'}
                   >
                     {isMemorized ? <BookOpenCheck size={20} /> : <BookOpen size={20} />}
-                  </button>
-                  <button className="audio-btn">
-                    <Play size={16} />
                   </button>
                 </div>
               </div>

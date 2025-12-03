@@ -38,6 +38,8 @@ A focused digital companion that helps Muslims track their Quran memorization pr
 
 ## 🚀 Getting Started
 
+> **Quick Start?** See [QUICKSTART.md](QUICKSTART.md) for a streamlined setup guide with automated scripts!
+
 ### Prerequisites
 - Node.js (v14 or higher)
 - npm or yarn
