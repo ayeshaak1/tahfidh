@@ -5,7 +5,6 @@ import { Download, Upload, Trash2, User, Settings, Award, Sun, Moon, Menu } from
 const Profile = ({ isGuest, userProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const { theme, toggleTheme, isDark } = useTheme();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [accentColor, setAccentColor] = useState('rose');
   const [defaultFont, setDefaultFont] = useState('uthmani');
   const [showTransliteration, setShowTransliteration] = useState(true);
   const [autoScroll, setAutoScroll] = useState(false);
@@ -292,22 +291,6 @@ const Profile = ({ isGuest, userProgress, setCurrentPath, sidebarOpen, setSideba
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
               {isDark ? 'Light Mode' : 'Dark Mode'}
             </button>
-          </div>
-          
-          <div className="setting-item">
-            <label>Accent Color</label>
-            <div className="color-swatches">
-              <button
-                className={`color-swatch ${accentColor === 'rose' ? 'active' : ''}`}
-                style={{ backgroundColor: 'var(--rose)' }}
-                onClick={() => setAccentColor('rose')}
-              ></button>
-              <button
-                className={`color-swatch ${accentColor === 'lavender' ? 'active' : ''}`}
-                style={{ backgroundColor: 'var(--lavender)' }}
-                onClick={() => setAccentColor('lavender')}
-              ></button>
-            </div>
           </div>
         </div>
 

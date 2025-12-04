@@ -57,6 +57,8 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const fontDropdownRef = useRef(null);
   // Ref for the settings popup to handle click outside
   const settingsPopupRef = useRef(null);
+  // Ref for the sticky header
+  const stickyHeaderRef = useRef(null);
 
   useEffect(() => {
     setCurrentPath(`/surah/${id}`);
@@ -65,13 +67,59 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
 
   useEffect(() => {
     const handleScroll = () => {
+      if (!stickyHeaderRef.current) return;
+      
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      setIsScrolled(scrollTop > 140);
+      const appHeader = document.querySelector('.app-header');
+      const appHeaderHeight = appHeader ? appHeader.offsetHeight + 32 : 100; // 32px for margin
+      
+      // Calculate when header should become fixed (when it reaches top of viewport)
+      const shouldBeFixed = scrollTop > appHeaderHeight;
+      
+      setIsScrolled(shouldBeFixed);
+      
+      // Get the parent container to calculate proper width
+      const parentContainer = stickyHeaderRef.current.closest('.surah-detail');
+      const containerRect = parentContainer ? parentContainer.getBoundingClientRect() : null;
+      
+      // Apply fixed positioning when scrolled
+      if (shouldBeFixed) {
+        stickyHeaderRef.current.style.position = 'fixed';
+        stickyHeaderRef.current.style.top = '0';
+        stickyHeaderRef.current.style.zIndex = '200';
+        
+        // Calculate width based on container, accounting for sidebar
+        if (containerRect) {
+          stickyHeaderRef.current.style.left = `${containerRect.left}px`;
+          stickyHeaderRef.current.style.width = `${containerRect.width}px`;
+        } else {
+          stickyHeaderRef.current.style.left = '0';
+          stickyHeaderRef.current.style.right = '0';
+          stickyHeaderRef.current.style.width = '100%';
+        }
+      } else {
+        stickyHeaderRef.current.style.position = 'relative';
+        stickyHeaderRef.current.style.top = 'auto';
+        stickyHeaderRef.current.style.left = 'auto';
+        stickyHeaderRef.current.style.right = 'auto';
+        stickyHeaderRef.current.style.width = '100%';
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    // Check initial scroll position
+    handleScroll();
+    
+    // Use scroll event with passive for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Also handle resize to recalculate
+    window.addEventListener('resize', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [sidebarOpen]); // Recalculate when sidebar state changes
 
   // Save preferences to localStorage whenever they change
   useEffect(() => {
@@ -396,7 +444,10 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       </header>
 
       {/* Sticky Header */}
-      <header className={`surah-header sticky ${isScrolled ? 'scrolled' : ''}`}>
+      <header 
+        ref={stickyHeaderRef}
+        className={`surah-header sticky ${isScrolled ? 'scrolled' : ''}`}
+      >
         <div className="surah-progress-bar">
           <div className="progress-container">
             <div 
@@ -438,37 +489,37 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         {/* Settings Section - Removed inline display */}
 
         <div className="navigation-row">
-          <div className="verse-jump">
-            <input
-              type="number"
-              min="1"
-              max={totalVerses}
-              value={currentVerse}
-              onChange={(e) => setCurrentVerse(parseInt(e.target.value) || 1)}
-              className="verse-input"
-            />
-            <button className="go-btn" onClick={() => goToVerse(currentVerse)}>
-              Go
-            </button>
-          </div>
+        <div className="verse-jump">
+          <input
+            type="number"
+            min="1"
+            max={totalVerses}
+            value={currentVerse}
+            onChange={(e) => setCurrentVerse(parseInt(e.target.value) || 1)}
+            className="verse-input"
+          />
+          <button className="go-btn" onClick={() => goToVerse(currentVerse)}>
+            Go
+          </button>
+        </div>
 
-          <div className="navigation-controls">
-            <button 
+        <div className="navigation-controls">
+          <button 
               className="nav-btn nav-btn-prev"
-              onClick={goToPreviousSurah}
-              disabled={parseInt(id) <= 1}
-            >
+            onClick={goToPreviousSurah}
+            disabled={parseInt(id) <= 1}
+          >
               <ChevronLeft size={16} />
               {parseInt(id) > 1 ? `Surah ${parseInt(id) - 1}` : 'Previous'}
-            </button>
-            <button 
+          </button>
+          <button 
               className="nav-btn nav-btn-next"
-              onClick={goToNextSurah}
-              disabled={parseInt(id) >= 114}
-            >
+            onClick={goToNextSurah}
+            disabled={parseInt(id) >= 114}
+          >
               {parseInt(id) < 114 ? `Surah ${parseInt(id) + 1}` : 'Next'}
               <ChevronRight size={16} />
-            </button>
+          </button>
           </div>
         </div>
       </div>

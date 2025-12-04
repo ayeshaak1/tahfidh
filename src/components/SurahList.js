@@ -66,7 +66,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
   };
 
   // Calculate progress for each surah
-  const getSurahProgress = (surahId) => {
+  const getSurahProgress = (surahId, totalVerses) => {
     const surahProgress = userProgress[surahId];
     if (!surahProgress || !surahProgress.verses) {
       return { status: 'Not Started', percentage: 0, memorizedVerses: 0 };
@@ -74,11 +74,12 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
 
     const verses = Object.values(surahProgress.verses);
     const memorizedVerses = verses.filter(verse => verse.memorized).length;
-    const percentage = Math.round((memorizedVerses / verses.length) * 100);
+    // Use totalVerses from surah data, not verses.length (which only counts tracked verses)
+    const percentage = Math.round((memorizedVerses / totalVerses) * 100);
 
     let status = 'Not Started';
     if (percentage === 100) status = 'Completed';
-    else if (percentage > 0) status = 'In Progress';
+    else if (memorizedVerses > 0) status = 'In Progress'; // Use verse count instead of percentage
 
     return { status, percentage, memorizedVerses };
   };
@@ -89,7 +90,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                          surah.name_arabic.includes(searchTerm) ||
                          surah.id.toString().includes(searchTerm);
     
-    const matchesStatus = statusFilter === 'All' || getSurahProgress(surah.id).status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || getSurahProgress(surah.id, surah.verses_count).status === statusFilter;
     // Note: Juz filtering will need to be implemented based on actual API data structure
     const matchesJuz = juzFilter === 'All' || true; // Placeholder for now
 
@@ -259,19 +260,19 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
           {/* Collapsible Search Bar */}
           <div className={`search-container ${showSearch ? 'expanded' : ''}`}>
             {showSearch ? (
-              <div className="search-bar">
-                <Search size={20} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search by name or number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
+          <div className="search-bar">
+            <Search size={20} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search by name or number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
                   autoFocus
-                />
-                {searchTerm && (
-                  <button className="clear-search" onClick={clearSearch}>
-                    <X size={16} />
+            />
+            {searchTerm && (
+              <button className="clear-search" onClick={clearSearch}>
+                <X size={16} />
                   </button>
                 )}
                 <button className="close-search" onClick={() => setShowSearch(false)}>
@@ -299,20 +300,20 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
         </div>
 
         {showFilters && (
-          <div className="filter-section">
+        <div className="filter-section">
             <div className="filter-group">
               <label className="filter-label">Status</label>
-              <div className="status-filters">
-                {['All', 'Not Started', 'In Progress', 'Completed'].map(status => (
-                  <button
-                    key={status}
-                    className={`status-filter ${statusFilter === status ? 'active' : ''}`}
-                    onClick={() => setStatusFilter(status)}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
+          <div className="status-filters">
+            {['All', 'Not Started', 'In Progress', 'Completed'].map(status => (
+              <button
+                key={status}
+                className={`status-filter ${statusFilter === status ? 'active' : ''}`}
+                onClick={() => setStatusFilter(status)}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
             </div>
 
             <div className="filter-group">
@@ -337,7 +338,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                     >
                       All Juz
                     </div>
-                    {Array.from({ length: 30 }, (_, i) => (
+              {Array.from({ length: 30 }, (_, i) => (
                       <div
                         key={i + 1}
                         className={`dropdown-item ${juzFilter === (i + 1).toString() ? 'active' : ''}`}
@@ -358,7 +359,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
       <div className="surah-grid">
         {filteredSurahs.length > 0 ? (
           filteredSurahs.map(surah => {
-            const progress = getSurahProgress(surah.id);
+            const progress = getSurahProgress(surah.id, surah.verses_count);
             const isCompleted = progress.status === 'Completed';
             const isInProgress = progress.status === 'In Progress';
             
@@ -425,7 +426,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                     </div>
                     <div className="progress-info">
                       <span className="progress-verses">{progress.memorizedVerses}/{surah.verses_count}</span>
-                      <span className="progress-percentage">{progress.percentage}%</span>
+                    <span className="progress-percentage">{progress.percentage}%</span>
                     </div>
                   </div>
 
@@ -440,7 +441,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                               navigate(`/surah/${surah.id}`);
                             }}
                           >
-                            Resume
+                      Resume
                           </button>
                           <button 
                             className="action-btn mark-done-btn"
