@@ -19,6 +19,11 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
+    // Disable browser scroll restoration to prevent unwanted scrolling
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
     // Load saved progress from localStorage
     const savedProgress = localStorage.getItem('quranProgress');
     if (savedProgress) {

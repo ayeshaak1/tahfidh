@@ -57,8 +57,6 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const fontDropdownRef = useRef(null);
   // Ref for the settings popup to handle click outside
   const settingsPopupRef = useRef(null);
-  // Ref for the sticky header
-  const stickyHeaderRef = useRef(null);
 
   useEffect(() => {
     setCurrentPath(`/surah/${id}`);
@@ -66,60 +64,62 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   }, [id, setCurrentPath]);
 
   useEffect(() => {
+    let originalWidth = null;
+    let originalLeft = null;
+    let initialTop = null;
+    
     const handleScroll = () => {
-      if (!stickyHeaderRef.current) return;
+      const stickyHeader = document.querySelector('.surah-progress-header');
+      if (!stickyHeader) return;
+      
+      // Store original dimensions on first load (when not fixed)
+      if (originalWidth === null && stickyHeader.style.position !== 'fixed' && stickyHeader.style.position !== '') {
+        originalWidth = stickyHeader.offsetWidth;
+        const rect = stickyHeader.getBoundingClientRect();
+        originalLeft = rect.left;
+        initialTop = rect.top + window.pageYOffset; // Store absolute top position
+      }
       
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const appHeader = document.querySelector('.app-header');
-      const appHeaderHeight = appHeader ? appHeader.offsetHeight + 32 : 100; // 32px for margin
       
-      // Calculate when header should become fixed (when it reaches top of viewport)
-      const shouldBeFixed = scrollTop > appHeaderHeight;
-      
+      // Check if we've scrolled past the initial position of the progress bar
+      // This accounts for all spacing (header + any margins/padding)
+      const shouldBeFixed = initialTop !== null && scrollTop >= initialTop;
       setIsScrolled(shouldBeFixed);
       
-      // Get the parent container to calculate proper width
-      const parentContainer = stickyHeaderRef.current.closest('.surah-detail');
-      const containerRect = parentContainer ? parentContainer.getBoundingClientRect() : null;
-      
-      // Apply fixed positioning when scrolled
       if (shouldBeFixed) {
-        stickyHeaderRef.current.style.position = 'fixed';
-        stickyHeaderRef.current.style.top = '0';
-        stickyHeaderRef.current.style.zIndex = '200';
-        
-        // Calculate width based on container, accounting for sidebar
-        if (containerRect) {
-          stickyHeaderRef.current.style.left = `${containerRect.left}px`;
-          stickyHeaderRef.current.style.width = `${containerRect.width}px`;
-        } else {
-          stickyHeaderRef.current.style.left = '0';
-          stickyHeaderRef.current.style.right = '0';
-          stickyHeaderRef.current.style.width = '100%';
+        stickyHeader.style.position = 'fixed';
+        stickyHeader.style.top = '0';
+        stickyHeader.style.zIndex = '200';
+        // Use stored original width and left position to maintain same size
+        if (originalWidth !== null && originalLeft !== null) {
+          stickyHeader.style.width = `${originalWidth}px`;
+          stickyHeader.style.left = `${originalLeft}px`;
         }
+        stickyHeader.style.right = 'auto';
       } else {
-        stickyHeaderRef.current.style.position = 'relative';
-        stickyHeaderRef.current.style.top = 'auto';
-        stickyHeaderRef.current.style.left = 'auto';
-        stickyHeaderRef.current.style.right = 'auto';
-        stickyHeaderRef.current.style.width = '100%';
+        stickyHeader.style.position = 'relative';
+        stickyHeader.style.top = 'auto';
+        stickyHeader.style.left = 'auto';
+        stickyHeader.style.right = 'auto';
+        stickyHeader.style.width = '100%';
+        // Reset stored values when going back to relative (so they can be recalculated on resize)
+        originalWidth = null;
+        originalLeft = null;
+        initialTop = null;
       }
     };
 
-    // Check initial scroll position
-    handleScroll();
-    
-    // Use scroll event with passive for better performance
+    const timeoutId = setTimeout(handleScroll, 100);
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Also handle resize to recalculate
     window.addEventListener('resize', handleScroll, { passive: true });
     
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [sidebarOpen]); // Recalculate when sidebar state changes
+  }, [sidebarOpen]);
 
   // Save preferences to localStorage whenever they change
   useEffect(() => {
@@ -443,11 +443,8 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         </div>
       </header>
 
-      {/* Sticky Header */}
-      <header 
-        ref={stickyHeaderRef}
-        className={`surah-header sticky ${isScrolled ? 'scrolled' : ''}`}
-      >
+      {/* Sticky Progress Bar */}
+      <div className={`surah-progress-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="surah-progress-bar">
           <div className="progress-container">
             <div 
@@ -460,7 +457,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
             <span className="progress-percentage-display">{progress.percentage}%</span>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Surah Title Section (Non-sticky) */}
       <div className="surah-title-section">

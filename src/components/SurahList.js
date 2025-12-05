@@ -140,6 +140,28 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
     });
   };
 
+  // Find the last memorized verse number for a surah
+  const getLastMemorizedVerse = (surahId) => {
+    const surahProgress = userProgress[surahId];
+    if (!surahProgress || !surahProgress.verses) {
+      return null;
+    }
+
+    // Find the highest verse number that is memorized
+    let lastMemorizedVerse = null;
+    Object.keys(surahProgress.verses).forEach(verseNum => {
+      const verse = surahProgress.verses[verseNum];
+      if (verse.memorized) {
+        const verseNumber = parseInt(verseNum);
+        if (!lastMemorizedVerse || verseNumber > lastMemorizedVerse) {
+          lastMemorizedVerse = verseNumber;
+        }
+      }
+    });
+
+    return lastMemorizedVerse;
+  };
+
   const handleJuzSelect = async (juz) => {
     setJuzFilter(juz);
     setShowJuzDropdown(false);
@@ -346,7 +368,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                       >
                         Juz {i + 1}
                       </div>
-                    ))}
+              ))}
                   </div>
                 )}
               </div>
@@ -374,7 +396,10 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
               <div
                 key={surah.id}
                 className={`surah-card ${progress.status.toLowerCase().replace(' ', '-')}`}
-                onClick={() => navigate(`/surah/${surah.id}`)}
+                onClick={() => {
+                  // Scroll to top when clicking on surah card (unless it's a resume action)
+                  navigate(`/surah/${surah.id}`);
+                }}
               >
                 {/* Top Bar */}
                 <div className="surah-top-bar">
@@ -438,7 +463,10 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                             className="action-btn resume-btn"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/surah/${surah.id}`);
+                              const lastVerse = getLastMemorizedVerse(surah.id);
+                              // Navigate to the last memorized verse, or start if none found
+                              const verseParam = lastVerse ? `?verse=${lastVerse}` : '';
+                              navigate(`/surah/${surah.id}${verseParam}`);
                             }}
                           >
                       Resume

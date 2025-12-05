@@ -48,7 +48,7 @@ const Navigation = ({ sidebarOpen, setSidebarOpen }) => {
           <span>Profile</span>
         </NavLink>
       </div>
-
+        
       <div className="nav-footer">
         <button className="nav-item theme-toggle" onClick={toggleTheme}>
           {isDark ? <Sun size={20} /> : <Moon size={20} />}
