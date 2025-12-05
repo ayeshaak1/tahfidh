@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X } from 'lucide-react';
 import quranApi from '../services/quranApi';
@@ -8,6 +8,8 @@ import LottieLoader from './LottieLoader';
 const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { theme, toggleTheme, isDark } = useTheme();
   
   // Load saved preferences from localStorage or use defaults
@@ -57,11 +59,31 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const fontDropdownRef = useRef(null);
   // Ref for the settings popup to handle click outside
   const settingsPopupRef = useRef(null);
-
+  // Ref to track if we've already handled initial scroll for this surah
+  const hasHandledInitialScroll = useRef(null);
+  // Ref to track navigation instances - increment each time we navigate to a surah
+  const navigationInstance = useRef(0);
+  // Ref to track the last location key we processed
+  const lastLocationKey = useRef(null);
+  
   useEffect(() => {
     setCurrentPath(`/surah/${id}`);
+    
+    // Use location.key to detect navigation - it changes on every navigation
+    // If location.key is different, we've navigated to this page (even if same surah)
+    if (lastLocationKey.current !== location.key) {
+      navigationInstance.current += 1;
+      hasHandledInitialScroll.current = null;
+      lastLocationKey.current = location.key;
+    }
+    
+    // Immediately scroll to top when surah changes to prevent browser scroll restoration
+    // Do it multiple times to ensure it sticks
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 10);
     fetchSurah();
-  }, [id, setCurrentPath]);
+  }, [id, location.key, setCurrentPath]);
 
   useEffect(() => {
     let originalWidth = null;
@@ -121,51 +143,88 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     };
   }, [sidebarOpen]);
 
-  // Scroll to top or last memorized verse when surah loads or changes
+  // Helper function to scroll to a specific verse
+  const scrollToVerse = (verseNumber) => {
+    const verseElement = document.getElementById(`verse-${verseNumber}`);
+    if (verseElement) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add highlight effect
+        verseElement.classList.add('highlighted');
+        setTimeout(() => {
+          verseElement.classList.remove('highlighted');
+        }, 2000);
+      });
+      return true;
+    }
+    return false;
+  };
+
+  // Scroll restoration logic when surah loads (only on initial load, not when marking verses)
   useEffect(() => {
     if (!surah || loading) return;
+    
+    // Only handle scroll on initial load, not when userProgress changes while already on page
+    // Use navigation instance to track each navigation
+    const currentInstance = navigationInstance.current;
+    if (hasHandledInitialScroll.current === currentInstance) {
+      return; // Already handled initial scroll for this navigation instance
+    }
+    
+    // Mark that we've handled initial scroll for this navigation instance
+    hasHandledInitialScroll.current = currentInstance;
 
-    // Small delay to ensure DOM is fully rendered
+    // Small delay to ensure DOM is fully rendered and prevent browser scroll restoration
     const timeoutId = setTimeout(() => {
-      // Get the last memorized verse for this specific surah
+      // First, check for verse parameter in URL (highest priority)
+      const verseParam = searchParams.get('verse');
+      if (verseParam) {
+        const verseNumber = parseInt(verseParam);
+        if (!isNaN(verseNumber) && verseNumber > 0) {
+          const scrolled = scrollToVerse(verseNumber);
+          if (!scrolled) {
+            // If verse not found, scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+          return;
+        }
+      }
+
+      // If no verse param, find the most recently memorized verse (by timestamp)
       const surahProgress = userProgress[id];
-      let lastVerse = null;
+      let mostRecentVerse = null;
+      let mostRecentTimestamp = null;
       
       if (surahProgress && surahProgress.verses) {
-        // Find the highest verse number that is memorized
+        // Find the verse with the most recent lastReviewed timestamp
         Object.keys(surahProgress.verses).forEach(verseNum => {
           const verse = surahProgress.verses[verseNum];
-          if (verse.memorized) {
-            const verseNumber = parseInt(verseNum);
-            if (!lastVerse || verseNumber > lastVerse) {
-              lastVerse = verseNumber;
+          if (verse.memorized && verse.lastReviewed) {
+            const verseTimestamp = new Date(verse.lastReviewed).getTime();
+            if (!mostRecentTimestamp || verseTimestamp > mostRecentTimestamp) {
+              mostRecentTimestamp = verseTimestamp;
+              mostRecentVerse = parseInt(verseNum);
             }
           }
         });
       }
       
-      if (lastVerse) {
-        // Scroll to the last memorized verse
-        const verseElement = document.getElementById(`verse-${lastVerse}`);
-        if (verseElement) {
-          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Add highlight effect
-          verseElement.classList.add('highlighted');
-          setTimeout(() => {
-            verseElement.classList.remove('highlighted');
-          }, 2000);
-        } else {
-          // If verse element not found yet, scroll to top
+      // If we have a most recently memorized verse, scroll to it
+      if (mostRecentVerse) {
+        const scrolled = scrollToVerse(mostRecentVerse);
+        if (!scrolled) {
+          // If verse not found, scroll to top
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       } else {
-        // No memorized verses, scroll to top
+        // No memorized verses - ensure we're at top
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [surah, loading, id, userProgress]);
+  }, [surah, loading, id, searchParams]); // Removed userProgress and location.key from dependencies
 
   // Save preferences to localStorage whenever they change
   useEffect(() => {

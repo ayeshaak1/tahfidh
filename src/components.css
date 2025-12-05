@@ -1333,12 +1333,18 @@
   min-height: 100vh;
 }
 
-.guest-warning-bar {
+.profile-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.guest-warning-bar,
+.guest-warning {
   background: var(--rose);
   color: white;
   padding: 1rem 2rem;
   border-radius: 25px;
-  margin-bottom: 2rem;
+  margin: 1rem 0 2rem 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1434,6 +1440,21 @@
   gap: 2rem;
 }
 
+.juz-heatmap-card,
+.surah-chart-card {
+  background: var(--cream);
+  border-radius: 25px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.juz-heatmap-card h3,
+.surah-chart-card h3 {
+  margin-bottom: 1rem;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
 .juz-heatmap h3,
 .surah-chart h3 {
   margin-bottom: 1rem;
@@ -1517,14 +1538,18 @@
 
 .setting-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 1rem 0;
   border-bottom: 1px solid var(--border);
 }
 
 .setting-item:last-child {
   border-bottom: none;
+}
+
+.setting-item label {
+  display: block;
 }
 
 .setting-item label {
@@ -1620,20 +1645,23 @@
   margin-bottom: 2rem;
 }
 
-.data-action {
+.data-action,
+.data-action-card {
   background: var(--cream);
   border-radius: 25px;
   padding: 1.5rem;
   border: 1px solid var(--border);
 }
 
-.data-action h4 {
+.data-action h4,
+.data-action-card h4 {
   margin-bottom: 0.5rem;
   color: var(--text);
   font-size: 1.2rem;
 }
 
-.data-action p {
+.data-action p,
+.data-action-card p {
   margin-bottom: 1rem;
   color: var(--text);
   opacity: 0.7;
@@ -1759,16 +1787,52 @@
 
 .badge-date {
   font-size: 0.8rem;
-  color: var(--rose);
-  font-weight: 500;
+  color: var(--text);
+  opacity: 0.6;
 }
 
 .badge-lock {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  font-size: 1.5rem;
-  opacity: 0.7;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.2rem;
+  opacity: 0.5;
+}
+
+.profile-footer {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: var(--beige);
+  border-radius: 25px;
+  border: 1px solid var(--border);
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: center;
+}
+
+.mandatory-disclaimer {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.mandatory-disclaimer strong {
+  color: var(--rose);
+}
+
+.app-version {
+  color: var(--text);
+  opacity: 0.6;
+  font-size: 0.85rem;
+}
+
+.danger-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .profile-footer {

@@ -113,6 +113,7 @@ function App() {
                 <Profile 
                   isGuest={isGuest}
                   userProgress={userProgress}
+                  setUserProgress={setUserProgress}
                   setCurrentPath={setCurrentPath}
                   sidebarOpen={sidebarOpen}
                   setSidebarOpen={setSidebarOpen}
