@@ -121,6 +121,52 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     };
   }, [sidebarOpen]);
 
+  // Scroll to top or last memorized verse when surah loads or changes
+  useEffect(() => {
+    if (!surah || loading) return;
+
+    // Small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(() => {
+      // Get the last memorized verse for this specific surah
+      const surahProgress = userProgress[id];
+      let lastVerse = null;
+      
+      if (surahProgress && surahProgress.verses) {
+        // Find the highest verse number that is memorized
+        Object.keys(surahProgress.verses).forEach(verseNum => {
+          const verse = surahProgress.verses[verseNum];
+          if (verse.memorized) {
+            const verseNumber = parseInt(verseNum);
+            if (!lastVerse || verseNumber > lastVerse) {
+              lastVerse = verseNumber;
+            }
+          }
+        });
+      }
+      
+      if (lastVerse) {
+        // Scroll to the last memorized verse
+        const verseElement = document.getElementById(`verse-${lastVerse}`);
+        if (verseElement) {
+          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight effect
+          verseElement.classList.add('highlighted');
+          setTimeout(() => {
+            verseElement.classList.remove('highlighted');
+          }, 2000);
+        } else {
+          // If verse element not found yet, scroll to top
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else {
+        // No memorized verses, scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [surah, loading, id, userProgress]);
+
   // Save preferences to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('quranFontPreference', selectedFont);

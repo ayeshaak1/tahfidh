@@ -722,7 +722,7 @@
   position: relative;
   background: var(--cream);
   border-bottom: 1px solid var(--border);
-  padding: 1rem 2rem;
+  padding: 1.2rem 2rem;
   margin-bottom: 1rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
