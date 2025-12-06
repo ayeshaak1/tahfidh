@@ -1,78 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Download, Upload, Trash2, User, Sun, Moon, Menu, X } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
+import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check } from 'lucide-react';
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [userName, setUserName] = useState(() => {
+    const saved = localStorage.getItem('userName');
+    return saved || '';
+  });
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
   const { theme, toggleTheme, isDark } = useTheme();
-  
-  // Load settings from localStorage
-  const [defaultFont, setDefaultFont] = useState(() => {
-    const saved = localStorage.getItem('quranFontPreference');
-    return saved || 'uthmani';
-  });
-  
-  const [showTranslation, setShowTranslation] = useState(() => {
-    const saved = localStorage.getItem('showTranslationPreference');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  
-  const [showTransliteration, setShowTransliteration] = useState(() => {
-    const saved = localStorage.getItem('showTransliterationPreference');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  
-  const [autoScroll, setAutoScroll] = useState(() => {
-    const saved = localStorage.getItem('autoScrollPreference');
-    return saved !== null ? JSON.parse(saved) : false;
-  });
-  
-  const [arabicFontSize, setArabicFontSize] = useState(() => {
-    const saved = localStorage.getItem('arabicFontSize');
-    return saved ? parseFloat(saved) : 2.5;
-  });
-  
-  const [translationFontSize, setTranslationFontSize] = useState(() => {
-    const saved = localStorage.getItem('translationFontSize');
-    return saved ? parseFloat(saved) : 1.0;
-  });
-  
-  const [transliterationFontSize, setTransliterationFontSize] = useState(() => {
-    const saved = localStorage.getItem('transliterationFontSize');
-    return saved ? parseFloat(saved) : 1.0;
-  });
+  const {
+    quranFont,
+    setQuranFont,
+    showTranslation,
+    setShowTranslation,
+    showTransliteration,
+    setShowTransliteration,
+    autoScroll,
+    setAutoScroll,
+    arabicFontSize,
+    setArabicFontSize,
+    translationFontSize,
+    setTranslationFontSize,
+    transliterationFontSize,
+    setTransliterationFontSize,
+    resetFontSizes,
+  } = useSettings();
 
   useEffect(() => {
     setCurrentPath('/profile');
   }, [setCurrentPath]);
 
-  // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('quranFontPreference', defaultFont);
-  }, [defaultFont]);
+    const saved = localStorage.getItem('userName');
+    if (saved) {
+      setUserName(saved);
+    }
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('showTranslationPreference', JSON.stringify(showTranslation));
-  }, [showTranslation]);
+  const handleEditName = () => {
+    setEditedName(userName);
+    setIsEditingName(true);
+  };
 
-  useEffect(() => {
-    localStorage.setItem('showTransliterationPreference', JSON.stringify(showTransliteration));
-  }, [showTransliteration]);
+  const handleSaveName = () => {
+    const trimmedName = editedName.trim();
+    if (trimmedName) {
+      setUserName(trimmedName);
+      localStorage.setItem('userName', trimmedName);
+    } else {
+      setUserName('');
+      localStorage.removeItem('userName');
+    }
+    setIsEditingName(false);
+  };
 
-  useEffect(() => {
-    localStorage.setItem('autoScrollPreference', JSON.stringify(autoScroll));
-  }, [autoScroll]);
-
-  useEffect(() => {
-    localStorage.setItem('arabicFontSize', arabicFontSize.toString());
-  }, [arabicFontSize]);
-
-  useEffect(() => {
-    localStorage.setItem('translationFontSize', translationFontSize.toString());
-  }, [translationFontSize]);
-
-  useEffect(() => {
-    localStorage.setItem('transliterationFontSize', transliterationFontSize.toString());
-  }, [transliterationFontSize]);
+  const handleCancelEditName = () => {
+    setIsEditingName(false);
+    setEditedName('');
+  };
 
   // Calculate overall statistics
   const calculateStats = () => {
@@ -170,42 +160,48 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         name: "First Steps", 
         description: "Memorized your first verse", 
         unlocked: stats.memorizedVerses >= 1, 
-        icon: "🌟"
+        icon: <Star size={24} />,
+        color: "var(--rose)"
       },
       { 
         id: 2, 
         name: "Surah Master", 
         description: "Completed your first surah", 
         unlocked: stats.completedSurahs >= 1, 
-        icon: "📖"
+        icon: <BookOpenCheck size={24} />,
+        color: "var(--lavender)"
       },
       { 
         id: 3, 
         name: "Century Club", 
         description: "Memorized 100 verses", 
         unlocked: stats.memorizedVerses >= 100, 
-        icon: "💯"
+        icon: <Target size={24} />,
+        color: "var(--rose)"
       },
       { 
         id: 4, 
         name: "Consistency", 
         description: "7-day streak", 
         unlocked: stats.streak >= 7, 
-        icon: "🔥"
+        icon: <Flame size={24} />,
+        color: "var(--lavender)"
       },
       { 
         id: 5, 
         name: "Halfway There", 
         description: "50% completion", 
         unlocked: stats.overallPercentage >= 50, 
-        icon: "🎯"
+        icon: <Trophy size={24} />,
+        color: "var(--rose)"
       },
       { 
         id: 6, 
         name: "Hafiz", 
         description: "100% completion", 
         unlocked: stats.overallPercentage === 100, 
-        icon: "👑"
+        icon: <Trophy size={24} />,
+        color: "var(--lavender)"
       }
     ];
     return achievements;
@@ -249,18 +245,24 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   };
 
   const clearLocalData = () => {
-    if (window.confirm('Are you sure you want to clear all local progress data? This action cannot be undone.')) {
-      setUserProgress({});
-      localStorage.removeItem('quranProgress');
-      alert('All progress data has been cleared.');
-    }
+    setShowConfirmDialog(true);
   };
 
-  const resetFontSizes = () => {
-    setArabicFontSize(2.5);
-    setTranslationFontSize(1.0);
-    setTransliterationFontSize(1.0);
+  const handleConfirmClear = () => {
+    setUserProgress({});
+    localStorage.removeItem('quranProgress');
+    setShowConfirmDialog(false);
+    setShowSuccessDialog(true);
   };
+
+  const handleCancelClear = () => {
+    setShowConfirmDialog(false);
+  };
+
+  const handleCloseSuccess = () => {
+    setShowSuccessDialog(false);
+  };
+
 
   return (
     <div className={`profile-page ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
@@ -277,7 +279,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       {/* Guest Warning Bar */}
       {isGuest && (
         <div className="guest-warning">
-          <span>⚠️ Guest Mode: Progress saved locally only</span>
+          <span>Guest Mode: Progress saved locally only</span>
         </div>
       )}
 
@@ -289,7 +291,50 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               <User size={32} />
             </div>
             <div className="user-info">
-              <h2>{isGuest ? 'Guest User' : 'User Name'}</h2>
+              {isEditingName ? (
+                <div className="user-name-edit-container">
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveName();
+                      } else if (e.key === 'Escape') {
+                        handleCancelEditName();
+                      }
+                    }}
+                    autoFocus
+                    className="user-name-input"
+                    placeholder={isGuest ? 'Guest User' : 'User Name'}
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    className="user-name-action-btn user-name-save-btn"
+                    title="Save name"
+                  >
+                    <Check size={20} />
+                  </button>
+                  <button
+                    onClick={handleCancelEditName}
+                    className="user-name-action-btn user-name-cancel-btn"
+                    title="Cancel editing"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ) : (
+                <div className="user-name-container">
+                  <h2>{userName || (isGuest ? 'Guest User' : 'User Name')}</h2>
+                  <button
+                    onClick={handleEditName}
+                    className="user-name-edit-btn"
+                    title="Edit name"
+                  >
+                    <Edit2 size={20} />
+                  </button>
+                </div>
+              )}
               <p>{isGuest ? 'Local progress tracking' : 'Premium Member'}</p>
             </div>
           </div>
@@ -341,7 +386,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               <div className="chart-container">
                 <div className="chart-bar">
                   <div 
-                    className="chart-fill"
+                    className="chart-fill progress-fill"
                     style={{ width: `${(stats.completedSurahs / stats.totalSurahs) * 100}%` }}
                   ></div>
                 </div>
@@ -358,81 +403,85 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           <div className="setting-group">
             <h4>Theme & Appearance</h4>
             <div className="setting-item">
-              <label>Theme</label>
-              <button className="theme-toggle-btn" onClick={toggleTheme}>
-                {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-              </button>
+              <div className="theme-header-row">
+                <label>Theme</label>
+                <button className="theme-toggle-btn" onClick={toggleTheme}>
+                  {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                  <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="setting-group">
             <h4>Quran Preferences</h4>
-            <div className="setting-item">
-              <label>Default Font</label>
-              <div className="toggle-buttons">
-                <button
-                  className={`toggle-btn ${defaultFont === 'uthmani' ? 'active' : ''}`}
-                  onClick={() => setDefaultFont('uthmani')}
-                >
-                  Uthmani
-                </button>
-                <button
-                  className={`toggle-btn ${defaultFont === 'indopak' ? 'active' : ''}`}
-                  onClick={() => setDefaultFont('indopak')}
-                >
-                  IndoPak
-                </button>
+            <div className="theme-appearance-row">
+              <div className="setting-item">
+                <label>Default Font</label>
+                <div className="toggle-buttons">
+                  <button
+                    className={`toggle-btn ${quranFont === 'uthmani' ? 'active' : ''}`}
+                    onClick={() => setQuranFont('uthmani')}
+                  >
+                    Uthmani
+                  </button>
+                  <button
+                    className={`toggle-btn ${quranFont === 'indopak' ? 'active' : ''}`}
+                    onClick={() => setQuranFont('indopak')}
+                  >
+                    IndoPak
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            <div className="setting-item">
-              <label>Display Options</label>
-              <div className="toggle-buttons">
-                <button
-                  className={`toggle-btn ${showTranslation ? 'active' : ''}`}
-                  onClick={() => setShowTranslation(!showTranslation)}
-                >
-                  Translation
-                </button>
-                <button
-                  className={`toggle-btn ${showTransliteration ? 'active' : ''}`}
-                  onClick={() => setShowTransliteration(!showTransliteration)}
-                >
-                  Transliteration
-                </button>
+              
+              <div className="setting-item">
+                <label>Display Options</label>
+                <div className="toggle-buttons">
+                  <button
+                    className={`toggle-btn ${showTranslation ? 'active' : ''}`}
+                    onClick={() => setShowTranslation(!showTranslation)}
+                  >
+                    Translation
+                  </button>
+                  <button
+                    className={`toggle-btn ${showTransliteration ? 'active' : ''}`}
+                    onClick={() => setShowTransliteration(!showTransliteration)}
+                  >
+                    Transliteration
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="setting-item">
-              <label>Auto-scroll</label>
-              <button
-                className={`toggle-btn ${autoScroll ? 'active' : ''}`}
-                onClick={() => setAutoScroll(!autoScroll)}
-              >
-                {autoScroll ? 'Enabled' : 'Disabled'}
-              </button>
+              <div className="setting-item">
+                <label>Auto-scroll</label>
+                <div className="toggle-buttons">
+                  <button
+                    className={`toggle-btn ${autoScroll ? 'active' : ''}`}
+                    onClick={() => setAutoScroll(!autoScroll)}
+                  >
+                    {autoScroll ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="setting-group">
-            <h4>Font Sizes</h4>
+            <div className="font-sizes-header-row">
+              <h4>Font Sizes</h4>
+              <button
+                className="reset-font-sizes-btn"
+                onClick={resetFontSizes}
+              >
+                Reset
+              </button>
+            </div>
             <div className="setting-item">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <label style={{ marginBottom: 0 }}>Font Sizes</label>
-                <button
-                  className="reset-font-sizes-btn"
-                  onClick={resetFontSizes}
-                >
-                  Reset
-                </button>
-              </div>
-              
-              <div className="font-size-slider-group">
-                <label className="slider-label">
-                  Arabic Text
-                  <span className="slider-value">{arabicFontSize.toFixed(1)}</span>
-                </label>
+              <div className="font-size-control">
+                <div className="font-size-header">
+                  <label>Arabic Text</label>
+                  <span className="font-size-value">{arabicFontSize.toFixed(1)}</span>
+                </div>
                 <input
                   type="range"
                   min="1.0"
@@ -440,15 +489,15 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   step="0.1"
                   value={arabicFontSize}
                   onChange={(e) => setArabicFontSize(parseFloat(e.target.value))}
-                  className="font-size-slider"
+                  className="font-size-range"
                 />
               </div>
 
-              <div className="font-size-slider-group">
-                <label className="slider-label">
-                  Translation
-                  <span className="slider-value">{translationFontSize.toFixed(1)}</span>
-                </label>
+              <div className="font-size-control">
+                <div className="font-size-header">
+                  <label>Translation</label>
+                  <span className="font-size-value">{translationFontSize.toFixed(1)}</span>
+                </div>
                 <input
                   type="range"
                   min="0.7"
@@ -456,15 +505,15 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   step="0.1"
                   value={translationFontSize}
                   onChange={(e) => setTranslationFontSize(parseFloat(e.target.value))}
-                  className="font-size-slider"
+                  className="font-size-range"
                 />
               </div>
 
-              <div className="font-size-slider-group">
-                <label className="slider-label">
-                  Transliteration
-                  <span className="slider-value">{transliterationFontSize.toFixed(1)}</span>
-                </label>
+              <div className="font-size-control">
+                <div className="font-size-header">
+                  <label>Transliteration</label>
+                  <span className="font-size-value">{transliterationFontSize.toFixed(1)}</span>
+                </div>
                 <input
                   type="range"
                   min="0.7"
@@ -472,7 +521,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   step="0.1"
                   value={transliterationFontSize}
                   onChange={(e) => setTransliterationFontSize(parseFloat(e.target.value))}
-                  className="font-size-slider"
+                  className="font-size-range"
                 />
               </div>
             </div>
@@ -511,6 +560,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
           <div className="danger-zone">
             <h4>Danger Zone</h4>
+            <p style={{ marginBottom: '1rem', color: 'var(--text)', opacity: 0.8, fontSize: '0.9rem' }}>
+              Before clearing your data, make sure to export your progress as a backup.
+            </p>
             <div className="danger-actions">
               {isGuest ? (
                 <button className="btn btn-danger" onClick={clearLocalData}>
@@ -533,12 +585,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           <div className="achievements-grid">
             {achievements.map(achievement => (
               <div key={achievement.id} className={`achievement-badge ${achievement.unlocked ? 'unlocked' : 'locked'}`}>
-                <div className="badge-icon">{achievement.icon}</div>
+                <div className="badge-icon" style={{ color: achievement.color }}>
+                  {achievement.icon}
+                </div>
                 <div className="badge-content">
                   <div className="badge-name">{achievement.name}</div>
                   <div className="badge-description">{achievement.description}</div>
                 </div>
-                {!achievement.unlocked && <div className="badge-lock">🔒</div>}
+                {!achievement.unlocked && <div className="badge-lock"><Lock size={16} /></div>}
               </div>
             ))}
           </div>
@@ -556,6 +610,80 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           </div>
         </div>
       </footer>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <>
+          <div className="settings-popup-overlay" onClick={handleCancelClear}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <AlertTriangle size={24} color="var(--error-red)" />
+                <h3>Clear Local Data</h3>
+              </div>
+              <button 
+                className="settings-close-btn"
+                onClick={handleCancelClear}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                Are you sure you want to clear all local progress data? This action cannot be undone.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleCancelClear}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-danger"
+                  onClick={handleConfirmClear}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  Clear Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Success Dialog */}
+      {showSuccessDialog && (
+        <>
+          <div className="settings-popup-overlay" onClick={handleCloseSuccess}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <h3>Success</h3>
+              <button 
+                className="settings-close-btn"
+                onClick={handleCloseSuccess}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                All progress data has been cleared.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleCloseSuccess}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
@@ -11,38 +12,26 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { theme, toggleTheme, isDark } = useTheme();
+  const {
+    quranFont,
+    setQuranFont,
+    showTranslation,
+    setShowTranslation,
+    showTransliteration,
+    setShowTransliteration,
+    autoScroll,
+    arabicFontSize,
+    setArabicFontSize,
+    translationFontSize,
+    setTranslationFontSize,
+    transliterationFontSize,
+    setTransliterationFontSize,
+    resetFontSizes,
+  } = useSettings();
   
-  // Load saved preferences from localStorage or use defaults
-  const [selectedFont, setSelectedFont] = useState(() => {
-    const saved = localStorage.getItem('quranFontPreference');
-    return saved || 'uthmani';
-  });
-  
-  const [showTranslation, setShowTranslation] = useState(() => {
-    const saved = localStorage.getItem('showTranslationPreference');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  
-  const [showTransliteration, setShowTransliteration] = useState(() => {
-    const saved = localStorage.getItem('showTransliterationPreference');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  
-  // Font size preferences
-  const [arabicFontSize, setArabicFontSize] = useState(() => {
-    const saved = localStorage.getItem('arabicFontSize');
-    return saved ? parseFloat(saved) : 2.5; // Default 2.5rem
-  });
-  
-  const [translationFontSize, setTranslationFontSize] = useState(() => {
-    const saved = localStorage.getItem('translationFontSize');
-    return saved ? parseFloat(saved) : 1.0; // Default 1rem
-  });
-  
-  const [transliterationFontSize, setTransliterationFontSize] = useState(() => {
-    const saved = localStorage.getItem('transliterationFontSize');
-    return saved ? parseFloat(saved) : 1.0; // Default 1rem
-  });
+  // Use quranFont from context as selectedFont
+  const selectedFont = quranFont;
+  const setSelectedFont = setQuranFont;
   
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedVerses, setSelectedVerses] = useState(new Set());
@@ -226,31 +215,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     return () => clearTimeout(timeoutId);
   }, [surah, loading, id, searchParams]); // Removed userProgress and location.key from dependencies
 
-  // Save preferences to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('quranFontPreference', selectedFont);
-  }, [selectedFont]);
-
-  useEffect(() => {
-    localStorage.setItem('showTranslationPreference', JSON.stringify(showTranslation));
-  }, [showTranslation]);
-
-  useEffect(() => {
-    localStorage.setItem('showTransliterationPreference', JSON.stringify(showTransliteration));
-  }, [showTransliteration]);
-
-  // Save font sizes to localStorage
-  useEffect(() => {
-    localStorage.setItem('arabicFontSize', arabicFontSize.toString());
-  }, [arabicFontSize]);
-
-  useEffect(() => {
-    localStorage.setItem('translationFontSize', translationFontSize.toString());
-  }, [translationFontSize]);
-
-  useEffect(() => {
-    localStorage.setItem('transliterationFontSize', transliterationFontSize.toString());
-  }, [transliterationFontSize]);
+  // Settings are now managed by SettingsContext, no need for local useEffect hooks
 
   // Handle click outside to close font dropdown
   useEffect(() => {
@@ -415,6 +380,8 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
 
   // Handle verse memorization toggle
   const toggleVerseMemorization = (verseId) => {
+    const wasMemorized = userProgress[id]?.verses?.[verseId]?.memorized || false;
+    
     setUserProgress(prev => {
       const newProgress = { ...prev };
       if (!newProgress[id]) {
@@ -432,6 +399,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       
       return newProgress;
     });
+
+    // Auto-scroll to next verse if enabled and verse was just marked as memorized
+    if (autoScroll && !wasMemorized && verseId < totalVerses) {
+      // Small delay to ensure state update is processed
+      setTimeout(() => {
+        scrollToVerse(verseId + 1);
+      }, 100);
+    }
   };
 
   // Bulk actions
@@ -719,11 +694,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                   <label className="setting-label" style={{ marginBottom: 0 }}>Font Sizes</label>
                   <button
                     className="reset-font-sizes-btn"
-                    onClick={() => {
-                      setArabicFontSize(2.5);
-                      setTranslationFontSize(1.0);
-                      setTransliterationFontSize(1.0);
-                    }}
+                    onClick={resetFontSizes}
                   >
                     Reset
                   </button>

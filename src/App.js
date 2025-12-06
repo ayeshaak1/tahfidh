@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import SurahList from './components/SurahList';
@@ -55,7 +56,8 @@ function App() {
 
   return (
     <ThemeProvider>
-      <Router>
+      <SettingsProvider>
+        <Router>
         <div className="App">
           {/* Show Navigation for all routes except landing page */}
           {currentPath !== '/' && <Navigation sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />}
@@ -125,6 +127,7 @@ function App() {
           {currentPath !== '/' && <Footer sidebarOpen={sidebarOpen} />}
         </div>
       </Router>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }
