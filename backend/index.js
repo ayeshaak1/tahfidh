@@ -2,14 +2,39 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
+const { pool, initializeDatabase } = require('./src/config/database');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
+
+// Session configuration for Passport
+app.use(session({
+  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your-session-secret-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -1259,7 +1284,7 @@ app.get('/api/test/list-translations', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Quran API proxy server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
@@ -1269,6 +1294,14 @@ app.listen(PORT, () => {
   console.log(`  - Juz-based Surahs: 6 hours`);
   console.log(`  - Verses: 6 hours`);
   console.log(`  - Translations: 24 hours`);
+  
+  // Initialize database
+  try {
+    await initializeDatabase();
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+  }
 });
 
 // Cache cleanup job - run every hour
@@ -1319,4 +1352,538 @@ setInterval(() => {
     console.log(`Cache cleanup: Removed ${cleanedCount} expired entries`);
   }
 }, 60 * 60 * 1000); // Run every hour
+
+// ============================================================================
+// AUTHENTICATION
+// ============================================================================
+
+// JWT Secret - MUST be set in environment variables
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET is not set in environment variables!');
+  console.error('Generate a secret key using: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  process.exit(1);
+}
+
+// Helper function to generate JWT token
+function generateToken(user) {
+  return jwt.sign(
+    { userId: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+// Middleware to verify JWT token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+}
+
+// Sign up endpoint
+app.post('/api/auth/signup', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { email, password, name } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: 'Email, password, and name are required' });
+    }
+
+    await client.query('BEGIN');
+
+    // Check if user already exists
+    const existingUser = await client.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const result = await client.query(
+      `INSERT INTO users (email, name, password, onboarding_complete, progress)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, email, name, onboarding_complete`,
+      [email, name, hashedPassword, false, '{}']
+    );
+
+    const user = result.rows[0];
+
+    await client.query('COMMIT');
+
+    // Generate token
+    const token = generateToken({ id: user.id.toString(), email: user.email });
+
+    res.json({
+      token,
+      user: {
+        id: user.id.toString(),
+        email: user.email,
+        name: user.name,
+      },
+      onboardingComplete: false,
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Signup error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Sign in endpoint
+app.post('/api/auth/signin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    // Find user
+    const result = await pool.query(
+      'SELECT id, email, name, password, onboarding_complete FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const user = result.rows[0];
+
+    // Verify password
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Generate token
+    const token = generateToken({ id: user.id.toString(), email: user.email });
+
+    res.json({
+      token,
+      user: {
+        id: user.id.toString(),
+        email: user.email,
+        name: user.name,
+      },
+      onboardingComplete: user.onboarding_complete,
+    });
+  } catch (error) {
+    console.error('Signin error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Verify token endpoint
+app.get('/api/auth/verify', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, name, onboarding_complete FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = result.rows[0];
+
+    res.json({
+      valid: true,
+      user: {
+        id: user.id.toString(),
+        email: user.email,
+        name: user.name,
+      },
+      onboardingComplete: user.onboarding_complete,
+    });
+  } catch (error) {
+    console.error('Verify error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// GOOGLE OAUTH CONFIGURATION
+// ============================================================================
+
+// Configure Google OAuth Strategy
+// Using only basic scopes (email, profile) - these don't require Google verification
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || `http://localhost:5000/api/auth/google/callback`,
+  // Only request basic scopes that don't require verification
+  scope: ['profile', 'email']
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const { id, displayName, emails } = profile;
+    const email = emails && emails[0] ? emails[0].value : null;
+
+    if (!email) {
+      return done(new Error('No email found in Google profile'), null);
+    }
+
+    // Check if user exists with this Google ID
+    let userResult = await pool.query(
+      'SELECT * FROM users WHERE google_id = $1',
+      [id]
+    );
+
+    let user;
+
+    if (userResult.rows.length > 0) {
+      // User exists with Google ID
+      user = userResult.rows[0];
+    } else {
+      // Check if user exists with this email
+      const emailResult = await pool.query(
+        'SELECT * FROM users WHERE email = $1',
+        [email]
+      );
+
+      if (emailResult.rows.length > 0) {
+        // User exists with email, link Google account
+        await pool.query(
+          'UPDATE users SET google_id = $1, auth_provider = $2, updated_at = CURRENT_TIMESTAMP WHERE email = $3',
+          [id, 'google', email]
+        );
+        user = emailResult.rows[0];
+        user.google_id = id;
+        user.auth_provider = 'google';
+      } else {
+        // Create new user
+        const newUserResult = await pool.query(
+          `INSERT INTO users (email, name, google_id, auth_provider, onboarding_complete, progress)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING *`,
+          [email, displayName, id, 'google', false, '{}']
+        );
+        user = newUserResult.rows[0];
+      }
+    }
+
+    return done(null, user);
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    return done(error, null);
+  }
+}));
+
+// Serialize user for session
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+// Deserialize user from session
+passport.deserializeUser(async (id, done) => {
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return done(null, false);
+    }
+    done(null, result.rows[0]);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
+// Google OAuth endpoint - initiates OAuth flow
+// Using only basic scopes (email, profile) - these work for all users without verification
+app.get('/api/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+  // Access type and prompt settings for better UX
+  accessType: 'offline',
+  prompt: 'consent'
+}));
+
+// Google OAuth callback - handles OAuth response
+app.get('/api/auth/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/auth/google/failure' }),
+  async (req, res) => {
+    try {
+      const user = req.user;
+
+      // Generate JWT token
+      const token = generateToken({ id: user.id.toString(), email: user.email });
+
+      // Redirect to frontend with token
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const redirectUrl = user.onboarding_complete
+        ? `${frontendUrl}/dashboard?token=${token}`
+        : `${frontendUrl}/onboarding?token=${token}`;
+
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/signin?error=oauth_failed`);
+    }
+  }
+);
+
+// Google OAuth failure handler
+app.get('/api/auth/google/failure', (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  res.redirect(`${frontendUrl}/signin?error=oauth_failed`);
+});
+
+// Onboarding endpoint
+app.post('/api/auth/onboarding', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { memorizedSurahs, progress: frontendProgress } = req.body;
+
+    // Get user ID
+    const userResult = await client.query(
+      'SELECT id FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    await client.query('BEGIN');
+
+    // Build progress object from memorized surahs
+    // Use frontend progress if provided (contains all verses marked as memorized)
+    const progress = frontendProgress || {};
+    
+    for (const { surahId, name } of memorizedSurahs) {
+      // If frontend progress exists for this surah, use it; otherwise create empty
+      if (!progress[surahId]) {
+        progress[surahId] = {
+          name,
+          verses: {},
+        };
+      }
+
+      // Store in user_progress table with the actual verses data
+      const versesData = progress[surahId].verses || {};
+      await client.query(
+        `INSERT INTO user_progress (user_id, surah_id, surah_name, verses)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, surah_id)
+         DO UPDATE SET surah_name = $3, verses = $4, updated_at = CURRENT_TIMESTAMP`,
+        [userId, surahId, progress[surahId].name || name, JSON.stringify(versesData)]
+      );
+    }
+
+    // Update user onboarding status and progress
+    await client.query(
+      'UPDATE users SET onboarding_complete = $1, progress = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+      [true, JSON.stringify(progress), userId]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      progress,
+      message: 'Onboarding completed successfully',
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Onboarding error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Update profile endpoint (name and email)
+app.put('/api/auth/profile', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { name, email } = req.body;
+
+    // Get user ID
+    const userResult = await client.query(
+      'SELECT id FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    // Build update query dynamically based on what's provided
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramCount++}`);
+      values.push(name);
+    }
+
+    if (email !== undefined) {
+      // Check if email is already taken by another user
+      const emailCheck = await client.query(
+        'SELECT id FROM users WHERE email = $1 AND id != $2',
+        [email, userId]
+      );
+      if (emailCheck.rows.length > 0) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+      updates.push(`email = $${paramCount++}`);
+      values.push(email);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: 'No fields to update' });
+    }
+
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(userId);
+
+    const updateQuery = `
+      UPDATE users 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING id, email, name, onboarding_complete
+    `;
+
+    const result = await client.query(updateQuery, values);
+    const user = result.rows[0];
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id.toString(),
+        email: user.email,
+        name: user.name,
+      },
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Update password endpoint
+app.put('/api/auth/profile/password', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    // Get user with password
+    const userResult = await client.query(
+      'SELECT id, password FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Check if user has a password (Google OAuth users might not have one)
+    if (!user.password) {
+      return res.status(400).json({ message: 'Password cannot be changed for Google OAuth accounts' });
+    }
+
+    // Verify current password
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await client.query(
+      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [hashedPassword, user.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    console.error('Password update error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Delete account endpoint
+app.delete('/api/auth/account', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    // Get user ID
+    const userResult = await client.query(
+      'SELECT id FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    await client.query('BEGIN');
+
+    // Delete user progress (CASCADE will handle this, but being explicit)
+    await client.query('DELETE FROM user_progress WHERE user_id = $1', [userId]);
+
+    // Delete user
+    await client.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully',
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Account deletion error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
 

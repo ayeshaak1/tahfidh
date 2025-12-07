@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, Filter, Menu, CheckCircle, Circle, Clock, BookOpen, ChevronDown } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
+import { StorageHelpers, STORAGE_KEYS } from '../constants/storageConstants';
 
 const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -134,13 +135,23 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
         newProgress[surahId] = { verses: {} };
       }
       
-      // Mark all verses as memorized
+      // Get today's date and time
+      const todayTimestamp = new Date().toISOString();
+      
+      // Mark all verses as memorized and assign today's date/time to all verses
       for (let i = 1; i <= totalVerses; i++) {
-        if (!newProgress[surahId].verses[i]) {
-          newProgress[surahId].verses[i] = {};
+        const verseKey = i.toString();
+        
+        if (!newProgress[surahId].verses[verseKey]) {
+          newProgress[surahId].verses[verseKey] = {};
         }
-        newProgress[surahId].verses[i].memorized = true;
+        newProgress[surahId].verses[verseKey].memorized = true;
+        // Always set lastReviewed to today's date/time when marking surah as done
+        newProgress[surahId].verses[verseKey].lastReviewed = todayTimestamp;
       }
+      
+      // Save to localStorage
+      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
       
       return newProgress;
     });

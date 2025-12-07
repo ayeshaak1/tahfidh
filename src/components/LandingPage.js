@@ -1,15 +1,21 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { BookOpen, BarChart3, Award, Sun, Moon } from 'lucide-react';
 
-const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
+const LandingPage = ({ onGuestMode, setCurrentPath }) => {
   const navigate = useNavigate();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     setCurrentPath('/');
-  }, [setCurrentPath]);
+    // Redirect to dashboard if already logged in
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [setCurrentPath, isAuthenticated, navigate]);
 
   const handleGuestMode = () => {
     onGuestMode();
@@ -17,8 +23,7 @@ const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
   };
 
   const handleSignUp = () => {
-    onSignUp();
-    navigate('/dashboard');
+    navigate('/signup');
   };
 
   return (
@@ -70,7 +75,7 @@ const LandingPage = ({ onGuestMode, onSignUp, setCurrentPath }) => {
             <button className="btn btn-ghost" onClick={handleGuestMode}>
               Continue as Guest
             </button>
-            <button className="btn btn-primary" onClick={handleSignUp}>
+            <button className="btn btn-primary" onClick={() => navigate('/signin')}>
               Start Journey
             </button>
           </div>

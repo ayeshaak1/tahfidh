@@ -62,7 +62,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const navigationInstance = useRef(0);
   // Ref to track the last location key we processed
   const lastLocationKey = useRef(null);
-  
+
   useEffect(() => {
     setCurrentPath(`/surah/${id}`);
     
@@ -617,14 +617,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
             <span className="progress-percentage-display">{progress.percentage}%</span>
           </div>
         </div>
-      </div>
+          </div>
 
       {/* Surah Title Section (Non-sticky) */}
       <div className="surah-title-section">
         <div className="surah-title">
           <h1 className="surah-arabic-title">{surah.name_arabic}</h1>
           <h2 className="surah-english-title">{surah.name_simple}</h2>
-        </div>
+              </div>
         <div className="surah-meta">
           <span className="meta-item">Juz {surah.juz?.juz_number || surah.revelation_order || 'N/A'}</span>
           <span className="meta-item">{surah.revelation_place === 'makka' ? 'Meccan' : 'Medinan'}</span>

@@ -1393,6 +1393,11 @@
   color: white;
 }
 
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .user-info h2 {
   font-size: 1.8rem;
   font-weight: 600;
@@ -1403,8 +1408,16 @@
 .user-name-container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
+  width: 100%;
   margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+.user-name-container h2 {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .user-name-edit-btn {
@@ -2178,6 +2191,76 @@
   box-sizing: border-box;
 }
 
+/* Override button width for auth pages */
+.auth-card .btn-secondary,
+.auth-card .btn-primary,
+.auth-card .btn-google,
+.auth-card .auth-submit,
+.auth-card .auth-guest-btn,
+.auth-card-unified .btn-secondary,
+.auth-card-unified .btn-primary,
+.auth-card-unified .btn-google,
+.auth-card-unified .auth-submit,
+.auth-card-unified .auth-guest-btn,
+.auth-card-split .btn-secondary,
+.auth-card-split .btn-primary,
+.auth-card-split .btn-google,
+.auth-card-split .auth-submit,
+.auth-card-split .auth-guest-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Ensure auth-card itself doesn't shrink */
+.auth-card {
+  min-width: 0;
+  width: 100%;
+  max-width: 80%;
+}
+
+.auth-card-unified {
+  min-width: 0;
+  width: 100%;
+  max-width: 900px;
+}
+
+.auth-card-split {
+  min-width: 0;
+  width: 100%;
+  max-width: 85% !important;
+  min-width: 80% !important;
+  height: 1200px !important;
+}
+
+/* Ensure all buttons in auth-card are full width at all screen sizes */
+@media (max-width: 768px) {
+  .auth-card .btn-secondary,
+  .auth-card .btn-primary,
+  .auth-card .btn-google,
+  .auth-card .auth-submit,
+  .auth-card .auth-guest-btn,
+  .auth-card-unified .btn-secondary,
+  .auth-card-unified .btn-primary,
+  .auth-card-unified .btn-google,
+  .auth-card-unified .auth-submit,
+  .auth-card-unified .auth-guest-btn,
+  .auth-card-split .btn-secondary,
+  .auth-card-split .btn-primary,
+  .auth-card-split .btn-google,
+  .auth-card-split .auth-submit,
+  .auth-card-split .auth-guest-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
 .btn-secondary:hover {
   background: var(--rose);
 }
@@ -2783,8 +2866,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
-}
-
+  }
+  
 .settings-toggle-btn:hover {
   background: var(--border);
   transform: translateY(-1px);
@@ -2890,6 +2973,70 @@
   padding: 1.5rem;
 }
 
+/* Edit Profile Popup Styling */
+.edit-profile-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.edit-profile-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.edit-profile-label {
+  margin: 0 0 1rem 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.edit-profile-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+}
+
+.edit-profile-field-container {
+  display: flex;
+    flex-direction: column;
+  gap: 0.75rem;
+}
+
+.edit-profile-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--cream);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.edit-profile-input:focus {
+  border-color: var(--rose);
+  background: var(--beige);
+  box-shadow: 0 0 0 3px rgba(226, 182, 179, 0.1);
+  }
+  
+.edit-profile-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.edit-profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .settings-panel {
   background: var(--beige);
   border: 1px solid var(--border);
@@ -2958,7 +3105,7 @@
 }
 
 .settings-top-row .toggle-buttons {
-  flex-direction: column;
+    flex-direction: column;
   gap: 0.5rem;
 }
 
@@ -2991,8 +3138,8 @@
   white-space: nowrap;
   box-sizing: border-box;
   flex-shrink: 0;
-}
-
+  }
+  
 .settings-panel .toggle-btn:hover,
 .settings-popup-content .toggle-btn:hover {
   background: var(--border);
@@ -3073,8 +3220,8 @@
 
 .reset-font-sizes-btn:active {
   transform: translateY(0);
-}
-
+  }
+  
 .font-size-control {
   margin-bottom: 1.5rem;
   width: 100%;
@@ -3157,8 +3304,8 @@
   background: var(--lavender);
   transform: scale(1.15);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-}
-
+  }
+  
 .font-size-range::-moz-range-track {
   height: 8px;
   border-radius: 4px;
@@ -3209,8 +3356,8 @@
   font-family: 'Uthmani', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif !important;
   letter-spacing: 0.02em;
   word-spacing: 0.1em;
-}
-
+  }
+  
 .preview-arabic-text.indopak {
   font-family: 'IndoPak', 'IndoPak-Fallback', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif !important;
   letter-spacing: 0.01em;
@@ -3529,10 +3676,28 @@
 
 /* Bismillah Section */
 .bismillah-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   z-index: 1;
   position: relative;
-  font-size: large;
+  width: 100%;
+  overflow: hidden;
+}
+
+.auth-card-split .bismillah-section {
+  margin-bottom: 1rem;
+}
+
+.auth-card .bismillah-section .bismillah,
+.auth-card-split .bismillah-section .bismillah {
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--rose);
+  text-align: center;
+  opacity: 0.8;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .lottie-loader-container .bismillah {
@@ -3772,5 +3937,905 @@
   .lottie-xl {
     width: 120px;
     height: 120px;
+  }
+}
+
+/* ============================================================================
+   AUTHENTICATION PAGES
+   ============================================================================ */
+
+.auth-page {
+  min-height: 100vh;
+  background: var(--cream);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.auth-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, var(--rose) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, var(--lavender) 2px, transparent 2px);
+  background-size: 100px 100px;
+  opacity: 0.10;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: var(--beige);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+}
+
+.auth-header .auth-logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.auth-header .auth-logo .arabic-logo {
+  font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
+  font-size: 1.75rem;
+  color: var(--rose);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.auth-header .auth-logo .english-logo {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 0.875rem;
+  color: var(--text);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: var(--cream);
+  border-color: var(--rose);
+}
+
+.auth-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 80%;
+  min-width: 0;
+  background: var(--beige);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+/* Split Auth Card - Side by Side Layout */
+.auth-card-split {
+  width: 100%;
+  max-width: 80%;
+  min-width: 70%;
+  background: var(--beige);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  display: flex;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  height: 1200px;
+  margin: 0 auto;
+}
+
+/* Auth Side (Left and Right) */
+.auth-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 3rem 2.5rem;
+  position: relative;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+/* Custom scrollbar for auth sides */
+.auth-side::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-side::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-side::-webkit-scrollbar-thumb {
+  background: var(--rose);
+  border-radius: 3px;
+  opacity: 0.5;
+}
+
+.auth-side::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+.auth-side-signin {
+  background: var(--beige);
+  border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-side-signin::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--rose) 0%, var(--lavender) 100%);
+  transform: translateX(-100%);
+  z-index: 0;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When sign-in is inactive (showing gradient CTA) */
+.auth-side-signin:not(.active)::before {
+  transform: translateX(0);
+}
+
+/* When sign-in becomes active, slide gradient out to the right */
+.auth-side-signin.active::before {
+  transform: translateX(100%);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+}
+
+.auth-side-signin:not(.active) {
+  color: white;
+}
+
+.auth-side-signin:not(.active) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-side-signin.active > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-side-signup {
+  background: linear-gradient(135deg, var(--rose) 0%, var(--lavender) 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-side-signup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--beige);
+  transform: translateX(100%);
+  z-index: 0;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When sign-up is active, slide beige background in from right */
+.auth-side-signup.active::before {
+  transform: translateX(0);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+}
+
+/* When sign-up becomes inactive, slide gradient back to right */
+.auth-side-signup:not(.active)::before {
+  transform: translateX(100%);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-side-signup.active {
+  color: var(--text);
+}
+
+.auth-side-signup.active > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-side-signup:not(.active) > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* CTA Panel (when inactive) */
+.auth-side-cta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInCTA 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInCTA {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.auth-side-cta:hover {
+  transform: scale(1.02);
+}
+
+.auth-cta-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: white;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.auth-cta-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  color: white;
+  max-width: 300px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.btn-cta {
+  padding: 0.875rem 2.5rem;
+  background: transparent;
+  border: 2px solid white;
+  border-radius: 25px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.auth-side-signup .btn-cta {
+  border-color: white;
+  color: white;
+}
+
+.auth-side-signin.active .btn-cta {
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
+.btn-cta:hover {
+  background: white;
+  color: var(--rose);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.auth-side-signin.active .btn-cta:hover {
+  background: var(--rose);
+  color: white;
+}
+
+/* Active Form Content */
+.auth-side-content {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  opacity: 0;
+}
+
+/* Fade in form after gradient slides are done (0.3s delay + 0.5s slide = 0.8s total) */
+.auth-side.active .auth-side-content {
+  animation: fadeInForm 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+}
+
+@keyframes fadeInForm {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hide inactive side content */
+.auth-side:not(.active) .auth-side-content {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Show CTA when inactive */
+.auth-side:not(.active) .auth-side-cta {
+  display: flex;
+  opacity: 1;
+  animation: slideInCTA 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+}
+
+@keyframes slideInCTA {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Hide CTA when active */
+.auth-side.active .auth-side-cta {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.auth-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  color: var(--text);
+  opacity: 0.7;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.auth-error {
+  background: var(--error-red-light);
+  border: 1px solid var(--error-red-border);
+  color: var(--error-red);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.auth-form {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--text);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 1rem 3rem 1rem 3rem;
+  background: var(--cream);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+  outline: none;
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(226, 182, 179, 0.1);
+}
+
+.input-wrapper input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input-wrapper input.input-error {
+  border-color: var(--error-red);
+}
+
+.input-wrapper input.input-error:focus {
+  border-color: var(--error-red);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  transition: opacity 0.2s ease;
+}
+
+.password-toggle:hover {
+  opacity: 0.8;
+}
+
+.password-toggle:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.field-error {
+  display: block;
+  color: var(--error-red);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.auth-guest-btn {
+  width: 100%;
+  margin-top: 1rem;
+  min-width: 0;
+}
+
+.auth-submit {
+  width: 100%;
+  min-width: 0;
+  margin-top: 1rem;
+  box-sizing: border-box;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-divider span {
+  padding: 0 1rem;
+  color: var(--text);
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
+.btn-google {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--cream);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.btn-google:hover {
+  border-color: var(--rose);
+  background: var(--beige);
+}
+
+.btn-google:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.auth-footer p {
+  color: var(--text);
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.auth-link {
+  color: var(--rose);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.auth-link:hover {
+  color: var(--rose-hover);
+  text-decoration: underline;
+}
+
+/* ============================================================================
+   ONBOARDING PAGE
+   ============================================================================ */
+
+.onboarding-page {
+  min-height: 100vh;
+  background: var(--cream);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.onboarding-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, var(--rose) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, var(--lavender) 2px, transparent 2px);
+  background-size: 100px 100px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: var(--beige);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+}
+
+.onboarding-container {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.onboarding-card {
+  width: 100%;
+  max-width: 900px;
+  background: var(--beige);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1;
+}
+
+.onboarding-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.onboarding-subtitle {
+  font-size: 1rem;
+  color: var(--text);
+  opacity: 0.7;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.onboarding-error {
+  background: var(--error-red-light);
+  border: 1px solid var(--error-red-border);
+  color: var(--error-red);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.onboarding-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-bottom: 2rem;
+}
+
+.surah-section {
+  margin-bottom: 2.5rem;
+}
+
+.surah-section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border);
+}
+
+/* Onboarding surah grid - scoped to onboarding page only */
+.onboarding-content .surah-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.surah-select-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--cream);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 100px;
+}
+
+.surah-select-btn:hover {
+  border-color: var(--rose);
+  background: var(--beige);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(226, 182, 179, 0.2);
+}
+
+.surah-select-btn.selected {
+  background: var(--rose);
+  border-color: var(--rose);
+  color: white;
+}
+
+.surah-select-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.surah-select-name {
+  font-size: 0.85rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.surah-select-check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.surah-select-btn.selected .surah-select-check {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.onboarding-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.onboarding-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .onboarding-card {
+  background: var(--dark-bg);
+  border-color: var(--dark-border);
+}
+
+[data-theme="dark"] .surah-select-btn {
+  background: var(--dark-bg);
+  border-color: var(--dark-border);
+}
+
+[data-theme="dark"] .surah-select-btn:hover {
+  background: rgba(255, 154, 162, 0.1);
+}
+
+[data-theme="dark"] .surah-select-btn.selected {
+  background: var(--rose);
+  border-color: var(--rose);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .auth-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .auth-header .auth-logo .arabic-logo {
+    font-size: 1.5rem;
+  }
+
+  .auth-header .auth-logo .english-logo {
+    font-size: 0.75rem;
+  }
+
+  .auth-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .auth-card,
+  .auth-card-unified,
+  .auth-card-split,
+  .onboarding-card {
+    padding: 2rem 1.5rem;
+    max-width: 100%;
+  }
+
+  .auth-card-split {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+  }
+
+  .auth-side {
+    padding: 2rem 1.5rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .auth-side-signup {
+    border-bottom: none;
+  }
+
+  .auth-cta-title {
+    font-size: 2rem;
+  }
+
+  .auth-cta-text {
+    font-size: 1rem;
+    max-width: 100%;
+  }
+
+  .auth-title,
+  .onboarding-title {
+    font-size: 1.5rem;
+  }
+
+  .auth-card .bismillah-section .bismillah {
+    font-size: 1.25rem;
+  }
+
+  .btn-google,
+  .auth-submit,
+  .auth-guest-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* Onboarding surah grid responsive - scoped to onboarding only */
+  .onboarding-content .surah-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .surah-select-btn {
+    min-height: 80px;
+    padding: 0.75rem;
+  }
+
+  .onboarding-footer {
+    flex-direction: column;
+  }
+
+  .onboarding-footer button {
+    width: 100%;
   }
 }

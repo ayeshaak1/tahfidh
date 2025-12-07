@@ -29,6 +29,31 @@ QURAN_CLIENT_SECRET=YOUR_CLIENT_SECRET_HERE
 # Server Configuration
 PORT=5000
 NODE_ENV=development
+
+# Database Configuration (PostgreSQL)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=tahfidh
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_SSL=false
+
+# JWT Secret Key
+# Generate a secret key by running: node backend/generate-jwt-secret.js
+# Then copy the JWT_SECRET value and paste it here
+JWT_SECRET=your-jwt-secret-key-here
+
+# Google OAuth Credentials
+# Your credentials from Google Cloud Console:
+GOOGLE_CLIENT_ID=419219087780-n6badp54fuit0c32c657nej2pnu7gd0f.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+
+# OAuth URLs (update for production after deployment)
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+FRONTEND_URL=http://localhost:3000
+
+# Session Secret (can use same as JWT_SECRET)
+SESSION_SECRET=your-session-secret-here
 EOF
 
 echo "[SUCCESS] backend/.env file created!"
@@ -37,16 +62,19 @@ echo "========================================"
 echo "  Next Steps:"
 echo "========================================"
 echo ""
-echo "1. Edit backend/.env and add your Quran.com API credentials:"
-echo "   - QURAN_CLIENT_ID"
-echo "   - QURAN_CLIENT_SECRET"
+echo "1. Generate JWT Secret:"
+echo "   cd backend"
+echo "   node generate-jwt-secret.js"
+echo "   Copy the output and paste for JWT_SECRET and SESSION_SECRET"
 echo ""
-echo "2. Get your API credentials from:"
-echo "   https://quran.com/api"
+echo "2. Update PostgreSQL password in backend/.env"
+echo "   - Set DB_PASSWORD to your PostgreSQL password"
 echo ""
-echo "3. Run the app:"
-echo "   - Backend: cd backend && npm install && npm run dev"
-echo "   - Frontend: npm install && npm start"
+echo "3. Google OAuth credentials are already added!"
+echo "   - Client ID and Secret are pre-filled"
+echo "   - Update URLs for production after deployment"
 echo ""
-
-
+echo "4. Run the app:"
+echo "   - Backend: cd backend && npm run dev"
+echo "   - Frontend: npm start"
+echo ""

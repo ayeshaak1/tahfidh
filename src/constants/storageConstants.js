@@ -21,6 +21,11 @@ export const STORAGE_KEYS = {
   // User Profile
   USER_NAME: 'userName',
   
+  // Authentication
+  AUTH_TOKEN: 'authToken',
+  USER_DATA: 'userData',
+  ONBOARDING_COMPLETE: 'onboardingComplete',
+  
   // Settings - Font Preference
   QURAN_FONT_PREFERENCE: 'quranFontPreference',
   

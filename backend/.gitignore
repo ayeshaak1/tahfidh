@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.production
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Google OAuth Credentials (NEVER commit these!)
+client_secret*.json
+credentials.json
+*oauth*.json
+
+# OS
+.DS_Store
+Thumbs.db
+

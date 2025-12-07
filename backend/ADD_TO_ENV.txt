@@ -1,0 +1,13 @@
+# Copy and paste these lines to the end of your backend/.env file:
+
+# Google OAuth Credentials
+GOOGLE_CLIENT_ID=419219087780-n6badp54fuit0c32c657nej2pnu7gd0f.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+
+# OAuth URLs (update for production after deployment)
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+FRONTEND_URL=http://localhost:3000
+
+# Session Secret (use the JWT secret you generated: 306fe0a929d9afbafa6480c3a82d008ec4e29b142da0caf013ead071d1ad7d0c9ea19d9e84dae7175425d77105af65c744f2b28973c4d6909c9bcbba6f3a2ffd)
+SESSION_SECRET=306fe0a929d9afbafa6480c3a82d008ec4e29b142da0caf013ead071d1ad7d0c9ea19d9e84dae7175425d77105af65c744f2b28973c4d6909c9bcbba6f3a2ffd
+

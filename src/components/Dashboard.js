@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { CONSTRAINTS } from '../constants/storageConstants';
+import quranApi from '../services/quranApi';
 import { 
   Menu, 
   Sun, 
@@ -38,10 +39,43 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     startOfWeek.setHours(0, 0, 0, 0);
     return startOfWeek;
   });
+  const [surahNamesCache, setSurahNamesCache] = useState({});
 
   useEffect(() => {
     setCurrentPath('/dashboard');
   }, [setCurrentPath]);
+
+  // Fetch surah names for surahs that are missing names in userProgress
+  useEffect(() => {
+    const fetchMissingSurahNames = async () => {
+      const missingNames = [];
+      Object.entries(userProgress).forEach(([surahId, surah]) => {
+        if (!surah.name && !surahNamesCache[surahId]) {
+          missingNames.push(surahId);
+        }
+      });
+
+      if (missingNames.length > 0) {
+        try {
+          const surahsData = await quranApi.getSurahs();
+          const newCache = { ...surahNamesCache };
+          missingNames.forEach(surahId => {
+            const surah = surahsData.chapters?.find(s => s.id.toString() === surahId.toString());
+            if (surah) {
+              newCache[surahId] = surah.name_simple;
+            }
+          });
+          if (Object.keys(newCache).length > Object.keys(surahNamesCache).length) {
+            setSurahNamesCache(newCache);
+          }
+        } catch (error) {
+          console.error('Failed to fetch surah names:', error);
+        }
+      }
+    };
+
+    fetchMissingSurahNames();
+  }, [userProgress, surahNamesCache]);
 
   // Calculate progress statistics
   const calculateProgress = () => {
@@ -77,7 +111,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
 
   // Calculate real data from userProgress - recalculate when userProgress changes
   const realData = useMemo(() => {
-    const calculateRealData = () => {
+  const calculateRealData = () => {
     let currentStreak = 0;
     let weeklyAverage = 0;
     let lastActivity = "No activity yet";
@@ -161,8 +195,10 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
             const verseTimestamp = new Date(verse.lastReviewed).getTime();
             if (!mostRecentTimestamp || verseTimestamp > mostRecentTimestamp) {
               mostRecentTimestamp = verseTimestamp;
-              mostRecentSurah = { id: surahId, name: surah.name, lastReviewed: verse.lastReviewed };
-              mostRecentVerse = parseInt(verseId);
+              // Use surah name from userProgress, or fallback to cache, or "Surah {id}"
+              const surahName = surah.name || surahNamesCache[surahId] || `Surah ${surahId}`;
+              mostRecentSurah = { id: surahId, name: surahName, lastReviewed: verse.lastReviewed };
+            mostRecentVerse = parseInt(verseId);
             }
           }
         });
@@ -174,16 +210,16 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       currentVerse = mostRecentVerse;
     }
 
-      return {
-        currentStreak,
-        weeklyAverage,
-        lastActivity,
-        currentSurah,
-        currentVerse
-      };
+    return {
+      currentStreak,
+      weeklyAverage,
+      lastActivity,
+      currentSurah,
+      currentVerse
     };
+  };
     return calculateRealData();
-  }, [userProgress, progress]);
+  }, [userProgress, progress, surahNamesCache]);
 
   // Generate weekly activity data for selected week
   const generateWeeklyActivity = () => {
@@ -196,24 +232,25 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       currentDate.setDate(startOfWeek.getDate() + day);
       
       let intensity = 0;
-              // Check if there was actual activity on this day
-        const dateKey = currentDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
-        if (progress.memorizedVerses > 0) {
-          // Look for actual activity in userProgress
-          Object.values(userProgress).forEach(surah => {
-            if (surah.verses) {
-              Object.values(surah.verses).forEach(verse => {
-                if (verse.lastReviewed) {
-                  const verseDate = new Date(verse.lastReviewed);
-                  const verseDateKey = verseDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
-                  if (verseDateKey === dateKey) {
-                    intensity = Math.min(3, intensity + 1);
-                  }
+      // Check if there was actual activity on this day (only from memorized verses)
+      const dateKey = currentDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+      if (progress.memorizedVerses > 0) {
+        // Look for actual activity in userProgress
+        Object.values(userProgress).forEach(surah => {
+          if (surah.verses) {
+            Object.values(surah.verses).forEach(verse => {
+              // Only count memorized verses for activity
+              if (verse.memorized && verse.lastReviewed) {
+                const verseDate = new Date(verse.lastReviewed);
+                const verseDateKey = verseDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+                if (verseDateKey === dateKey) {
+                  intensity = Math.min(3, intensity + 1);
                 }
-              });
-            }
-          });
-        }
+              }
+            });
+          }
+        });
+      }
       
       weekData.push({
         date: currentDate,
@@ -248,14 +285,15 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       
       let intensity = 0;
       if (progress.memorizedVerses > 0) {
-        // Check for actual activity on this day
+        // Check for actual activity on this day (only from memorized verses)
         const currentDate = new Date(year, month, day);
         const dateKey = currentDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
         
         Object.values(userProgress).forEach(surah => {
           if (surah.verses) {
             Object.values(surah.verses).forEach(verse => {
-              if (verse.lastReviewed) {
+              // Only count memorized verses for activity
+              if (verse.memorized && verse.lastReviewed) {
                 const verseDate = new Date(verse.lastReviewed);
                 const verseDateKey = verseDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
                 if (verseDateKey === dateKey) {
@@ -292,14 +330,15 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     for (let month = 0; month < 12; month++) {
       let intensity = 0;
       if (progress.memorizedVerses > 0) {
-        // Check for actual activity in this month
+        // Check for actual activity in this month (only from memorized verses)
         const monthStart = new Date(selectedYear, month, 1);
         const monthEnd = new Date(selectedYear, month + 1, 0);
         
         Object.values(userProgress).forEach(surah => {
           if (surah.verses) {
             Object.values(surah.verses).forEach(verse => {
-              if (verse.lastReviewed) {
+              // Only count memorized verses for activity
+              if (verse.memorized && verse.lastReviewed) {
                 const verseDate = new Date(verse.lastReviewed);
                 if (verseDate >= monthStart && verseDate <= monthEnd) {
                   intensity = Math.min(3, intensity + 1);
@@ -315,9 +354,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
   };
 
   // Generate activity data based on actual progress and selected view
-  const generateActivityData = () => {
-    const hasActivity = progress.memorizedVerses > 0;
-    
+  const activityData = useMemo(() => {
     if (activityView === 'weekly') {
       return generateWeeklyActivity();
     } else if (activityView === 'monthly') {
@@ -325,9 +362,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     } else { // yearly
       return generateYearlyActivity();
     }
-  };
-
-  const activityData = generateActivityData();
+  }, [userProgress, progress, activityView, selectedWeekStart, selectedMonth, selectedYear]);
 
   // Generate achievements based on actual progress
   const generateAchievements = () => {
@@ -390,15 +425,11 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
   const getActivityViewInfo = () => {
     switch (activityView) {
       case 'weekly':
-        const weekEnd = new Date(selectedWeekStart);
-        weekEnd.setDate(selectedWeekStart.getDate() + 6);
-        const weekStartStr = selectedWeekStart.toLocaleDateString('default', { month: 'short', day: 'numeric' });
-        const weekEndStr = weekEnd.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
-        return { title: `Weekly Activity - ${weekStartStr} to ${weekEndStr}`, description: 'Select week to view activity' };
+        return { title: 'Weekly Activity', description: 'Select week to view activity' };
       case 'monthly':
-        return { title: `Monthly Activity - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, description: 'Select month to view activity' };
+        return { title: 'Monthly Activity', description: 'Select month to view activity' };
       case 'yearly':
-        return { title: `Yearly Activity - ${selectedYear}`, description: 'Select year to view activity' };
+        return { title: 'Yearly Activity', description: 'Select year to view activity' };
       default:
         return { title: 'Activity Overview', description: '' };
     }
@@ -504,19 +535,19 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
                 />
                 {progress.versePercentage > 0 && (
                   <>
-                    <circle
-                      cx="150"
-                      cy="150"
-                      r="135"
-                      fill="none"
-                      stroke="url(#progressGradient)"
-                      strokeWidth="16"
-                      strokeDasharray={`${2 * Math.PI * 135}`}
+                  <circle
+                    cx="150"
+                    cy="150"
+                    r="135"
+                    fill="none"
+                    stroke="url(#progressGradient)"
+                    strokeWidth="16"
+                    strokeDasharray={`${2 * Math.PI * 135}`}
                       strokeDashoffset={`${2 * Math.PI * 135 * (1 - Math.max(progress.versePercentage, 0.5) / 100)}`}
-                      strokeLinecap="round"
-                      transform="rotate(-90 150 150)"
-                      className="progress-circle"
-                    />
+                    strokeLinecap="round"
+                    transform="rotate(-90 150 150)"
+                    className="progress-circle"
+                  />
                     <circle
                       cx="150"
                       cy="150"

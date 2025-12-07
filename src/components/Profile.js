@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import { 
   STORAGE_KEYS, 
@@ -14,15 +16,34 @@ import {
 } from '../constants/storageConstants';
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, signOut, deleteAccount } = useAuth();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
+  const [showDeleteSuccessDialog, setShowDeleteSuccessDialog] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showImportSuccessDialog, setShowImportSuccessDialog] = useState(false);
   const [importError, setImportError] = useState(null);
   const [userName, setUserName] = useState(() => {
-    return StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
+    // Use authenticated user's name if available, otherwise localStorage
+    const authUser = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA);
+    return authUser?.name || StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
+  });
+  const [userEmail, setUserEmail] = useState(() => {
+    const authUser = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA);
+    return authUser?.email || '';
   });
   const [isEditingName, setIsEditingName] = useState(false);
+  const [showEditProfilePopup, setShowEditProfilePopup] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [editedName, setEditedName] = useState('');
+  const [editedEmail, setEditedEmail] = useState('');
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
   const [surahsData, setSurahsData] = useState(null);
   const [juzMapping, setJuzMapping] = useState(null); // Map surah ID to juz number
   const { theme, setTheme, toggleTheme, isDark } = useTheme();
@@ -105,40 +126,228 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     fetchData();
   }, []);
 
+  // Update userName and userEmail from auth context when user changes
   useEffect(() => {
-    const saved = StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
-    if (saved) {
-      setUserName(saved);
+    if (user) {
+      if (user.name) setUserName(user.name);
+      if (user.email) setUserEmail(user.email);
     }
-  }, []);
+  }, [user]);
 
-  // Save userName to localStorage whenever it changes
+  // Save userName to localStorage whenever it changes (for guest mode)
   useEffect(() => {
-    if (userName) {
+    if (userName && isGuest) {
       StorageHelpers.setItem(STORAGE_KEYS.USER_NAME, userName);
-    } else {
-      StorageHelpers.removeItem(STORAGE_KEYS.USER_NAME);
+    } else if (!isGuest && userName) {
+      // For authenticated users, also save to localStorage as backup
+      StorageHelpers.setItem(STORAGE_KEYS.USER_NAME, userName);
     }
-  }, [userName]);
+  }, [userName, isGuest]);
 
   const handleEditName = () => {
     setEditedName(userName);
     setIsEditingName(true);
+    setProfileError('');
+    setProfileSuccess('');
   };
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     const trimmedName = editedName.trim();
-    if (trimmedName) {
-      setUserName(trimmedName);
-    } else {
-      setUserName(DEFAULT_VALUES.USER_NAME);
+    if (!trimmedName) {
+      setProfileError('Name cannot be empty');
+      return;
     }
-    setIsEditingName(false);
+
+    if (isAuthenticated && !isGuest) {
+      // Update via API
+      setIsUpdating(true);
+      setProfileError('');
+      try {
+        const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to update name');
+        }
+
+        const data = await response.json();
+        setUserName(data.user.name);
+        // Update stored user data
+        StorageHelpers.setItem(STORAGE_KEYS.USER_DATA, data.user);
+        setProfileSuccess('Name updated successfully');
+        setIsEditingName(false);
+        setTimeout(() => setProfileSuccess(''), 3000);
+      } catch (error) {
+        setProfileError(error.message || 'Failed to update name');
+      } finally {
+        setIsUpdating(false);
+      }
+    } else {
+      // Guest mode - just update local state
+      setUserName(trimmedName);
+      setIsEditingName(false);
+    }
   };
 
   const handleCancelEditName = () => {
     setIsEditingName(false);
     setEditedName('');
+    setProfileError('');
+    setProfileSuccess('');
+  };
+
+  const handleEditEmail = () => {
+    setEditedEmail(userEmail);
+    setIsEditingEmail(true);
+    setProfileError('');
+    setProfileSuccess('');
+  };
+
+  const handleSaveEmail = async () => {
+    const trimmedEmail = editedEmail.trim();
+    if (!trimmedEmail) {
+      setProfileError('Email cannot be empty');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setProfileError('Please enter a valid email address');
+      return;
+    }
+
+    setIsUpdating(true);
+    setProfileError('');
+    try {
+      const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: trimmedEmail }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update email');
+      }
+
+      const data = await response.json();
+      setUserEmail(data.user.email);
+      StorageHelpers.setItem(STORAGE_KEYS.USER_DATA, data.user);
+      setProfileSuccess('Email updated successfully');
+      setIsEditingEmail(false);
+      setTimeout(() => setProfileSuccess(''), 3000);
+    } catch (error) {
+      setProfileError(error.message || 'Failed to update email');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleCancelEditEmail = () => {
+    setIsEditingEmail(false);
+    setEditedEmail('');
+    setProfileError('');
+    setProfileSuccess('');
+  };
+
+  const handleEditPassword = () => {
+    setPasswordData({ current: '', new: '', confirm: '' });
+    setIsEditingPassword(true);
+    setProfileError('');
+    setProfileSuccess('');
+  };
+
+  const handleSavePassword = async () => {
+    if (!passwordData.current || !passwordData.new || !passwordData.confirm) {
+      setProfileError('All password fields are required');
+      return;
+    }
+
+    if (passwordData.new.length < 6) {
+      setProfileError('New password must be at least 6 characters');
+      return;
+    }
+
+    if (passwordData.new !== passwordData.confirm) {
+      setProfileError('New passwords do not match');
+      return;
+    }
+
+    setIsUpdating(true);
+    setProfileError('');
+    try {
+      const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/profile/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          currentPassword: passwordData.current,
+          newPassword: passwordData.new 
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update password');
+      }
+
+      setProfileSuccess('Password updated successfully');
+      setIsEditingPassword(false);
+      setPasswordData({ current: '', new: '', confirm: '' });
+      setTimeout(() => setProfileSuccess(''), 3000);
+    } catch (error) {
+      setProfileError(error.message || 'Failed to update password');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleCancelEditPassword = () => {
+    setIsEditingPassword(false);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    setProfileError('');
+    setProfileSuccess('');
+  };
+
+  const handleLogout = () => {
+    signOut();
+    navigate('/');
+  };
+
+  const handleOpenEditProfile = () => {
+    setEditedName(userName);
+    setEditedEmail(userEmail);
+    setIsEditingName(false);
+    setIsEditingEmail(false);
+    setIsEditingPassword(false);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    setProfileError('');
+    setProfileSuccess('');
+    setShowEditProfilePopup(true);
+  };
+
+  const handleCloseEditProfile = () => {
+    setShowEditProfilePopup(false);
+    setIsEditingName(false);
+    setIsEditingEmail(false);
+    setIsEditingPassword(false);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    setProfileError('');
+    setProfileSuccess('');
   };
 
   // Calculate overall statistics
@@ -244,16 +453,16 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         });
       } else {
         // Final fallback: use tracked verses only (least accurate)
-        Object.entries(userProgress).forEach(([surahId, surah]) => {
-          if (surah.verses) {
+      Object.entries(userProgress).forEach(([surahId, surah]) => {
+        if (surah.verses) {
             const surahIdNum = parseInt(surahId);
             const surahJuz = juzMapping && juzMapping[surahIdNum] ? juzMapping[surahIdNum] : Math.ceil(surahIdNum / 4);
-            if (surahJuz === juz) {
-              juzVerses += Object.keys(surah.verses).length;
-              juzMemorized += Object.values(surah.verses).filter(verse => verse.memorized).length;
-            }
+          if (surahJuz === juz) {
+            juzVerses += Object.keys(surah.verses).length;
+            juzMemorized += Object.values(surah.verses).filter(verse => verse.memorized).length;
           }
-        });
+        }
+      });
       }
       
       const progress = juzVerses > 0 ? Math.round((juzMemorized / juzVerses) * 100) : 0;
@@ -506,6 +715,39 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setImportError(null);
   };
 
+  const handleDeleteAccount = () => {
+    setShowDeleteAccountDialog(true);
+  };
+
+  const handleCancelDeleteAccount = () => {
+    setShowDeleteAccountDialog(false);
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount();
+      setShowDeleteAccountDialog(false);
+      setShowDeleteSuccessDialog(true);
+      // Clear all local data as well
+      setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
+      StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
+      // Navigate to landing page after a short delay
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+    } catch (error) {
+      setProfileError(error.message || 'Failed to delete account. Please try again.');
+      setIsDeletingAccount(false);
+      setShowDeleteAccountDialog(false);
+    }
+  };
+
+  const handleCloseDeleteSuccess = () => {
+    setShowDeleteSuccessDialog(false);
+    navigate('/');
+  };
+
 
   return (
     <div className={`profile-page ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
@@ -527,89 +769,58 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       )}
 
       <div className="profile-content">
-        {/* Profile Section */}
-        <section className="profile-section">
-          <div className="user-card">
-            <div className="user-avatar">
-              <User size={32} />
-            </div>
-            <div className="user-info">
-              {isEditingName ? (
-                <div className="user-name-edit-container">
-                  <input
-                    type="text"
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSaveName();
-                      } else if (e.key === 'Escape') {
-                        handleCancelEditName();
-                      }
-                    }}
-                    autoFocus
-                    className="user-name-input"
-                    placeholder={isGuest ? 'Guest User' : 'User Name'}
-                  />
-                  <button
-                    onClick={handleSaveName}
-                    className="user-name-action-btn user-name-save-btn"
-                    title="Save name"
-                  >
-                    <Check size={20} />
-                  </button>
-                  <button
-                    onClick={handleCancelEditName}
-                    className="user-name-action-btn user-name-cancel-btn"
-                    title="Cancel editing"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-              ) : (
-                <div className="user-name-container">
-                  <h2>{userName || (isGuest ? 'Guest User' : 'User Name')}</h2>
-                  <button
-                    onClick={handleEditName}
-                    className="user-name-edit-btn"
-                    title="Edit name"
-                  >
-                    <Edit2 size={20} />
-                  </button>
-                </div>
-              )}
-              <p>{isGuest ? 'Local progress tracking' : 'Premium Member'}</p>
-            </div>
+      {/* Profile Section */}
+      <section className="profile-section">
+        <div className="user-card">
+          <div className="user-avatar">
+            <User size={32} />
           </div>
+          <div className="user-info">
+              <div className="user-name-container">
+                <h2>{userName || (isGuest ? 'Guest User' : 'User Name')}</h2>
+                {!isGuest && isAuthenticated && (
+                  <button
+                    onClick={handleOpenEditProfile}
+                    className="btn btn-secondary"
+                    style={{ width: 'auto', minWidth: '120px' }}
+                  >
+                    <Edit2 size={16} />
+                    Edit Profile
+                  </button>
+                )}
+              </div>
+            <p>{isGuest ? 'Local progress tracking' : 'Premium Member'}</p>
+          </div>
+        </div>
 
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-value">{stats.memorizedVerses}</div>
-              <div className="stat-label">Total Verses</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{stats.overallPercentage}%</div>
-              <div className="stat-label">Completion</div>
-            </div>
-            <div className="stat-card">
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-value">{stats.memorizedVerses}</div>
+            <div className="stat-label">Total Verses</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{stats.overallPercentage}%</div>
+            <div className="stat-label">Completion</div>
+          </div>
+          <div className="stat-card">
               <div className="stat-value">{stats.streak}</div>
               <div className="stat-label">Day Streak</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{stats.completedSurahs}</div>
               <div className="stat-label">Surahs Completed</div>
-            </div>
           </div>
+        </div>
 
-          <div className="visualization-section">
+        <div className="visualization-section">
             <div className="juz-heatmap-card">
-              <h3>Juz Progress</h3>
-              <div className="heatmap-grid">
-                {juzHeatmap.map(({ juz, progress }) => (
-                  <div
-                    key={juz}
-                    className="heatmap-square"
-                    style={{
+            <h3>Juz Progress</h3>
+            <div className="heatmap-grid">
+              {juzHeatmap.map(({ juz, progress }) => (
+                <div
+                  key={juz}
+                  className="heatmap-square"
+                  style={{
                       backgroundColor: progress > 0 
                         ? `rgba(226, 182, 179, ${Math.max(0.3, progress / 100)})` 
                         : 'var(--cream)',
@@ -617,60 +828,60 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                       color: progress > 50 ? 'white' : 'var(--text)'
                     }}
                     title={`Juz ${juz}: ${progress}%`}
-                  >
-                    {juz}
-                  </div>
-                ))}
-              </div>
+                >
+                  {juz}
+                </div>
+              ))}
             </div>
+          </div>
 
             <div className="surah-chart-card">
-              <h3>Surah Completion</h3>
-              <div className="chart-container">
-                <div className="chart-bar">
-                  <div 
+            <h3>Surah Completion</h3>
+            <div className="chart-container">
+              <div className="chart-bar">
+                <div 
                     className="chart-fill progress-fill"
-                    style={{ width: `${(stats.completedSurahs / stats.totalSurahs) * 100}%` }}
-                  ></div>
-                </div>
+                  style={{ width: `${(stats.completedSurahs / stats.totalSurahs) * 100}%` }}
+                ></div>
+              </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                  <span className="chart-label">{stats.completedSurahs}/{stats.totalSurahs} surahs</span>
+              <span className="chart-label">{stats.completedSurahs}/{stats.totalSurahs} surahs</span>
                   <span className="chart-percentage" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--rose)' }}>
                     {Math.round((stats.completedSurahs / stats.totalSurahs) * 100)}%
                   </span>
                 </div>
-              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Settings Panel */}
-        <section className="settings-panel">
-          <h3>Settings</h3>
-          
-          <div className="setting-group">
-            <h4>Theme & Appearance</h4>
-            <div className="setting-item">
+      {/* Settings Panel */}
+      <section className="settings-panel">
+        <h3>Settings</h3>
+        
+        <div className="setting-group">
+          <h4>Theme & Appearance</h4>
+          <div className="setting-item">
               <div className="theme-header-row">
                 <div className="label-with-help">
-                  <label>Theme</label>
+            <label>Theme</label>
                   <div className="help-tooltip">
                     <HelpCircle size={16} />
                     <span className="tooltip-text">Switch between light and dark mode</span>
                   </div>
                 </div>
-                <button className="theme-toggle-btn" onClick={toggleTheme}>
-                  {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            <button className="theme-toggle-btn" onClick={toggleTheme}>
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
                   <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
+            </button>
               </div>
             </div>
           </div>
-
+          
           <div className="setting-group">
             <h4>Quran Preferences</h4>
             <div className="theme-appearance-row">
-              <div className="setting-item">
+          <div className="setting-item">
                 <div className="label-with-help">
                   <label>Default Font</label>
                   <div className="help-tooltip">
@@ -679,19 +890,19 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   </div>
                 </div>
                 <div className="toggle-buttons">
-                  <button
+              <button
                     className={`toggle-btn ${quranFont === VALID_VALUES.FONT_TYPES.UTHMANI ? 'active' : ''}`}
                     onClick={() => setQuranFont(VALID_VALUES.FONT_TYPES.UTHMANI)}
                   >
                     Uthmani
                   </button>
-                  <button
+              <button
                     className={`toggle-btn ${quranFont === VALID_VALUES.FONT_TYPES.INDOPAK ? 'active' : ''}`}
                     onClick={() => setQuranFont(VALID_VALUES.FONT_TYPES.INDOPAK)}
                   >
                     IndoPak
                   </button>
-                </div>
+            </div>
               </div>
               
               <div className="setting-item">
@@ -715,10 +926,10 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   >
                     Transliteration
                   </button>
-                </div>
-              </div>
+          </div>
+        </div>
 
-              <div className="setting-item">
+          <div className="setting-item">
                 <div className="label-with-help">
                   <label>Auto-scroll</label>
                   <div className="help-tooltip">
@@ -737,7 +948,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               </div>
             </div>
           </div>
-
+          
           <div className="setting-group">
             <div className="font-sizes-header-row">
               <h4>Font Sizes</h4>
@@ -748,7 +959,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 Reset
               </button>
             </div>
-            <div className="setting-item">
+          <div className="setting-item">
               <div className="font-size-control">
                 <div className="font-size-header">
                   <div className="label-with-help">
@@ -797,7 +1008,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   }}
                   className="font-size-range"
                 />
-              </div>
+            </div>
 
               <div className="font-size-control">
                 <div className="font-size-header">
@@ -806,10 +1017,10 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                     <div className="help-tooltip">
                       <HelpCircle size={16} />
                       <span className="tooltip-text">Transliteration text font size</span>
-                    </div>
-                  </div>
+          </div>
+        </div>
                   <span className="font-size-value">{transliterationFontSize.toFixed(1)}</span>
-                </div>
+            </div>
                 <input
                   type="range"
                   min={CONSTRAINTS.FONT_SIZES.TRANSLITERATION.MIN}
@@ -822,98 +1033,114 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   }}
                   className="font-size-range"
                 />
-              </div>
+            </div>
             </div>
           </div>
-        </section>
+      </section>
 
-        {/* Data Management */}
-        <section className="data-management">
-          <h3>Data Management</h3>
+      {/* Data Management */}
+      <section className="data-management">
+        <h3>Data Management</h3>
+        
+        <div className="data-actions">
+            <div className="data-action-card">
+              <div className="data-action-header">
+            <h4>Export Progress</h4>
+              </div>
+            <p>Download your progress data as JSON</p>
+            <button className="btn btn-secondary" onClick={exportProgress}>
+              <Download size={16} />
+              Download Backup
+            </button>
+          </div>
           
-          <div className="data-actions">
             <div className="data-action-card">
               <div className="data-action-header">
-                <h4>Export Progress</h4>
+            <h4>Import Progress</h4>
               </div>
-              <p>Download your progress data as JSON</p>
-              <button className="btn btn-secondary" onClick={exportProgress}>
-                <Download size={16} />
-                Download Backup
-              </button>
-            </div>
-            
-            <div className="data-action-card">
-              <div className="data-action-header">
-                <h4>Import Progress</h4>
-              </div>
-              <p>Restore progress from a backup file</p>
-              <label className="file-upload-btn">
-                <Upload size={16} />
-                Choose File
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importProgress}
-                  style={{ display: 'none' }}
-                />
-              </label>
-            </div>
+            <p>Restore progress from a backup file</p>
+            <label className="file-upload-btn">
+              <Upload size={16} />
+              Choose File
+              <input
+                type="file"
+                accept=".json"
+                onChange={importProgress}
+                style={{ display: 'none' }}
+              />
+            </label>
           </div>
+        </div>
 
-          <div className="danger-zone">
+        <div className="danger-zone">
             <div className="danger-zone-header">
-              <h4>Danger Zone</h4>
+          <h4>Danger Zone</h4>
             </div>
             <p style={{ marginBottom: '1rem', color: 'var(--text)', opacity: 0.8, fontSize: '0.9rem' }}>
               Before clearing your data, make sure to export your progress as a backup.
             </p>
-            <div className="danger-actions">
-              {isGuest ? (
-                <button className="btn btn-danger" onClick={clearLocalData}>
-                  <Trash2 size={16} />
-                  Clear Local Data
-                </button>
-              ) : (
-                <button className="btn btn-danger" onClick={() => alert('Account deletion would be implemented in production.')}>
-                  <Trash2 size={16} />
-                  Delete Account
-                </button>
-              )}
-            </div>
+          <div className="danger-actions">
+            {isGuest ? (
+              <button className="btn btn-danger" onClick={clearLocalData}>
+                <Trash2 size={16} />
+                Clear Local Data
+              </button>
+            ) : (
+                <button className="btn btn-danger" onClick={handleDeleteAccount}>
+                <Trash2 size={16} />
+                Delete Account
+              </button>
+            )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Achievements */}
-        <section className="achievements-section">
-          <h3>Achievements</h3>
-          <div className="achievements-grid">
-            {achievements.map(achievement => (
-              <div key={achievement.id} className={`achievement-badge ${achievement.unlocked ? 'unlocked' : 'locked'}`}>
+      {/* Achievements */}
+      <section className="achievements-section">
+        <h3>Achievements</h3>
+        <div className="achievements-grid">
+          {achievements.map(achievement => (
+            <div key={achievement.id} className={`achievement-badge ${achievement.unlocked ? 'unlocked' : 'locked'}`}>
                 <div className="badge-icon" style={{ color: achievement.color }}>
                   {achievement.icon}
                 </div>
-                <div className="badge-content">
-                  <div className="badge-name">{achievement.name}</div>
-                  <div className="badge-description">{achievement.description}</div>
-                </div>
-                {!achievement.unlocked && <div className="badge-lock"><Lock size={16} /></div>}
+              <div className="badge-content">
+                <div className="badge-name">{achievement.name}</div>
+                <div className="badge-description">{achievement.description}</div>
               </div>
-            ))}
-          </div>
-        </section>
+                {!achievement.unlocked && <div className="badge-lock"><Lock size={16} /></div>}
+            </div>
+          ))}
+        </div>
+      </section>
       </div>
 
       {/* Footer */}
       <footer className="profile-footer">
         <div className="footer-content">
-          <div className="mandatory-disclaimer">
-            <p><strong>Tahfidh is a progress tracker only. Always verify memorization with a physical Quran.</strong></p>
+          {!isGuest && isAuthenticated && (
+            <button
+              onClick={handleLogout}
+              className="btn"
+              style={{ 
+                width: 'auto',
+                minWidth: '120px',
+                border: '2px solid var(--error-red)',
+                color: 'var(--error-red)',
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--error-red-light)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+              }}
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
+          )}
           </div>
-          <div className="app-version">
-            <p>App Version 1.0.0</p>
-          </div>
-        </div>
       </footer>
 
       {/* Confirmation Dialog */}
@@ -925,14 +1152,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <AlertTriangle size={24} color="var(--error-red)" />
                 <h3>Clear Local Data</h3>
-              </div>
+          </div>
               <button 
                 className="settings-close-btn"
                 onClick={handleCancelClear}
               >
                 <X size={20} />
               </button>
-            </div>
+        </div>
             <div className="settings-popup-content">
               <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
                 Are you sure you want to clear all local progress data? This action cannot be undone.
@@ -1054,6 +1281,339 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 >
                   OK
                 </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Delete Account Confirmation Dialog */}
+      {showDeleteAccountDialog && (
+        <>
+          <div className="settings-popup-overlay" onClick={handleCancelDeleteAccount}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <AlertTriangle size={24} color="var(--error-red)" />
+                <h3>Delete Account</h3>
+              </div>
+              <button 
+                className="settings-close-btn"
+                onClick={handleCancelDeleteAccount}
+                disabled={isDeletingAccount}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                Are you sure you want to delete your account? This will permanently delete all your data, including your progress, settings, and account information. This action cannot be undone.
+              </p>
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', opacity: 0.8, fontSize: '0.9rem', lineHeight: '1.6' }}>
+                Before deleting, make sure to export your progress as a backup if you want to keep a copy.
+              </p>
+              {profileError && (
+                <div style={{ 
+                  padding: '0.75rem 1rem', 
+                  marginBottom: '1.5rem',
+                  backgroundColor: 'var(--error-red-light)', 
+                  border: '1px solid var(--error-red-border)', 
+                  borderRadius: '8px',
+                  color: 'var(--error-red)',
+                  fontSize: '0.9rem'
+                }}>
+                  {profileError}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleCancelDeleteAccount}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                  disabled={isDeletingAccount}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-danger"
+                  onClick={handleConfirmDeleteAccount}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                  disabled={isDeletingAccount}
+                >
+                  {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Delete Account Success Dialog */}
+      {showDeleteSuccessDialog && (
+        <>
+          <div className="settings-popup-overlay" onClick={handleCloseDeleteSuccess}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <CheckCircle size={24} color="var(--rose)" />
+                <h3>Account Deleted</h3>
+              </div>
+              <button 
+                className="settings-close-btn"
+                onClick={handleCloseDeleteSuccess}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                Your account has been successfully deleted. You will be redirected to the home page.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleCloseDeleteSuccess}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Edit Profile Popup */}
+      {showEditProfilePopup && (
+        <>
+          <div className="settings-popup-overlay" onClick={handleCloseEditProfile}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <h3>Edit Profile</h3>
+              <button 
+                className="settings-close-btn"
+                onClick={handleCloseEditProfile}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              {/* Profile Error/Success Messages */}
+              {profileError && (
+                <div style={{ 
+                  padding: '0.75rem 1rem', 
+                  marginBottom: '1.5rem',
+                  backgroundColor: 'var(--error-red-light)', 
+                  border: '1px solid var(--error-red-border)', 
+                  borderRadius: '8px',
+                  color: 'var(--error-red)',
+                  fontSize: '0.9rem'
+                }}>
+                  {profileError}
+                </div>
+              )}
+              {profileSuccess && (
+                <div style={{ 
+                  padding: '0.75rem 1rem', 
+                  marginBottom: '1.5rem',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                  border: '1px solid rgba(16, 185, 129, 0.3)', 
+                  borderRadius: '8px',
+                  color: '#059669',
+                  fontSize: '0.9rem'
+                }}>
+                  {profileSuccess}
+                </div>
+              )}
+
+              {/* Name Editing */}
+              <div className="edit-profile-section">
+                <h4 className="edit-profile-label">Name</h4>
+                {isEditingName ? (
+                  <div className="edit-profile-field-container">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSaveName();
+                        } else if (e.key === 'Escape') {
+                          handleCancelEditName();
+                        }
+                      }}
+                      autoFocus
+                      className="edit-profile-input"
+                      placeholder="Enter your name"
+                      disabled={isUpdating}
+                    />
+                    <div className="edit-profile-actions">
+                      <button
+                        onClick={handleSaveName}
+                        className="user-name-action-btn user-name-save-btn"
+                        title="Save name"
+                        disabled={isUpdating}
+                      >
+                        <Check size={20} />
+                      </button>
+                      <button
+                        onClick={handleCancelEditName}
+                        className="user-name-action-btn user-name-cancel-btn"
+                        title="Cancel editing"
+                        disabled={isUpdating}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="edit-profile-display">
+                    <span>{userName || (isGuest ? 'Guest User' : 'User Name')}</span>
+                    <button
+                      onClick={() => {
+                        setEditedName(userName);
+                        setIsEditingName(true);
+                        setProfileError('');
+                        setProfileSuccess('');
+                      }}
+                      className="user-name-edit-btn"
+                      title="Edit name"
+                    >
+                      <Edit2 size={20} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Email Editing */}
+              <div className="edit-profile-section">
+                <h4 className="edit-profile-label">Email</h4>
+                {isEditingEmail ? (
+                  <div className="edit-profile-field-container">
+                    <input
+                      type="email"
+                      value={editedEmail}
+                      onChange={(e) => setEditedEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSaveEmail();
+                        } else if (e.key === 'Escape') {
+                          handleCancelEditEmail();
+                        }
+                      }}
+                      autoFocus
+                      className="edit-profile-input"
+                      placeholder="Enter your email"
+                      disabled={isUpdating}
+                    />
+                    <div className="edit-profile-actions">
+                      <button
+                        onClick={handleSaveEmail}
+                        className="user-name-action-btn user-name-save-btn"
+                        title="Save email"
+                        disabled={isUpdating}
+                      >
+                        <Check size={20} />
+                      </button>
+                      <button
+                        onClick={handleCancelEditEmail}
+                        className="user-name-action-btn user-name-cancel-btn"
+                        title="Cancel editing"
+                        disabled={isUpdating}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="edit-profile-display">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Mail size={16} style={{ opacity: 0.7 }} />
+                      <span>{userEmail || 'No email'}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditedEmail(userEmail);
+                        setIsEditingEmail(true);
+                        setProfileError('');
+                        setProfileSuccess('');
+                      }}
+                      className="user-name-edit-btn"
+                      title="Edit email"
+                    >
+                      <Edit2 size={20} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Password Change */}
+              <div className="edit-profile-section">
+                <h4 className="edit-profile-label">Change Password</h4>
+                {isEditingPassword ? (
+                  <div className="edit-profile-field-container">
+                    <input
+                      type="password"
+                      value={passwordData.current}
+                      onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+                      className="edit-profile-input"
+                      placeholder="Enter current password"
+                      disabled={isUpdating}
+                      style={{ marginBottom: '0.75rem' }}
+                    />
+                    <input
+                      type="password"
+                      value={passwordData.new}
+                      onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
+                      className="edit-profile-input"
+                      placeholder="Enter new password (min. 6 characters)"
+                      disabled={isUpdating}
+                      style={{ marginBottom: '0.75rem' }}
+                    />
+                    <input
+                      type="password"
+                      value={passwordData.confirm}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
+                      className="edit-profile-input"
+                      placeholder="Confirm new password"
+                      disabled={isUpdating}
+                    />
+                    <div className="edit-profile-actions" style={{ marginTop: '0.75rem' }}>
+                      <button
+                        onClick={handleSavePassword}
+                        className="user-name-action-btn user-name-save-btn"
+                        title="Save password"
+                        disabled={isUpdating}
+                      >
+                        <Check size={20} />
+                      </button>
+                      <button
+                        onClick={handleCancelEditPassword}
+                        className="user-name-action-btn user-name-cancel-btn"
+                        title="Cancel editing"
+                        disabled={isUpdating}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="edit-profile-display">
+                    <span style={{ opacity: 0.7 }}>Click to change password</span>
+                    <button
+                      onClick={() => {
+                        setPasswordData({ current: '', new: '', confirm: '' });
+                        setIsEditingPassword(true);
+                        setProfileError('');
+                        setProfileSuccess('');
+                      }}
+                      className="user-name-edit-btn"
+                      title="Change password"
+                    >
+                      <Edit2 size={20} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

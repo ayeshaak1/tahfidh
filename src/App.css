@@ -86,7 +86,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  opacity: 0.05;
+  opacity: 0.15;
 }
 
 .islamic-pattern {
@@ -661,7 +661,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text);
-  cursor: pointer;
+  cursor: default;
   transition: transform 0.2s ease;
 }
 
@@ -690,7 +690,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text);
-  cursor: pointer;
+  cursor: default;
   transition: transform 0.2s ease;
 }
 
@@ -945,7 +945,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: default;
   transition: transform 0.2s ease;
   text-align: center;
 }
@@ -990,6 +990,7 @@
   color: var(--text);
   min-width: 120px;
   text-align: center;
+  cursor: default;
 }
 
 .nav-btn {
