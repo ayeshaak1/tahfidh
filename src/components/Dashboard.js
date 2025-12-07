@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { CONSTRAINTS } from '../constants/storageConstants';
@@ -64,10 +64,11 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     };
   };
 
-  const progress = calculateProgress();
+  const progress = useMemo(() => calculateProgress(), [userProgress]);
 
-  // Calculate real data from userProgress
-  const calculateRealData = () => {
+  // Calculate real data from userProgress - recalculate when userProgress changes
+  const realData = useMemo(() => {
+    const calculateRealData = () => {
     let currentStreak = 0;
     let weeklyAverage = 0;
     let lastActivity = "No activity yet";
@@ -78,12 +79,13 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     const today = new Date();
     const oneDay = 24 * 60 * 60 * 1000;
     
-    // Find the most recent activity
+    // Find the most recent activity (only from memorized verses)
     let latestActivity = null;
     Object.values(userProgress).forEach(surah => {
       if (surah.verses) {
         Object.values(surah.verses).forEach(verse => {
-          if (verse.lastReviewed && (!latestActivity || new Date(verse.lastReviewed) > new Date(latestActivity))) {
+          // Only consider memorized verses for last activity
+          if (verse.memorized && verse.lastReviewed && (!latestActivity || new Date(verse.lastReviewed) > new Date(latestActivity))) {
             latestActivity = verse.lastReviewed;
           }
         });
@@ -92,10 +94,16 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
 
     if (latestActivity) {
       const lastActivityDate = new Date(latestActivity);
-      const daysSince = Math.round(Math.abs((today - lastActivityDate) / oneDay));
+      const todayStart = new Date(today);
+      todayStart.setHours(0, 0, 0, 0);
+      const lastActivityStart = new Date(lastActivityDate);
+      lastActivityStart.setHours(0, 0, 0, 0);
+      const daysSince = Math.round(Math.abs((todayStart - lastActivityStart) / oneDay));
       
       if (daysSince === 0) {
-        lastActivity = "Today";
+        // Show time if it's today
+        const timeStr = lastActivityDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        lastActivity = `Today at ${timeStr}`;
       } else if (daysSince === 1) {
         lastActivity = "Yesterday";
       } else {
@@ -113,15 +121,21 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       weeklyAverage = Math.round(progress.memorizedVerses / 4);
     }
 
-    // Find current surah (most recently worked on)
+    // Find current surah (most recently worked on - only from memorized verses)
     let mostRecentSurah = null;
     let mostRecentVerse = 0;
+    let mostRecentTimestamp = null;
     Object.entries(userProgress).forEach(([surahId, surah]) => {
       if (surah.verses) {
         Object.entries(surah.verses).forEach(([verseId, verse]) => {
-          if (verse.lastReviewed && (!mostRecentSurah || new Date(verse.lastReviewed) > new Date(mostRecentSurah.lastReviewed))) {
-            mostRecentSurah = { id: surahId, name: surah.name };
-            mostRecentVerse = parseInt(verseId);
+          // Only consider memorized verses for current surah
+          if (verse.memorized && verse.lastReviewed) {
+            const verseTimestamp = new Date(verse.lastReviewed).getTime();
+            if (!mostRecentTimestamp || verseTimestamp > mostRecentTimestamp) {
+              mostRecentTimestamp = verseTimestamp;
+              mostRecentSurah = { id: surahId, name: surah.name, lastReviewed: verse.lastReviewed };
+              mostRecentVerse = parseInt(verseId);
+            }
           }
         });
       }
@@ -132,16 +146,16 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       currentVerse = mostRecentVerse;
     }
 
-    return {
-      currentStreak,
-      weeklyAverage,
-      lastActivity,
-      currentSurah,
-      currentVerse
+      return {
+        currentStreak,
+        weeklyAverage,
+        lastActivity,
+        currentSurah,
+        currentVerse
+      };
     };
-  };
-
-  const realData = calculateRealData();
+    return calculateRealData();
+  }, [userProgress, progress]);
 
   // Generate weekly activity data for current week
   const generateWeeklyActivity = () => {

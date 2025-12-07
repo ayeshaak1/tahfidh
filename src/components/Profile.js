@@ -437,7 +437,12 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                     style={{ width: `${(stats.completedSurahs / stats.totalSurahs) * 100}%` }}
                   ></div>
                 </div>
-                <span className="chart-label">{stats.completedSurahs}/{stats.totalSurahs} surahs</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                  <span className="chart-label">{stats.completedSurahs}/{stats.totalSurahs} surahs</span>
+                  <span className="chart-percentage" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--rose)' }}>
+                    {Math.round((stats.completedSurahs / stats.totalSurahs) * 100)}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
