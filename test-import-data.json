@@ -1,0 +1,529 @@
+{
+  "version": "1.0.0",
+  "exportDate": "2025-12-07T10:30:00.000Z",
+  "progress": {
+    "1": {
+      "name": "Al-Fatihah",
+      "verses": {
+        "1": {
+          "memorized": true,
+          "lastReviewed": "2025-12-07T10:30:00.000Z"
+        },
+        "2": {
+          "memorized": true,
+          "lastReviewed": "2025-12-07T10:31:00.000Z"
+        },
+        "3": {
+          "memorized": true,
+          "lastReviewed": "2025-12-06T10:32:00.000Z"
+        },
+        "4": {
+          "memorized": false,
+          "lastReviewed": "2025-12-05T09:00:00.000Z"
+        },
+        "5": {
+          "memorized": true,
+          "lastReviewed": "2025-12-05T10:33:00.000Z"
+        },
+        "6": {
+          "memorized": true,
+          "lastReviewed": "2025-12-04T10:34:00.000Z"
+        },
+        "7": {
+          "memorized": true,
+          "lastReviewed": "2025-12-03T10:35:00.000Z"
+        }
+      }
+    },
+    "2": {
+      "name": "Al-Baqarah",
+      "verses": {
+        "1": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:00:00.000Z"
+        },
+        "2": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:05:00.000Z"
+        },
+        "3": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:10:00.000Z"
+        },
+        "4": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:15:00.000Z"
+        },
+        "5": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:20:00.000Z"
+        },
+        "6": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:25:00.000Z"
+        },
+        "7": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:30:00.000Z"
+        },
+        "8": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:35:00.000Z"
+        },
+        "9": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T08:40:00.000Z"
+        },
+        "10": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T15:30:00.000Z"
+        },
+        "11": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T15:35:00.000Z"
+        },
+        "12": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T15:40:00.000Z"
+        },
+        "13": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T15:45:00.000Z"
+        },
+        "14": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T15:50:00.000Z"
+        },
+        "15": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T15:55:00.000Z"
+        },
+        "16": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:00:00.000Z"
+        },
+        "17": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:05:00.000Z"
+        },
+        "18": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:10:00.000Z"
+        },
+        "19": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:15:00.000Z"
+        },
+        "20": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:20:00.000Z"
+        },
+        "21": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:25:00.000Z"
+        },
+        "22": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:30:00.000Z"
+        },
+        "23": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:35:00.000Z"
+        },
+        "24": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T16:40:00.000Z"
+        },
+        "25": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T14:20:00.000Z"
+        },
+        "26": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T14:25:00.000Z"
+        },
+        "27": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T14:30:00.000Z"
+        },
+        "28": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T14:35:00.000Z"
+        },
+        "29": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T14:40:00.000Z"
+        },
+        "30": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T14:45:00.000Z"
+        },
+        "31": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:00:00.000Z"
+        },
+        "32": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:05:00.000Z"
+        },
+        "33": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:10:00.000Z"
+        },
+        "34": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:15:00.000Z"
+        },
+        "35": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:20:00.000Z"
+        },
+        "36": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:25:00.000Z"
+        },
+        "37": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:30:00.000Z"
+        },
+        "38": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:35:00.000Z"
+        },
+        "39": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:40:00.000Z"
+        },
+        "40": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:45:00.000Z"
+        },
+        "41": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:50:00.000Z"
+        },
+        "42": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T10:55:00.000Z"
+        },
+        "43": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:00:00.000Z"
+        },
+        "44": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:05:00.000Z"
+        },
+        "45": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:10:00.000Z"
+        },
+        "46": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:15:00.000Z"
+        },
+        "47": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:20:00.000Z"
+        },
+        "48": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:25:00.000Z"
+        },
+        "49": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:30:00.000Z"
+        },
+        "50": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:35:00.000Z"
+        },
+        "51": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:00:00.000Z"
+        },
+        "52": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:05:00.000Z"
+        },
+        "53": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:10:00.000Z"
+        },
+        "54": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:15:00.000Z"
+        },
+        "55": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:20:00.000Z"
+        },
+        "56": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:25:00.000Z"
+        },
+        "57": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:30:00.000Z"
+        },
+        "58": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:35:00.000Z"
+        },
+        "59": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:40:00.000Z"
+        },
+        "60": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:45:00.000Z"
+        },
+        "61": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:50:00.000Z"
+        },
+        "62": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T10:55:00.000Z"
+        },
+        "63": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:00:00.000Z"
+        },
+        "64": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:05:00.000Z"
+        },
+        "65": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:10:00.000Z"
+        },
+        "66": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:15:00.000Z"
+        },
+        "67": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:20:00.000Z"
+        },
+        "68": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:25:00.000Z"
+        },
+        "69": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:30:00.000Z"
+        },
+        "70": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:35:00.000Z"
+        },
+        "71": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:00:00.000Z"
+        },
+        "72": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:05:00.000Z"
+        },
+        "73": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:10:00.000Z"
+        },
+        "74": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:15:00.000Z"
+        },
+        "75": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:20:00.000Z"
+        },
+        "76": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:25:00.000Z"
+        },
+        "77": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:30:00.000Z"
+        },
+        "78": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:35:00.000Z"
+        },
+        "79": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:40:00.000Z"
+        },
+        "80": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:45:00.000Z"
+        },
+        "81": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:50:00.000Z"
+        },
+        "82": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T10:55:00.000Z"
+        },
+        "83": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:00:00.000Z"
+        },
+        "84": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:05:00.000Z"
+        },
+        "85": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:10:00.000Z"
+        },
+        "86": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:15:00.000Z"
+        },
+        "87": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:20:00.000Z"
+        },
+        "88": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:25:00.000Z"
+        },
+        "89": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:30:00.000Z"
+        },
+        "90": {
+          "memorized": true,
+          "lastReviewed": "2025-11-28T11:35:00.000Z"
+        },
+        "91": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:00:00.000Z"
+        },
+        "92": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:05:00.000Z"
+        },
+        "93": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:10:00.000Z"
+        },
+        "94": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:15:00.000Z"
+        },
+        "95": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:20:00.000Z"
+        },
+        "96": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:25:00.000Z"
+        },
+        "97": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:30:00.000Z"
+        },
+        "98": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:35:00.000Z"
+        },
+        "99": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:40:00.000Z"
+        },
+        "100": {
+          "memorized": true,
+          "lastReviewed": "2025-11-27T10:45:00.000Z"
+        }
+      }
+    },
+    "112": {
+      "name": "Al-Ikhlas",
+      "verses": {
+        "1": {
+          "memorized": true,
+          "lastReviewed": "2025-12-07T11:00:00.000Z"
+        },
+        "2": {
+          "memorized": true,
+          "lastReviewed": "2025-12-07T11:01:00.000Z"
+        },
+        "3": {
+          "memorized": true,
+          "lastReviewed": "2025-12-06T11:02:00.000Z"
+        },
+        "4": {
+          "memorized": true,
+          "lastReviewed": "2025-12-05T11:03:00.000Z"
+        }
+      }
+    },
+    "113": {
+      "name": "Al-Falaq",
+      "verses": {
+        "1": {
+          "memorized": true,
+          "lastReviewed": "2025-12-04T11:10:00.000Z"
+        },
+        "2": {
+          "memorized": true,
+          "lastReviewed": "2025-12-04T11:11:00.000Z"
+        },
+        "3": {
+          "memorized": true,
+          "lastReviewed": "2025-12-03T11:12:00.000Z"
+        },
+        "4": {
+          "memorized": true,
+          "lastReviewed": "2025-12-03T11:13:00.000Z"
+        },
+        "5": {
+          "memorized": true,
+          "lastReviewed": "2025-12-02T11:14:00.000Z"
+        }
+      }
+    },
+    "114": {
+      "name": "An-Nas",
+      "verses": {
+        "1": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T11:20:00.000Z"
+        },
+        "2": {
+          "memorized": true,
+          "lastReviewed": "2025-12-01T11:21:00.000Z"
+        },
+        "3": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:22:00.000Z"
+        },
+        "4": {
+          "memorized": true,
+          "lastReviewed": "2025-11-30T11:23:00.000Z"
+        },
+        "5": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:24:00.000Z"
+        },
+        "6": {
+          "memorized": true,
+          "lastReviewed": "2025-11-29T11:25:00.000Z"
+        }
+      }
+    }
+  },
+  "userName": "Test User",
+  "theme": "dark",
+  "quranFont": "uthmani",
+  "showTranslation": true,
+  "showTransliteration": true,
+  "autoScroll": false,
+  "arabicFontSize": 2.8,
+  "translationFontSize": 1.2,
+  "transliterationFontSize": 1.1
+}
+

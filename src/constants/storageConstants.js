@@ -370,7 +370,7 @@ export const EXPORT_VERSION = '1.0.0';
 export const ExportHelpers = {
   /**
    * Create export data object from current app state
-   * @param {UserProgress} userProgress - Current user progress
+   * @param {UserProgress} userProgress - Current user progress (includes all verse data with memorized status and lastReviewed timestamps)
    * @param {string} userName - Current user name
    * @param {string} theme - Current theme
    * @param {Object} settings - All settings from SettingsContext
@@ -378,7 +378,7 @@ export const ExportHelpers = {
    */
   createExportData: (userProgress, userName, theme, settings) => {
     return {
-      progress: userProgress,
+      progress: userProgress, // Contains all surahs, verses, memorized status, and lastReviewed timestamps
       userName: userName || '',
       theme: theme || DEFAULT_VALUES.THEME,
       quranFont: settings.quranFont || DEFAULT_VALUES.QURAN_FONT,

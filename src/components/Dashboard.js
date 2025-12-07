@@ -103,11 +103,11 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
 
     if (latestActivity) {
       const lastActivityDate = new Date(latestActivity);
-      const todayStart = new Date(today);
-      todayStart.setHours(0, 0, 0, 0);
+      const todayStartForActivity = new Date(today);
+      todayStartForActivity.setHours(0, 0, 0, 0);
       const lastActivityStart = new Date(lastActivityDate);
       lastActivityStart.setHours(0, 0, 0, 0);
-      const daysSince = Math.round(Math.abs((todayStart - lastActivityStart) / oneDay));
+      const daysSince = Math.round(Math.abs((todayStartForActivity - lastActivityStart) / oneDay));
       
       if (daysSince === 0) {
         // Show time if it's today
@@ -119,9 +119,28 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
         lastActivity = `${lastActivityDate.toLocaleDateString()} ${lastActivityDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
       }
 
-      // Calculate current streak based on actual activity
-      if (progress.memorizedVerses > 0) {
-        currentStreak = Math.min(7, Math.floor(progress.memorizedVerses / 10) + 1);
+      // Calculate current streak based on consecutive days with activity (only memorized verses)
+      const activityDates = new Set();
+      Object.values(userProgress).forEach(surah => {
+        if (surah.verses) {
+          Object.values(surah.verses).forEach(verse => {
+            // Only count memorized verses for streak
+            if (verse.memorized && verse.lastReviewed) {
+              const reviewDate = new Date(verse.lastReviewed);
+              reviewDate.setHours(0, 0, 0, 0);
+              activityDates.add(reviewDate.toISOString().split('T')[0]);
+            }
+          });
+        }
+      });
+      
+      // Calculate consecutive days from today backwards
+      const todayStartForStreak = new Date(today);
+      todayStartForStreak.setHours(0, 0, 0, 0);
+      let checkDate = new Date(todayStartForStreak);
+      while (activityDates.has(checkDate.toISOString().split('T')[0])) {
+        currentStreak++;
+        checkDate.setDate(checkDate.getDate() - 1);
       }
     }
 
@@ -445,7 +464,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       {/* Guest Warning */}
       {isGuest && (
         <div className="guest-warning">
-          <span>⚠️ Guest Mode: Progress saved locally only</span>
+          <span>Guest Mode: Progress saved locally only</span>
           {/* <button className="create-account-btn">Create Account</button> */}
         </div>
       )}

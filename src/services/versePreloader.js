@@ -11,7 +11,7 @@ class VersePreloader {
     if (this.isPreloading) return;
     
     this.isPreloading = true;
-    console.log(`🔄 Preloading ${count} random verses...`);
+    console.log(`Preloading ${count} random verses...`);
     
     try {
       const promises = [];
@@ -31,25 +31,25 @@ class VersePreloader {
           if (verse.verse.words && Array.isArray(verse.verse.words)) {
             const totalLength = verse.verse.words.reduce((total, word) => total + (word.text ? word.text.length : 0), 0);
             if (totalLength > 25) {
-              console.log(`⚠️ Skipping verse ${verse.verse.verse_key} - too long (${totalLength} characters)`);
+              console.log(`Skipping verse ${verse.verse.verse_key} - too long (${totalLength} characters)`);
               return false;
             }
           }
           return true;
         });
       
-      console.log(`✅ Successfully preloaded ${this.randomVerses.length} random verses`);
+      console.log(`Successfully preloaded ${this.randomVerses.length} random verses`);
       if (this.randomVerses.length > 0) {
-        console.log('🔍 Sample preloaded verse structure:', JSON.stringify(this.randomVerses[0], null, 2));
+        console.log('Sample preloaded verse structure:', JSON.stringify(this.randomVerses[0], null, 2));
       }
       
       // Fallback if we couldn't get enough verses after length filtering
       if (this.randomVerses.length < 3) {
-        console.log('⚠️ Limited verses preloaded after length filtering, loading default verses...');
+        console.log('Limited verses preloaded after length filtering, loading default verses...');
         this.randomVerses.push(...this.getDefaultVerses());
       }
     } catch (error) {
-      console.error('❌ Error preloading verses:', error);
+      console.error('Error preloading verses:', error);
       // Fallback to default verses
       this.randomVerses = this.getDefaultVerses();
     } finally {
@@ -60,7 +60,7 @@ class VersePreloader {
   async fetchRandomVerse() {
     try {
       const response = await quranApi.getRandomVerse();
-      console.log('🔍 Random verse API response:', JSON.stringify(response, null, 2));
+      console.log('Random verse API response:', JSON.stringify(response, null, 2));
       return response;
     } catch (error) {
       console.warn('Failed to fetch random verse:', error);
@@ -69,15 +69,15 @@ class VersePreloader {
   }
 
   getRandomVerse() {
-    console.log(`🔍 getRandomVerse called. Available verses: ${this.randomVerses.length}, current index: ${this.currentIndex}`);
+    console.log(`getRandomVerse called. Available verses: ${this.randomVerses.length}, current index: ${this.currentIndex}`);
     
     if (this.randomVerses.length === 0) {
-      console.log('⚠️ No preloaded verses, returning default verse');
+      console.log('No preloaded verses, returning default verse');
       return this.getDefaultVerses()[0];
     }
     
     const verse = this.randomVerses[this.currentIndex % this.randomVerses.length];
-    console.log(`🔍 Returning verse at index ${this.currentIndex % this.randomVerses.length}:`, JSON.stringify(verse, null, 2));
+    console.log(`Returning verse at index ${this.currentIndex % this.randomVerses.length}:`, JSON.stringify(verse, null, 2));
     this.currentIndex++;
     
     // Preload more verses when we're halfway through

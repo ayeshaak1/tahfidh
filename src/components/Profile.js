@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle } from 'lucide-react';
+import quranApi from '../services/quranApi';
 import { 
   STORAGE_KEYS, 
   DEFAULT_VALUES, 
@@ -22,6 +23,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   });
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
+  const [surahsData, setSurahsData] = useState(null);
+  const [juzMapping, setJuzMapping] = useState(null); // Map surah ID to juz number
   const { theme, setTheme, toggleTheme, isDark } = useTheme();
   const {
     quranFont,
@@ -44,6 +47,63 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   useEffect(() => {
     setCurrentPath('/profile');
   }, [setCurrentPath]);
+
+  // Fetch surahs data and juz mapping for accurate juz calculation
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch surahs for verse counts
+        const surahsResponse = await quranApi.getSurahs();
+        if (surahsResponse && surahsResponse.chapters) {
+          setSurahsData(surahsResponse.chapters);
+        }
+        
+        // Fetch juz data to create accurate surah-to-juz mapping
+        // Note: In test mode, API may only return limited surah data (e.g., surahs 1-2)
+        // In production with full API access, all surahs will be mapped correctly
+        try {
+          const juzsResponse = await quranApi.getJuzs();
+          console.log('Juzs response:', juzsResponse);
+          if (juzsResponse && juzsResponse.juzs) {
+            const mapping = {};
+            juzsResponse.juzs.forEach(juz => {
+              const juzNumber = parseInt(juz.juz_number) || juz.juz_number;
+              if (juz.verse_mapping && typeof juz.verse_mapping === 'object') {
+                // verse_mapping is like { "1": "1-7", "2": "1-141" }
+                // Each key is a surah ID, value is the verse range
+                Object.keys(juz.verse_mapping).forEach(surahId => {
+                  const surahIdNum = parseInt(surahId);
+                  if (!isNaN(surahIdNum)) {
+                    // If surah appears in multiple juz, use the first one found
+                    // (some surahs span multiple juz)
+                    if (!mapping[surahIdNum]) {
+                      mapping[surahIdNum] = juzNumber;
+                    }
+                  }
+                });
+              }
+            });
+            console.log('Juz mapping created:', mapping);
+            // Only use mapping if it has sufficient data (more than just test surahs)
+            // In production, this will have all 114 surahs mapped
+            if (Object.keys(mapping).length > 2) {
+              setJuzMapping(mapping);
+            } else {
+              console.warn('Juz mapping incomplete (likely test mode), using fallback');
+            }
+          } else {
+            console.warn('No juzs data in response:', juzsResponse);
+          }
+        } catch (juzErr) {
+          console.error('Failed to fetch juz data:', juzErr);
+          // Fall back to simplified mapping if API fails
+        }
+      } catch (err) {
+        console.error('Failed to fetch surahs for juz calculation:', err);
+      }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const saved = StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
@@ -150,16 +210,51 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       let juzVerses = 0;
       let juzMemorized = 0;
       
-      // Simplified juz mapping (in production, use exact juz boundaries)
-      Object.entries(userProgress).forEach(([surahId, surah]) => {
-        if (surah.verses) {
-          const surahJuz = Math.ceil(parseInt(surahId) / 4);
-          if (surahJuz === juz) {
-            juzVerses += Object.keys(surah.verses).length;
-            juzMemorized += Object.values(surah.verses).filter(verse => verse.memorized).length;
+      // Use juz mapping from API if available (most accurate)
+      if (juzMapping && Object.keys(juzMapping).length > 0 && surahsData) {
+        surahsData.forEach(surah => {
+          const surahJuz = juzMapping[surah.id];
+          // Compare as numbers to handle string/number mismatch
+          if (surahJuz !== undefined && parseInt(surahJuz) === juz) {
+            const surahProgress = userProgress[surah.id];
+            const totalVerses = surah.verses_count || 0;
+            juzVerses += totalVerses;
+            
+            if (surahProgress && surahProgress.verses) {
+              juzMemorized += Object.values(surahProgress.verses).filter(verse => verse.memorized).length;
+            }
           }
-        }
-      });
+        });
+      } else if (surahsData) {
+        // Fallback: use simplified mapping if juz data not available or incomplete
+        // This is approximate - each juz has roughly 4 surahs
+        // Note: In test mode with limited API access, juz mapping may be incomplete
+        // In production with full API access, the juz mapping from API will be used
+        surahsData.forEach(surah => {
+          const surahJuz = Math.ceil(parseInt(surah.id) / 4);
+          if (surahJuz === juz) {
+            const surahProgress = userProgress[surah.id];
+            const totalVerses = surah.verses_count || 0;
+            juzVerses += totalVerses;
+            
+            if (surahProgress && surahProgress.verses) {
+              juzMemorized += Object.values(surahProgress.verses).filter(verse => verse.memorized).length;
+            }
+          }
+        });
+      } else {
+        // Final fallback: use tracked verses only (least accurate)
+        Object.entries(userProgress).forEach(([surahId, surah]) => {
+          if (surah.verses) {
+            const surahIdNum = parseInt(surahId);
+            const surahJuz = juzMapping && juzMapping[surahIdNum] ? juzMapping[surahIdNum] : Math.ceil(surahIdNum / 4);
+            if (surahJuz === juz) {
+              juzVerses += Object.keys(surah.verses).length;
+              juzMemorized += Object.values(surah.verses).filter(verse => verse.memorized).length;
+            }
+          }
+        });
+      }
       
       const progress = juzVerses > 0 ? Math.round((juzMemorized / juzVerses) * 100) : 0;
       heatmap.push({ juz, progress });
@@ -265,77 +360,122 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           // Validate import data
           const validation = ExportHelpers.validateImportData(importedData);
           if (!validation.valid) {
-            setImportError(validation.error);
+            setImportError(validation.error || 'Invalid file format');
             setShowImportSuccessDialog(false);
             return;
           }
           
+          // Clear any previous errors
           setImportError(null);
           
-          // Import progress data
+          // Import progress data (includes all verse data with lastReviewed timestamps)
+          // This is the most important data - contains all memorization progress
           if (importedData.progress && Validators.isValidUserProgress(importedData.progress)) {
             setUserProgress(importedData.progress);
             StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, importedData.progress);
+          } else {
+            // If progress is missing or invalid, that's a critical error
+            setImportError('Invalid or missing progress data');
+            setShowImportSuccessDialog(false);
+            return;
           }
           
-          // Import user name if present
-          if (importedData.userName && typeof importedData.userName === 'string') {
-            setUserName(importedData.userName);
-            // StorageHelpers.setItem is called automatically in useEffect when userName changes
+          // Import user name if present (optional)
+          if (importedData.userName !== undefined) {
+            if (typeof importedData.userName === 'string') {
+              setUserName(importedData.userName);
+              // StorageHelpers.setItem is called automatically in useEffect when userName changes
+            } else if (importedData.userName !== null) {
+              // Invalid type, but not critical - just skip it
+              console.warn('Invalid userName type in import, skipping');
+            }
           }
           
-          // Import theme if present (SettingsContext and ThemeContext handle localStorage persistence automatically)
-          if (importedData.theme && Validators.isValidTheme(importedData.theme)) {
-            setTheme(importedData.theme);
-            // ThemeContext automatically saves to localStorage via useEffect
+          // Import theme if present (optional, but validate if provided)
+          if (importedData.theme !== undefined) {
+            if (Validators.isValidTheme(importedData.theme)) {
+              setTheme(importedData.theme);
+              // ThemeContext automatically saves to localStorage via useEffect
+            } else {
+              console.warn('Invalid theme in import, using default');
+            }
           }
           
-          // Import all settings if present (SettingsContext handles localStorage persistence automatically)
-          if (importedData.quranFont && Validators.isValidFontType(importedData.quranFont)) {
-            setQuranFont(importedData.quranFont);
-            // SettingsContext automatically saves to localStorage via useEffect
+          // Import all settings if present (optional, but validate if provided)
+          if (importedData.quranFont !== undefined) {
+            if (Validators.isValidFontType(importedData.quranFont)) {
+              setQuranFont(importedData.quranFont);
+            } else {
+              console.warn('Invalid quranFont in import, using default');
+            }
           }
           
-          if (typeof importedData.showTranslation === 'boolean') {
-            setShowTranslation(importedData.showTranslation);
-            // SettingsContext automatically saves to localStorage via useEffect
+          if (importedData.showTranslation !== undefined) {
+            if (typeof importedData.showTranslation === 'boolean') {
+              setShowTranslation(importedData.showTranslation);
+            } else {
+              console.warn('Invalid showTranslation type in import, skipping');
+            }
           }
           
-          if (typeof importedData.showTransliteration === 'boolean') {
-            setShowTransliteration(importedData.showTransliteration);
-            // SettingsContext automatically saves to localStorage via useEffect
+          if (importedData.showTransliteration !== undefined) {
+            if (typeof importedData.showTransliteration === 'boolean') {
+              setShowTransliteration(importedData.showTransliteration);
+            } else {
+              console.warn('Invalid showTransliteration type in import, skipping');
+            }
           }
           
-          if (typeof importedData.autoScroll === 'boolean') {
-            setAutoScroll(importedData.autoScroll);
-            // SettingsContext automatically saves to localStorage via useEffect
+          if (importedData.autoScroll !== undefined) {
+            if (typeof importedData.autoScroll === 'boolean') {
+              setAutoScroll(importedData.autoScroll);
+            } else {
+              console.warn('Invalid autoScroll type in import, skipping');
+            }
           }
           
-          if (typeof importedData.arabicFontSize === 'number') {
-            const validatedSize = Validators.validateFontSize(importedData.arabicFontSize, 'arabic');
-            setArabicFontSize(validatedSize);
-            // SettingsContext automatically saves to localStorage via useEffect
+          if (importedData.arabicFontSize !== undefined) {
+            if (typeof importedData.arabicFontSize === 'number') {
+              const validatedSize = Validators.validateFontSize(importedData.arabicFontSize, 'arabic');
+              setArabicFontSize(validatedSize);
+            } else {
+              console.warn('Invalid arabicFontSize type in import, skipping');
+            }
           }
           
-          if (typeof importedData.translationFontSize === 'number') {
-            const validatedSize = Validators.validateFontSize(importedData.translationFontSize, 'translation');
-            setTranslationFontSize(validatedSize);
-            // SettingsContext automatically saves to localStorage via useEffect
+          if (importedData.translationFontSize !== undefined) {
+            if (typeof importedData.translationFontSize === 'number') {
+              const validatedSize = Validators.validateFontSize(importedData.translationFontSize, 'translation');
+              setTranslationFontSize(validatedSize);
+            } else {
+              console.warn('Invalid translationFontSize type in import, skipping');
+            }
           }
           
-          if (typeof importedData.transliterationFontSize === 'number') {
-            const validatedSize = Validators.validateFontSize(importedData.transliterationFontSize, 'transliteration');
-            setTransliterationFontSize(validatedSize);
-            // SettingsContext automatically saves to localStorage via useEffect
+          if (importedData.transliterationFontSize !== undefined) {
+            if (typeof importedData.transliterationFontSize === 'number') {
+              const validatedSize = Validators.validateFontSize(importedData.transliterationFontSize, 'transliteration');
+              setTransliterationFontSize(validatedSize);
+            } else {
+              console.warn('Invalid transliterationFontSize type in import, skipping');
+            }
           }
           
+          // All data imported successfully
           setShowImportSuccessDialog(true);
           setImportError(null);
         } catch (error) {
-          setImportError(error.message);
+          // Handle JSON parse errors or other unexpected errors
+          setImportError(error.message || 'Failed to parse import file. Please ensure it is a valid JSON file.');
           setShowImportSuccessDialog(false);
         }
       };
+      
+      reader.onerror = () => {
+        setImportError('Failed to read file. Please try again.');
+        setShowImportSuccessDialog(false);
+      };
+      
       reader.readAsText(file);
     }
     // Reset file input so same file can be imported again
