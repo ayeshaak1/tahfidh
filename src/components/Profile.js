@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check } from 'lucide-react';
+import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle } from 'lucide-react';
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -404,7 +404,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <h4>Theme & Appearance</h4>
             <div className="setting-item">
               <div className="theme-header-row">
-                <label>Theme</label>
+                <div className="label-with-help">
+                  <label>Theme</label>
+                  <div className="help-tooltip">
+                    <HelpCircle size={16} />
+                    <span className="tooltip-text">Switch between light and dark mode</span>
+                  </div>
+                </div>
                 <button className="theme-toggle-btn" onClick={toggleTheme}>
                   {isDark ? <Sun size={20} /> : <Moon size={20} />}
                   <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
@@ -417,7 +423,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <h4>Quran Preferences</h4>
             <div className="theme-appearance-row">
               <div className="setting-item">
-                <label>Default Font</label>
+                <div className="label-with-help">
+                  <label>Default Font</label>
+                  <div className="help-tooltip">
+                    <HelpCircle size={16} />
+                    <span className="tooltip-text">Choose Quran font style</span>
+                  </div>
+                </div>
                 <div className="toggle-buttons">
                   <button
                     className={`toggle-btn ${quranFont === 'uthmani' ? 'active' : ''}`}
@@ -435,7 +447,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               </div>
               
               <div className="setting-item">
-                <label>Display Options</label>
+                <div className="label-with-help">
+                  <label>Display Options</label>
+                  <div className="help-tooltip">
+                    <HelpCircle size={16} />
+                    <span className="tooltip-text">Show or hide translation and transliteration</span>
+                  </div>
+                </div>
                 <div className="toggle-buttons">
                   <button
                     className={`toggle-btn ${showTranslation ? 'active' : ''}`}
@@ -453,7 +471,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               </div>
 
               <div className="setting-item">
-                <label>Auto-scroll</label>
+                <div className="label-with-help">
+                  <label>Auto-scroll</label>
+                  <div className="help-tooltip">
+                    <HelpCircle size={16} />
+                    <span className="tooltip-text">Auto-scroll to next verse after marking a verse as memorized</span>
+                  </div>
+                </div>
                 <div className="toggle-buttons">
                   <button
                     className={`toggle-btn ${autoScroll ? 'active' : ''}`}
@@ -479,7 +503,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <div className="setting-item">
               <div className="font-size-control">
                 <div className="font-size-header">
-                  <label>Arabic Text</label>
+                  <div className="label-with-help">
+                    <label>Arabic Text</label>
+                    <div className="help-tooltip">
+                      <HelpCircle size={16} />
+                      <span className="tooltip-text">Arabic text font size</span>
+                    </div>
+                  </div>
                   <span className="font-size-value">{arabicFontSize.toFixed(1)}</span>
                 </div>
                 <input
@@ -495,7 +525,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
               <div className="font-size-control">
                 <div className="font-size-header">
-                  <label>Translation</label>
+                  <div className="label-with-help">
+                    <label>Translation</label>
+                    <div className="help-tooltip">
+                      <HelpCircle size={16} />
+                      <span className="tooltip-text">Translation text font size</span>
+                    </div>
+                  </div>
                   <span className="font-size-value">{translationFontSize.toFixed(1)}</span>
                 </div>
                 <input
@@ -511,7 +547,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
               <div className="font-size-control">
                 <div className="font-size-header">
-                  <label>Transliteration</label>
+                  <div className="label-with-help">
+                    <label>Transliteration</label>
+                    <div className="help-tooltip">
+                      <HelpCircle size={16} />
+                      <span className="tooltip-text">Transliteration text font size</span>
+                    </div>
+                  </div>
                   <span className="font-size-value">{transliterationFontSize.toFixed(1)}</span>
                 </div>
                 <input
@@ -534,7 +576,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           
           <div className="data-actions">
             <div className="data-action-card">
-              <h4>Export Progress</h4>
+              <div className="data-action-header">
+                <h4>Export Progress</h4>
+              </div>
               <p>Download your progress data as JSON</p>
               <button className="btn btn-secondary" onClick={exportProgress}>
                 <Download size={16} />
@@ -543,7 +587,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             </div>
             
             <div className="data-action-card">
-              <h4>Import Progress</h4>
+              <div className="data-action-header">
+                <h4>Import Progress</h4>
+              </div>
               <p>Restore progress from a backup file</p>
               <label className="file-upload-btn">
                 <Upload size={16} />
@@ -559,7 +605,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           </div>
 
           <div className="danger-zone">
-            <h4>Danger Zone</h4>
+            <div className="danger-zone-header">
+              <h4>Danger Zone</h4>
+            </div>
             <p style={{ marginBottom: '1rem', color: 'var(--text)', opacity: 0.8, fontSize: '0.9rem' }}>
               Before clearing your data, make sure to export your progress as a backup.
             </p>

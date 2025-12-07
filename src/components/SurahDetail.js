@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X, HelpCircle } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
 
@@ -380,6 +380,8 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
 
   // Handle verse memorization toggle
   const toggleVerseMemorization = (verseId) => {
+    // Ensure verseId is a number for proper comparison
+    const verseIdNum = typeof verseId === 'string' ? parseInt(verseId, 10) : verseId;
     const wasMemorized = userProgress[id]?.verses?.[verseId]?.memorized || false;
     
     setUserProgress(prev => {
@@ -401,11 +403,12 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     });
 
     // Auto-scroll to next verse if enabled and verse was just marked as memorized
-    if (autoScroll && !wasMemorized && verseId < totalVerses) {
-      // Small delay to ensure state update is processed
+    if (autoScroll && !wasMemorized && verseIdNum < totalVerses) {
+      // Small delay to ensure state update is processed and DOM is ready
       setTimeout(() => {
-        scrollToVerse(verseId + 1);
-      }, 100);
+        const nextVerseId = verseIdNum + 1;
+        scrollToVerse(nextVerseId);
+      }, 300);
     }
   };
 
@@ -689,9 +692,9 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                 </div>
               </div>
 
-              <div className="font-size-controls">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <label className="setting-label" style={{ marginBottom: 0 }}>Font Sizes</label>
+              <div className="setting-group">
+                <div className="font-sizes-header-row">
+                  <h4>Font Sizes</h4>
                   <button
                     className="reset-font-sizes-btn"
                     onClick={resetFontSizes}
@@ -699,53 +702,72 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     Reset
                   </button>
                 </div>
-                
-                <div className="font-size-slider-group">
-                  <label className="slider-label">
-                    Arabic Text
-                    <span className="slider-value">{arabicFontSize.toFixed(1)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="1.0"
-                    max="4.0"
-                    step="0.1"
-                    value={arabicFontSize}
-                    onChange={(e) => setArabicFontSize(parseFloat(e.target.value))}
-                    className="font-size-slider"
-                  />
-                </div>
+                <div className="setting-item">
+                  <div className="font-size-control">
+                    <div className="font-size-header">
+                      <div className="label-with-help">
+                        <label>Arabic Text</label>
+                        <div className="help-tooltip">
+                          <HelpCircle size={16} />
+                          <span className="tooltip-text">Arabic text font size</span>
+                        </div>
+                      </div>
+                      <span className="font-size-value">{arabicFontSize.toFixed(1)}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1.0"
+                      max="4.0"
+                      step="0.1"
+                      value={arabicFontSize}
+                      onChange={(e) => setArabicFontSize(parseFloat(e.target.value))}
+                      className="font-size-range"
+                    />
+                  </div>
 
-                <div className="font-size-slider-group">
-                  <label className="slider-label">
-                    Translation
-                    <span className="slider-value">{translationFontSize.toFixed(1)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="0.7"
-                    max="2.0"
-                    step="0.1"
-                    value={translationFontSize}
-                    onChange={(e) => setTranslationFontSize(parseFloat(e.target.value))}
-                    className="font-size-slider"
-                  />
-                </div>
+                  <div className="font-size-control">
+                    <div className="font-size-header">
+                      <div className="label-with-help">
+                        <label>Translation</label>
+                        <div className="help-tooltip">
+                          <HelpCircle size={16} />
+                          <span className="tooltip-text">Translation text font size</span>
+                        </div>
+                      </div>
+                      <span className="font-size-value">{translationFontSize.toFixed(1)}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.7"
+                      max="2.0"
+                      step="0.1"
+                      value={translationFontSize}
+                      onChange={(e) => setTranslationFontSize(parseFloat(e.target.value))}
+                      className="font-size-range"
+                    />
+                  </div>
 
-                <div className="font-size-slider-group">
-                  <label className="slider-label">
-                    Transliteration
-                    <span className="slider-value">{transliterationFontSize.toFixed(1)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="0.7"
-                    max="2.0"
-                    step="0.1"
-                    value={transliterationFontSize}
-                    onChange={(e) => setTransliterationFontSize(parseFloat(e.target.value))}
-                    className="font-size-slider"
-                  />
+                  <div className="font-size-control">
+                    <div className="font-size-header">
+                      <div className="label-with-help">
+                        <label>Transliteration</label>
+                        <div className="help-tooltip">
+                          <HelpCircle size={16} />
+                          <span className="tooltip-text">Transliteration text font size</span>
+                        </div>
+                      </div>
+                      <span className="font-size-value">{transliterationFontSize.toFixed(1)}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.7"
+                      max="2.0"
+                      step="0.1"
+                      value={transliterationFontSize}
+                      onChange={(e) => setTransliterationFontSize(parseFloat(e.target.value))}
+                      className="font-size-range"
+                    />
+                  </div>
                 </div>
               </div>
 

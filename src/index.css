@@ -17,13 +17,13 @@
 [data-theme="dark"] {
   --cream: #1E152A;
   --beige: #2A1E3A;
-  --rose: #FF9AA2;
+  --rose: #f69199;
   --lavender: #B19CD9;
   --text: #F7FAFC;
   --border: #4A5568;
   --shadow: rgba(255, 255, 255, 0.3);
-  --error-red: #EF4444;
-  --error-red-hover: #DC2626;
+  --error-red: #e83c3c;
+  --error-red-hover: #d63131;
   --error-red-light: rgba(239, 68, 68, 0.15);
   --error-red-border: rgba(239, 68, 68, 0.4);
 }

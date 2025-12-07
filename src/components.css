@@ -1497,6 +1497,95 @@
   font-size: 1rem;
 }
 
+/* Help Tooltip Styles */
+.label-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.data-action-header,
+.danger-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.help-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  color: var(--text);
+  opacity: 0.6;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.help-tooltip:hover {
+  opacity: 1;
+  color: var(--rose);
+}
+
+.help-tooltip .tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--beige);
+  color: var(--text);
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  min-width: 280px;
+  max-width: min(400px, calc(100vw - 2rem));
+  white-space: normal;
+  z-index: 1000;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  line-height: 1.4;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.help-tooltip .tooltip-text::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--beige);
+}
+
+.help-tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Ensure tooltips stay within settings panel */
+.settings-panel .help-tooltip .tooltip-text,
+.setting-group .help-tooltip .tooltip-text {
+  max-width: min(400px, calc(100% - 2rem));
+}
+
+/* Ensure tooltips stay within data management cards */
+.data-action-card .help-tooltip .tooltip-text {
+  max-width: min(400px, calc(100% - 2rem));
+}
+
+/* Ensure tooltips stay within danger zone */
+.danger-zone .help-tooltip .tooltip-text {
+  max-width: min(400px, calc(100% - 2rem));
+}
+
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1946,6 +2035,7 @@
   background: var(--beige);
   border-radius: 25px;
   border: 1px solid var(--border);
+  margin-bottom: 0;
 }
 
 .footer-content {
@@ -1957,7 +2047,7 @@
 
 .mandatory-disclaimer {
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .mandatory-disclaimer strong {
@@ -1967,7 +2057,7 @@
 .app-version {
   color: var(--text);
   opacity: 0.6;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 
 .danger-actions {
@@ -2003,7 +2093,6 @@
   background: var(--beige);
   border-top: 1px solid var(--border);
   padding: 1.5rem 2rem;
-  margin-top: 3rem;
   box-sizing: border-box;
   transition: margin-left 0.3s ease, padding 0.3s ease, width 0.3s ease;
   overflow-x: hidden;
@@ -2038,13 +2127,13 @@
 
 .footer-disclaimer {
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   line-height: 1.6;
 }
 
 .footer-disclaimer p {
   margin: 0;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 
 .footer-disclaimer strong {
@@ -2897,7 +2986,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
-  width: 240px;
+  width: 18rem;
   text-align: center;
   white-space: nowrap;
   box-sizing: border-box;
