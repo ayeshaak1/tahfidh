@@ -967,7 +967,8 @@
   color: var(--text);
 }
 
-/* Month/Year Navigation */
+/* Week/Month/Year Navigation */
+.week-navigation,
 .month-navigation,
 .year-navigation {
   display: flex;
@@ -981,6 +982,7 @@
   border: 1px solid var(--border);
 }
 
+.current-week,
 .current-month,
 .current-year {
   font-size: 1.2rem;
@@ -1270,13 +1272,15 @@
     font-size: 1rem;
   }
   
-  /* Month/Year Navigation */
+  /* Week/Month/Year Navigation */
+  .week-navigation,
   .month-navigation,
   .year-navigation {
     flex-direction: column;
     gap: 0.5rem;
   }
   
+  .current-week,
   .current-month,
   .current-year {
     min-width: auto;

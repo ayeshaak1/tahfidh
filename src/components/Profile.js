@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle } from 'lucide-react';
+import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle } from 'lucide-react';
 import { 
   STORAGE_KEYS, 
   DEFAULT_VALUES, 
@@ -15,12 +15,14 @@ import {
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showImportSuccessDialog, setShowImportSuccessDialog] = useState(false);
+  const [importError, setImportError] = useState(null);
   const [userName, setUserName] = useState(() => {
     return StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
   });
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { theme, setTheme, toggleTheme, isDark } = useTheme();
   const {
     quranFont,
     setQuranFont,
@@ -263,9 +265,12 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           // Validate import data
           const validation = ExportHelpers.validateImportData(importedData);
           if (!validation.valid) {
-            alert(`Invalid file format: ${validation.error}`);
+            setImportError(validation.error);
+            setShowImportSuccessDialog(false);
             return;
           }
+          
+          setImportError(null);
           
           // Import progress data
           if (importedData.progress && Validators.isValidUserProgress(importedData.progress)) {
@@ -276,19 +281,65 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           // Import user name if present
           if (importedData.userName && typeof importedData.userName === 'string') {
             setUserName(importedData.userName);
+            // StorageHelpers.setItem is called automatically in useEffect when userName changes
           }
           
-          // Import settings if present (will be handled by SettingsContext if needed)
-          // Note: Settings are managed by SettingsContext, so we don't directly set them here
-          // but the export/import structure supports them for future use
+          // Import theme if present (SettingsContext and ThemeContext handle localStorage persistence automatically)
+          if (importedData.theme && Validators.isValidTheme(importedData.theme)) {
+            setTheme(importedData.theme);
+            // ThemeContext automatically saves to localStorage via useEffect
+          }
           
-          alert('Progress imported successfully!');
+          // Import all settings if present (SettingsContext handles localStorage persistence automatically)
+          if (importedData.quranFont && Validators.isValidFontType(importedData.quranFont)) {
+            setQuranFont(importedData.quranFont);
+            // SettingsContext automatically saves to localStorage via useEffect
+          }
+          
+          if (typeof importedData.showTranslation === 'boolean') {
+            setShowTranslation(importedData.showTranslation);
+            // SettingsContext automatically saves to localStorage via useEffect
+          }
+          
+          if (typeof importedData.showTransliteration === 'boolean') {
+            setShowTransliteration(importedData.showTransliteration);
+            // SettingsContext automatically saves to localStorage via useEffect
+          }
+          
+          if (typeof importedData.autoScroll === 'boolean') {
+            setAutoScroll(importedData.autoScroll);
+            // SettingsContext automatically saves to localStorage via useEffect
+          }
+          
+          if (typeof importedData.arabicFontSize === 'number') {
+            const validatedSize = Validators.validateFontSize(importedData.arabicFontSize, 'arabic');
+            setArabicFontSize(validatedSize);
+            // SettingsContext automatically saves to localStorage via useEffect
+          }
+          
+          if (typeof importedData.translationFontSize === 'number') {
+            const validatedSize = Validators.validateFontSize(importedData.translationFontSize, 'translation');
+            setTranslationFontSize(validatedSize);
+            // SettingsContext automatically saves to localStorage via useEffect
+          }
+          
+          if (typeof importedData.transliterationFontSize === 'number') {
+            const validatedSize = Validators.validateFontSize(importedData.transliterationFontSize, 'transliteration');
+            setTransliterationFontSize(validatedSize);
+            // SettingsContext automatically saves to localStorage via useEffect
+          }
+          
+          setShowImportSuccessDialog(true);
+          setImportError(null);
         } catch (error) {
-          alert(`Invalid file format: ${error.message}`);
+          setImportError(error.message);
+          setShowImportSuccessDialog(false);
         }
       };
       reader.readAsText(file);
     }
+    // Reset file input so same file can be imported again
+    event.target.value = '';
   };
 
   const clearLocalData = () => {
@@ -308,6 +359,11 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
   const handleCloseSuccess = () => {
     setShowSuccessDialog(false);
+  };
+
+  const handleCloseImportSuccess = () => {
+    setShowImportSuccessDialog(false);
+    setImportError(null);
   };
 
 
@@ -784,6 +840,76 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 <button 
                   className="btn btn-secondary"
                   onClick={handleCloseSuccess}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Import Success Dialog */}
+      {showImportSuccessDialog && (
+        <>
+          <div className="settings-popup-overlay" onClick={handleCloseImportSuccess}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <CheckCircle size={24} color="var(--rose)" />
+                <h3>Import Successful</h3>
+              </div>
+              <button 
+                className="settings-close-btn"
+                onClick={handleCloseImportSuccess}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                All data has been imported successfully! Your progress, settings, and preferences have been restored.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleCloseImportSuccess}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Import Error Dialog */}
+      {importError && (
+        <>
+          <div className="settings-popup-overlay" onClick={() => setImportError(null)}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <AlertTriangle size={24} color="var(--error-red)" />
+                <h3>Import Failed</h3>
+              </div>
+              <button 
+                className="settings-close-btn"
+                onClick={() => setImportError(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                {`Invalid file format: ${importError}`}
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => setImportError(null)}
                   style={{ width: 'auto', minWidth: '120px' }}
                 >
                   OK

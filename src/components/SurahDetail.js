@@ -158,7 +158,30 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     return false;
   };
 
-  // Scroll restoration logic when surah loads (only on initial load, not when marking verses)
+  // Scroll restoration logic when surah loads or searchParams change
+  // Separate effect for verse parameter to handle navigation from Dashboard
+  useEffect(() => {
+    if (!surah || loading) return;
+    
+    // Check if we have a verse parameter - if so, always scroll to it
+    const verseParam = searchParams.get('verse');
+    if (verseParam) {
+      const verseNumber = parseInt(verseParam);
+      if (!isNaN(verseNumber) && verseNumber > 0) {
+        // Small delay to ensure DOM is fully rendered
+        const timeoutId = setTimeout(() => {
+          const scrolled = scrollToVerse(verseNumber);
+          if (!scrolled) {
+            // If verse not found, scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }, 200);
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [surah, loading, id, searchParams]); // Only depend on searchParams for verse parameter
+
+  // Separate effect for initial scroll (most recent verse) - only on navigation, not when userProgress changes
   useEffect(() => {
     if (!surah || loading) return;
     
@@ -169,26 +192,18 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       return; // Already handled initial scroll for this navigation instance
     }
     
+    // If there's a verse parameter, don't use this logic (the other effect handles it)
+    const verseParam = searchParams.get('verse');
+    if (verseParam) {
+      return; // Verse parameter takes priority, handled by other effect
+    }
+    
     // Mark that we've handled initial scroll for this navigation instance
     hasHandledInitialScroll.current = currentInstance;
 
     // Small delay to ensure DOM is fully rendered and prevent browser scroll restoration
     const timeoutId = setTimeout(() => {
-      // First, check for verse parameter in URL (highest priority)
-      const verseParam = searchParams.get('verse');
-      if (verseParam) {
-        const verseNumber = parseInt(verseParam);
-        if (!isNaN(verseNumber) && verseNumber > 0) {
-          const scrolled = scrollToVerse(verseNumber);
-          if (!scrolled) {
-            // If verse not found, scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-          return;
-        }
-      }
-
-      // If no verse param, find the most recently memorized verse (by timestamp)
+      // Find the most recently memorized verse (by timestamp)
       const surahProgress = userProgress[id];
       let mostRecentVerse = null;
       let mostRecentTimestamp = null;
@@ -218,10 +233,10 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         // No memorized verses - ensure we're at top
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-    }, 100);
+    }, 200);
 
     return () => clearTimeout(timeoutId);
-  }, [surah, loading, id, searchParams]); // Removed userProgress and location.key from dependencies
+  }, [surah, loading, id, location.key]); // Only depend on location.key to detect navigation, not userProgress
 
   // Settings are now managed by SettingsContext, no need for local useEffect hooks
 

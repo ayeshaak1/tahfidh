@@ -29,6 +29,15 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
   const [activityView, setActivityView] = useState('weekly'); // weekly, monthly, yearly
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedWeekStart, setSelectedWeekStart] = useState(() => {
+    // Initialize to start of current week (Sunday)
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - currentDay);
+    startOfWeek.setHours(0, 0, 0, 0);
+    return startOfWeek;
+  });
 
   useEffect(() => {
     setCurrentPath('/dashboard');
@@ -157,12 +166,10 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     return calculateRealData();
   }, [userProgress, progress]);
 
-  // Generate weekly activity data for current week
+  // Generate weekly activity data for selected week
   const generateWeeklyActivity = () => {
-    const today = new Date();
-    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - currentDay); // Start from Sunday
+    const startOfWeek = new Date(selectedWeekStart);
+    startOfWeek.setHours(0, 0, 0, 0);
     
     const weekData = [];
     for (let day = 0; day < 7; day++) {
@@ -364,7 +371,11 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
   const getActivityViewInfo = () => {
     switch (activityView) {
       case 'weekly':
-        return { title: 'Weekly Activity', description: 'Current week activity overview' };
+        const weekEnd = new Date(selectedWeekStart);
+        weekEnd.setDate(selectedWeekStart.getDate() + 6);
+        const weekStartStr = selectedWeekStart.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+        const weekEndStr = weekEnd.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+        return { title: `Weekly Activity - ${weekStartStr} to ${weekEndStr}`, description: 'Select week to view activity' };
       case 'monthly':
         return { title: `Monthly Activity - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, description: 'Select month to view activity' };
       case 'yearly':
@@ -401,6 +412,19 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
 
   const goToNextYear = () => {
     setSelectedYear(selectedYear + 1);
+  };
+
+  // Navigation functions for week selection
+  const goToPreviousWeek = () => {
+    const newWeekStart = new Date(selectedWeekStart);
+    newWeekStart.setDate(selectedWeekStart.getDate() - 7);
+    setSelectedWeekStart(newWeekStart);
+  };
+
+  const goToNextWeek = () => {
+    const newWeekStart = new Date(selectedWeekStart);
+    newWeekStart.setDate(selectedWeekStart.getDate() + 7);
+    setSelectedWeekStart(newWeekStart);
   };
 
   return (
@@ -539,7 +563,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       {/* Quick Actions Bar */}
       <div className="quick-actions">
         {realData.currentSurah ? (
-          <div className="action-card primary" onClick={() => navigate(`/surah/${realData.currentSurah.id}`)}>
+          <div className="action-card primary" onClick={() => navigate(`/surah/${realData.currentSurah.id}?verse=${realData.currentVerse}`)}>
             <div className="action-icon">
               <BookOpen size={24} />
             </div>
@@ -599,7 +623,61 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
           </div>
         </div>
         
-        {/* Month/Year Navigation */}
+        {/* Week/Month/Year Navigation */}
+        {activityView === 'weekly' && (
+          <div className="week-navigation">
+            <button className="nav-btn" onClick={goToPreviousWeek}>
+              <ChevronLeft size={16} />
+            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+              <span className="current-week">
+                {(() => {
+                  const weekEnd = new Date(selectedWeekStart);
+                  weekEnd.setDate(selectedWeekStart.getDate() + 6);
+                  const weekStartStr = selectedWeekStart.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+                  const weekEndStr = weekEnd.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+                  return `${weekStartStr} - ${weekEndStr}`;
+                })()}
+              </span>
+              {(() => {
+                // Determine if this is current week, previous week (1 week before), or next week (1 week after)
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const currentWeekStart = new Date(today);
+                currentWeekStart.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
+                currentWeekStart.setHours(0, 0, 0, 0);
+                
+                const previousWeekStart = new Date(currentWeekStart);
+                previousWeekStart.setDate(currentWeekStart.getDate() - 7);
+                
+                const nextWeekStart = new Date(currentWeekStart);
+                nextWeekStart.setDate(currentWeekStart.getDate() + 7);
+                
+                const selectedWeekStartNormalized = new Date(selectedWeekStart);
+                selectedWeekStartNormalized.setHours(0, 0, 0, 0);
+                
+                let weekSubheading = null;
+                if (selectedWeekStartNormalized.getTime() === currentWeekStart.getTime()) {
+                  weekSubheading = 'This Week';
+                } else if (selectedWeekStartNormalized.getTime() === previousWeekStart.getTime()) {
+                  weekSubheading = 'Past Week';
+                } else if (selectedWeekStartNormalized.getTime() === nextWeekStart.getTime()) {
+                  weekSubheading = 'Next Week';
+                }
+                
+                return weekSubheading ? (
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text)', opacity: 0.7, fontWeight: 500 }}>
+                    {weekSubheading}
+                  </span>
+                ) : null;
+              })()}
+            </div>
+            <button className="nav-btn" onClick={goToNextWeek}>
+              <ChevronRightIcon size={16} />
+            </button>
+          </div>
+        )}
+        
         {activityView === 'monthly' && (
           <div className="month-navigation">
             <button className="nav-btn" onClick={goToPreviousMonth}>

@@ -77,9 +77,15 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
     // Use totalVerses from surah data, not verses.length (which only counts tracked verses)
     const percentage = Math.round((memorizedVerses / totalVerses) * 100);
 
+    // Determine status based on verse count, not percentage
     let status = 'Not Started';
-    if (percentage === 100) status = 'Completed';
-    else if (memorizedVerses > 0) status = 'In Progress'; // Use verse count instead of percentage
+    if (memorizedVerses === 0) {
+      status = 'Not Started';
+    } else if (memorizedVerses === totalVerses) {
+      status = 'Completed';
+    } else {
+      status = 'In Progress';
+    }
 
     return { status, percentage, memorizedVerses };
   };
