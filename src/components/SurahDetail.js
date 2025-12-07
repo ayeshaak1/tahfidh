@@ -140,8 +140,8 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     };
   }, [sidebarOpen]);
 
-  // Helper function to scroll to a specific verse
-  const scrollToVerse = (verseNumber) => {
+  // Helper function to scroll to a specific verse with retries
+  const scrollToVerse = (verseNumber, retries = 5, delay = 100) => {
     const verseElement = document.getElementById(`verse-${verseNumber}`);
     if (verseElement) {
       // Use requestAnimationFrame to ensure DOM is ready
@@ -155,6 +155,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       });
       return true;
     }
+    
+    // Retry if element not found and retries remaining
+    if (retries > 0) {
+      setTimeout(() => {
+        scrollToVerse(verseNumber, retries - 1, delay);
+      }, delay);
+    }
+    
     return false;
   };
 
@@ -168,14 +176,39 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     if (verseParam) {
       const verseNumber = parseInt(verseParam);
       if (!isNaN(verseNumber) && verseNumber > 0) {
-        // Small delay to ensure DOM is fully rendered
-        const timeoutId = setTimeout(() => {
-          const scrolled = scrollToVerse(verseNumber);
-          if (!scrolled) {
-            // If verse not found, scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        // First, ensure we're at top to prevent browser scroll restoration
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        
+        // Wait for DOM to be fully rendered - check if verse elements exist
+        const checkAndScroll = (attempts = 0) => {
+          const verseElement = document.getElementById(`verse-${verseNumber}`);
+          // Also check if any verse element exists to ensure DOM is ready
+          const anyVerseElement = document.querySelector('[id^="verse-"]');
+          
+          if (verseElement) {
+            // Verse found, scroll to it
+            requestAnimationFrame(() => {
+              verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              verseElement.classList.add('highlighted');
+              setTimeout(() => {
+                verseElement.classList.remove('highlighted');
+              }, 2000);
+            });
+          } else if (anyVerseElement && attempts < 10) {
+            // Verses are rendering but target verse not found yet, retry
+            setTimeout(() => checkAndScroll(attempts + 1), 100);
+          } else {
+            // Verses not rendered yet or max attempts reached, scroll to top
+            if (attempts >= 10) {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              // Wait a bit more for initial render
+              setTimeout(() => checkAndScroll(attempts + 1), 100);
+            }
           }
-        }, 200);
+        };
+        
+        const timeoutId = setTimeout(() => checkAndScroll(), 300);
         return () => clearTimeout(timeoutId);
       }
     }
@@ -201,39 +234,60 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     // Mark that we've handled initial scroll for this navigation instance
     hasHandledInitialScroll.current = currentInstance;
 
-    // Small delay to ensure DOM is fully rendered and prevent browser scroll restoration
-    const timeoutId = setTimeout(() => {
-      // Find the most recently memorized verse (by timestamp)
-      const surahProgress = userProgress[id];
-      let mostRecentVerse = null;
-      let mostRecentTimestamp = null;
-      
-      if (surahProgress && surahProgress.verses) {
-        // Find the verse with the most recent lastReviewed timestamp
-        Object.keys(surahProgress.verses).forEach(verseNum => {
-          const verse = surahProgress.verses[verseNum];
-          if (verse.memorized && verse.lastReviewed) {
-            const verseTimestamp = new Date(verse.lastReviewed).getTime();
-            if (!mostRecentTimestamp || verseTimestamp > mostRecentTimestamp) {
-              mostRecentTimestamp = verseTimestamp;
-              mostRecentVerse = parseInt(verseNum);
-            }
+    // First, ensure we're at top to prevent browser scroll restoration
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    // Find the most recently memorized verse (by timestamp)
+    const surahProgress = userProgress[id];
+    let mostRecentVerse = null;
+    let mostRecentTimestamp = null;
+    
+    if (surahProgress && surahProgress.verses) {
+      // Find the verse with the most recent lastReviewed timestamp
+      Object.keys(surahProgress.verses).forEach(verseNum => {
+        const verse = surahProgress.verses[verseNum];
+        if (verse.memorized && verse.lastReviewed) {
+          const verseTimestamp = new Date(verse.lastReviewed).getTime();
+          if (!mostRecentTimestamp || verseTimestamp > mostRecentTimestamp) {
+            mostRecentTimestamp = verseTimestamp;
+            mostRecentVerse = parseInt(verseNum);
           }
-        });
-      }
-      
-      // If we have a most recently memorized verse, scroll to it
+        }
+      });
+    }
+    
+    // Wait for DOM to be fully rendered before scrolling
+    const checkAndScroll = (attempts = 0) => {
       if (mostRecentVerse) {
-        const scrolled = scrollToVerse(mostRecentVerse);
-        if (!scrolled) {
-          // If verse not found, scroll to top
+        const verseElement = document.getElementById(`verse-${mostRecentVerse}`);
+        const anyVerseElement = document.querySelector('[id^="verse-"]');
+        
+        if (verseElement) {
+          // Verse found, scroll to it
+          requestAnimationFrame(() => {
+            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            verseElement.classList.add('highlighted');
+            setTimeout(() => {
+              verseElement.classList.remove('highlighted');
+            }, 2000);
+          });
+        } else if (anyVerseElement && attempts < 10) {
+          // Verses are rendering but target verse not found yet, retry
+          setTimeout(() => checkAndScroll(attempts + 1), 100);
+        } else if (attempts >= 10) {
+          // Max attempts reached, scroll to top
           window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          // Wait a bit more for initial render
+          setTimeout(() => checkAndScroll(attempts + 1), 100);
         }
       } else {
         // No memorized verses - ensure we're at top
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-    }, 200);
+    };
+    
+    const timeoutId = setTimeout(() => checkAndScroll(), 300);
 
     return () => clearTimeout(timeoutId);
   }, [surah, loading, id, location.key]); // Only depend on location.key to detect navigation, not userProgress

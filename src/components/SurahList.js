@@ -146,26 +146,29 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
     });
   };
 
-  // Find the last memorized verse number for a surah
+  // Find the most recently memorized verse number for a surah (by timestamp)
   const getLastMemorizedVerse = (surahId) => {
     const surahProgress = userProgress[surahId];
     if (!surahProgress || !surahProgress.verses) {
       return null;
     }
 
-    // Find the highest verse number that is memorized
-    let lastMemorizedVerse = null;
+    // Find the verse with the most recent lastReviewed timestamp
+    let mostRecentVerse = null;
+    let mostRecentTimestamp = null;
+    
     Object.keys(surahProgress.verses).forEach(verseNum => {
       const verse = surahProgress.verses[verseNum];
-      if (verse.memorized) {
-        const verseNumber = parseInt(verseNum);
-        if (!lastMemorizedVerse || verseNumber > lastMemorizedVerse) {
-          lastMemorizedVerse = verseNumber;
+      if (verse.memorized && verse.lastReviewed) {
+        const verseTimestamp = new Date(verse.lastReviewed).getTime();
+        if (!mostRecentTimestamp || verseTimestamp > mostRecentTimestamp) {
+          mostRecentTimestamp = verseTimestamp;
+          mostRecentVerse = parseInt(verseNum);
         }
       }
     });
 
-    return lastMemorizedVerse;
+    return mostRecentVerse;
   };
 
   const handleJuzSelect = async (juz) => {
@@ -403,8 +406,10 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
                 key={surah.id}
                 className={`surah-card ${progress.status.toLowerCase().replace(' ', '-')}`}
                 onClick={() => {
-                  // Scroll to top when clicking on surah card (unless it's a resume action)
-                  navigate(`/surah/${surah.id}`);
+                  // Navigate to last memorized verse if exists, otherwise to top
+                  const lastVerse = getLastMemorizedVerse(surah.id);
+                  const verseParam = lastVerse ? `?verse=${lastVerse}` : '';
+                  navigate(`/surah/${surah.id}${verseParam}`);
                 }}
               >
                 {/* Top Bar */}
