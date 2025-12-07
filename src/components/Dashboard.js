@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { CONSTRAINTS } from '../constants/storageConstants';
 import { 
   Menu, 
   Sun, 
@@ -35,8 +36,8 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
 
   // Calculate progress statistics
   const calculateProgress = () => {
-    const totalSurahs = 114;
-    const totalVerses = 6236;
+    const totalSurahs = CONSTRAINTS.QURAN.TOTAL_SURAHS;
+    const totalVerses = CONSTRAINTS.QURAN.TOTAL_VERSES;
     
     let completedSurahs = 0;
     let memorizedVerses = 0;
@@ -421,6 +422,20 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
                     <stop offset="0%" stopColor="#E2B6B3" />
                     <stop offset="100%" stopColor="#9A86A4" />
                   </linearGradient>
+                  <linearGradient id="shimmerGradient" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="transparent" stopOpacity="0" />
+                    <stop offset="30%" stopColor="rgba(255,255,255,0.4)" stopOpacity="0.4" />
+                    <stop offset="50%" stopColor="rgba(255,255,255,0.6)" stopOpacity="0.6" />
+                    <stop offset="70%" stopColor="rgba(255,255,255,0.4)" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+                    <animateTransform
+                      attributeName="gradientTransform"
+                      type="rotate"
+                      values="0 150 150;360 150 150"
+                      dur="4s"
+                      repeatCount="indefinite"
+                    />
+                  </linearGradient>
                 </defs>
                 <circle
                   cx="150"
@@ -430,25 +445,40 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
                   stroke="var(--border)"
                   strokeWidth="12"
                 />
-                {progress.surahPercentage > 0 && (
-                  <circle
-                    cx="150"
-                    cy="150"
-                    r="135"
-                    fill="none"
-                    stroke="url(#progressGradient)"
-                    strokeWidth="16"
-                    strokeDasharray={`${2 * Math.PI * 135}`}
-                    strokeDashoffset={`${2 * Math.PI * 135 * (1 - Math.max(progress.surahPercentage, 0.5) / 100)}`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 150 150)"
-                    className="progress-circle"
-                  />
+                {progress.versePercentage > 0 && (
+                  <>
+                    <circle
+                      cx="150"
+                      cy="150"
+                      r="135"
+                      fill="none"
+                      stroke="url(#progressGradient)"
+                      strokeWidth="16"
+                      strokeDasharray={`${2 * Math.PI * 135}`}
+                      strokeDashoffset={`${2 * Math.PI * 135 * (1 - Math.max(progress.versePercentage, 0.5) / 100)}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 150 150)"
+                      className="progress-circle"
+                    />
+                    <circle
+                      cx="150"
+                      cy="150"
+                      r="135"
+                      fill="none"
+                      stroke="url(#shimmerGradient)"
+                      strokeWidth="18"
+                      strokeDasharray={`${2 * Math.PI * 135}`}
+                      strokeDashoffset={`${2 * Math.PI * 135 * (1 - Math.max(progress.versePercentage, 0.5) / 100)}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 150 150)"
+                      className="progress-circle-shimmer"
+                    />
+                  </>
                 )}
               </svg>
               <div className="progress-center">
-                <div className="progress-percentage">{formatProgressPercentage(progress.surahPercentage)}</div>
-                <div className="progress-subtext">Completed</div>
+                <div className="progress-percentage">{formatProgressPercentage(progress.versePercentage)}</div>
+                <div className="progress-subtext">Verses Completed</div>
               </div>
             </div>
             
@@ -524,7 +554,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
           </div>
           <div className="action-content">
             <div className="action-label">Start New Surah</div>
-            <div className="action-detail">Choose from 114 surahs</div>
+            <div className="action-detail">Choose from {CONSTRAINTS.QURAN.TOTAL_SURAHS} surahs</div>
           </div>
         </div>
       </div>

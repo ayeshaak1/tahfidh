@@ -10,12 +10,13 @@ import Profile from './components/Profile';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import versePreloader from './services/versePreloader';
+import { STORAGE_KEYS, DEFAULT_VALUES, StorageHelpers, Validators } from './constants/storageConstants';
 import './App.css';
 import './components.css';
 
 function App() {
   const [isGuest, setIsGuest] = useState(true);
-  const [userProgress, setUserProgress] = useState({});
+  const [userProgress, setUserProgress] = useState(DEFAULT_VALUES.USER_PROGRESS);
   const [currentPath, setCurrentPath] = useState('/');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -26,9 +27,13 @@ function App() {
     }
 
     // Load saved progress from localStorage
-    const savedProgress = localStorage.getItem('quranProgress');
-    if (savedProgress) {
-      setUserProgress(JSON.parse(savedProgress));
+    const savedProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
+    if (savedProgress && Validators.isValidUserProgress(savedProgress)) {
+      setUserProgress(savedProgress);
+    } else if (savedProgress) {
+      // If progress exists but is invalid, reset to empty
+      console.warn('Invalid progress data detected, resetting to empty progress');
+      setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
     }
 
     // Initialize verse preloader
@@ -39,14 +44,14 @@ function App() {
   // Save progress to localStorage whenever userProgress changes
   useEffect(() => {
     if (Object.keys(userProgress).length > 0) {
-      localStorage.setItem('quranProgress', JSON.stringify(userProgress));
+      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, userProgress);
     }
   }, [userProgress]);
 
   const handleGuestMode = () => {
     setIsGuest(true);
     // Initialize empty progress for guest
-    setUserProgress({});
+    setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
   };
 
   const handleSignUp = () => {

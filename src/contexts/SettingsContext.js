@@ -1,4 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  STORAGE_KEYS, 
+  DEFAULT_VALUES, 
+  VALID_VALUES, 
+  CONSTRAINTS,
+  StorageHelpers, 
+  Validators 
+} from '../constants/storageConstants';
 
 const SettingsContext = createContext();
 
@@ -13,74 +21,77 @@ export const useSettings = () => {
 export const SettingsProvider = ({ children }) => {
   // Load all settings from localStorage with defaults
   const [quranFont, setQuranFont] = useState(() => {
-    const saved = localStorage.getItem('quranFontPreference');
-    return saved || 'uthmani';
+    const saved = StorageHelpers.getItem(STORAGE_KEYS.QURAN_FONT_PREFERENCE, DEFAULT_VALUES.QURAN_FONT);
+    return Validators.isValidFontType(saved) ? saved : DEFAULT_VALUES.QURAN_FONT;
   });
 
   const [showTranslation, setShowTranslation] = useState(() => {
-    const saved = localStorage.getItem('showTranslationPreference');
-    return saved !== null ? JSON.parse(saved) : true;
+    const saved = StorageHelpers.getJSONItem(STORAGE_KEYS.SHOW_TRANSLATION_PREFERENCE, DEFAULT_VALUES.SHOW_TRANSLATION);
+    return typeof saved === 'boolean' ? saved : DEFAULT_VALUES.SHOW_TRANSLATION;
   });
 
   const [showTransliteration, setShowTransliteration] = useState(() => {
-    const saved = localStorage.getItem('showTransliterationPreference');
-    return saved !== null ? JSON.parse(saved) : true;
+    const saved = StorageHelpers.getJSONItem(STORAGE_KEYS.SHOW_TRANSLITERATION_PREFERENCE, DEFAULT_VALUES.SHOW_TRANSLITERATION);
+    return typeof saved === 'boolean' ? saved : DEFAULT_VALUES.SHOW_TRANSLITERATION;
   });
 
   const [autoScroll, setAutoScroll] = useState(() => {
-    const saved = localStorage.getItem('autoScrollPreference');
-    return saved !== null ? JSON.parse(saved) : false;
+    const saved = StorageHelpers.getJSONItem(STORAGE_KEYS.AUTO_SCROLL_PREFERENCE, DEFAULT_VALUES.AUTO_SCROLL);
+    return typeof saved === 'boolean' ? saved : DEFAULT_VALUES.AUTO_SCROLL;
   });
 
   const [arabicFontSize, setArabicFontSize] = useState(() => {
-    const saved = localStorage.getItem('arabicFontSize');
-    return saved ? parseFloat(saved) : 2.5;
+    const saved = StorageHelpers.getItem(STORAGE_KEYS.ARABIC_FONT_SIZE);
+    const parsed = saved ? parseFloat(saved) : DEFAULT_VALUES.ARABIC_FONT_SIZE;
+    return Validators.validateFontSize(parsed, 'arabic');
   });
 
   const [translationFontSize, setTranslationFontSize] = useState(() => {
-    const saved = localStorage.getItem('translationFontSize');
-    return saved ? parseFloat(saved) : 1.0;
+    const saved = StorageHelpers.getItem(STORAGE_KEYS.TRANSLATION_FONT_SIZE);
+    const parsed = saved ? parseFloat(saved) : DEFAULT_VALUES.TRANSLATION_FONT_SIZE;
+    return Validators.validateFontSize(parsed, 'translation');
   });
 
   const [transliterationFontSize, setTransliterationFontSize] = useState(() => {
-    const saved = localStorage.getItem('transliterationFontSize');
-    return saved ? parseFloat(saved) : 1.0;
+    const saved = StorageHelpers.getItem(STORAGE_KEYS.TRANSLITERATION_FONT_SIZE);
+    const parsed = saved ? parseFloat(saved) : DEFAULT_VALUES.TRANSLITERATION_FONT_SIZE;
+    return Validators.validateFontSize(parsed, 'transliteration');
   });
 
   // Persist settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('quranFontPreference', quranFont);
+    StorageHelpers.setItem(STORAGE_KEYS.QURAN_FONT_PREFERENCE, quranFont);
   }, [quranFont]);
 
   useEffect(() => {
-    localStorage.setItem('showTranslationPreference', JSON.stringify(showTranslation));
+    StorageHelpers.setItem(STORAGE_KEYS.SHOW_TRANSLATION_PREFERENCE, showTranslation);
   }, [showTranslation]);
 
   useEffect(() => {
-    localStorage.setItem('showTransliterationPreference', JSON.stringify(showTransliteration));
+    StorageHelpers.setItem(STORAGE_KEYS.SHOW_TRANSLITERATION_PREFERENCE, showTransliteration);
   }, [showTransliteration]);
 
   useEffect(() => {
-    localStorage.setItem('autoScrollPreference', JSON.stringify(autoScroll));
+    StorageHelpers.setItem(STORAGE_KEYS.AUTO_SCROLL_PREFERENCE, autoScroll);
   }, [autoScroll]);
 
   useEffect(() => {
-    localStorage.setItem('arabicFontSize', arabicFontSize.toString());
+    StorageHelpers.setItem(STORAGE_KEYS.ARABIC_FONT_SIZE, arabicFontSize.toString());
   }, [arabicFontSize]);
 
   useEffect(() => {
-    localStorage.setItem('translationFontSize', translationFontSize.toString());
+    StorageHelpers.setItem(STORAGE_KEYS.TRANSLATION_FONT_SIZE, translationFontSize.toString());
   }, [translationFontSize]);
 
   useEffect(() => {
-    localStorage.setItem('transliterationFontSize', transliterationFontSize.toString());
+    StorageHelpers.setItem(STORAGE_KEYS.TRANSLITERATION_FONT_SIZE, transliterationFontSize.toString());
   }, [transliterationFontSize]);
 
   // Reset all font sizes to defaults
   const resetFontSizes = () => {
-    setArabicFontSize(2.5);
-    setTranslationFontSize(1.0);
-    setTransliterationFontSize(1.0);
+    setArabicFontSize(DEFAULT_VALUES.ARABIC_FONT_SIZE);
+    setTranslationFontSize(DEFAULT_VALUES.TRANSLATION_FONT_SIZE);
+    setTransliterationFontSize(DEFAULT_VALUES.TRANSLITERATION_FONT_SIZE);
   };
 
   const value = {

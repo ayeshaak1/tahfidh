@@ -2,13 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle } from 'lucide-react';
+import { 
+  STORAGE_KEYS, 
+  DEFAULT_VALUES, 
+  CONSTRAINTS,
+  VALID_VALUES,
+  StorageHelpers, 
+  Validators,
+  ExportHelpers 
+} from '../constants/storageConstants';
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [userName, setUserName] = useState(() => {
-    const saved = localStorage.getItem('userName');
-    return saved || '';
+    return StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
   });
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
@@ -36,11 +44,20 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   }, [setCurrentPath]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('userName');
+    const saved = StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
     if (saved) {
       setUserName(saved);
     }
   }, []);
+
+  // Save userName to localStorage whenever it changes
+  useEffect(() => {
+    if (userName) {
+      StorageHelpers.setItem(STORAGE_KEYS.USER_NAME, userName);
+    } else {
+      StorageHelpers.removeItem(STORAGE_KEYS.USER_NAME);
+    }
+  }, [userName]);
 
   const handleEditName = () => {
     setEditedName(userName);
@@ -51,10 +68,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     const trimmedName = editedName.trim();
     if (trimmedName) {
       setUserName(trimmedName);
-      localStorage.setItem('userName', trimmedName);
     } else {
-      setUserName('');
-      localStorage.removeItem('userName');
+      setUserName(DEFAULT_VALUES.USER_NAME);
     }
     setIsEditingName(false);
   };
@@ -66,8 +81,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
   // Calculate overall statistics
   const calculateStats = () => {
-    const totalSurahs = 114;
-    const totalVerses = 6236;
+    const totalSurahs = CONSTRAINTS.QURAN.TOTAL_SURAHS;
+    const totalVerses = CONSTRAINTS.QURAN.TOTAL_VERSES;
     
     let completedSurahs = 0;
     let memorizedVerses = 0;
@@ -211,7 +226,23 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
   // Data management functions
   const exportProgress = () => {
-    const dataStr = JSON.stringify(userProgress, null, 2);
+    // Create export data with all user data
+    const exportData = ExportHelpers.createExportData(
+      userProgress,
+      userName,
+      theme,
+      {
+        quranFont,
+        showTranslation,
+        showTransliteration,
+        autoScroll,
+        arabicFontSize,
+        translationFontSize,
+        transliterationFontSize,
+      }
+    );
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -228,16 +259,32 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       reader.onload = (e) => {
         try {
           const importedData = JSON.parse(e.target.result);
-          // Validate basic structure
-          if (typeof importedData === 'object' && importedData !== null) {
-            setUserProgress(importedData);
-            localStorage.setItem('quranProgress', JSON.stringify(importedData));
-            alert('Progress imported successfully!');
-          } else {
-            throw new Error('Invalid data structure');
+          
+          // Validate import data
+          const validation = ExportHelpers.validateImportData(importedData);
+          if (!validation.valid) {
+            alert(`Invalid file format: ${validation.error}`);
+            return;
           }
+          
+          // Import progress data
+          if (importedData.progress && Validators.isValidUserProgress(importedData.progress)) {
+            setUserProgress(importedData.progress);
+            StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, importedData.progress);
+          }
+          
+          // Import user name if present
+          if (importedData.userName && typeof importedData.userName === 'string') {
+            setUserName(importedData.userName);
+          }
+          
+          // Import settings if present (will be handled by SettingsContext if needed)
+          // Note: Settings are managed by SettingsContext, so we don't directly set them here
+          // but the export/import structure supports them for future use
+          
+          alert('Progress imported successfully!');
         } catch (error) {
-          alert('Invalid file format. Please select a valid JSON file.');
+          alert(`Invalid file format: ${error.message}`);
         }
       };
       reader.readAsText(file);
@@ -249,8 +296,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   };
 
   const handleConfirmClear = () => {
-    setUserProgress({});
-    localStorage.removeItem('quranProgress');
+    setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
+    StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
     setShowConfirmDialog(false);
     setShowSuccessDialog(true);
   };
@@ -432,14 +479,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 </div>
                 <div className="toggle-buttons">
                   <button
-                    className={`toggle-btn ${quranFont === 'uthmani' ? 'active' : ''}`}
-                    onClick={() => setQuranFont('uthmani')}
+                    className={`toggle-btn ${quranFont === VALID_VALUES.FONT_TYPES.UTHMANI ? 'active' : ''}`}
+                    onClick={() => setQuranFont(VALID_VALUES.FONT_TYPES.UTHMANI)}
                   >
                     Uthmani
                   </button>
                   <button
-                    className={`toggle-btn ${quranFont === 'indopak' ? 'active' : ''}`}
-                    onClick={() => setQuranFont('indopak')}
+                    className={`toggle-btn ${quranFont === VALID_VALUES.FONT_TYPES.INDOPAK ? 'active' : ''}`}
+                    onClick={() => setQuranFont(VALID_VALUES.FONT_TYPES.INDOPAK)}
                   >
                     IndoPak
                   </button>
@@ -514,11 +561,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 </div>
                 <input
                   type="range"
-                  min="1.0"
-                  max="4.0"
-                  step="0.1"
+                  min={CONSTRAINTS.FONT_SIZES.ARABIC.MIN}
+                  max={CONSTRAINTS.FONT_SIZES.ARABIC.MAX}
+                  step={CONSTRAINTS.FONT_SIZES.ARABIC.STEP}
                   value={arabicFontSize}
-                  onChange={(e) => setArabicFontSize(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const newSize = parseFloat(e.target.value);
+                    setArabicFontSize(Validators.validateFontSize(newSize, 'arabic'));
+                  }}
                   className="font-size-range"
                 />
               </div>
@@ -536,11 +586,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 </div>
                 <input
                   type="range"
-                  min="0.7"
-                  max="2.0"
-                  step="0.1"
+                  min={CONSTRAINTS.FONT_SIZES.TRANSLATION.MIN}
+                  max={CONSTRAINTS.FONT_SIZES.TRANSLATION.MAX}
+                  step={CONSTRAINTS.FONT_SIZES.TRANSLATION.STEP}
                   value={translationFontSize}
-                  onChange={(e) => setTranslationFontSize(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const newSize = parseFloat(e.target.value);
+                    setTranslationFontSize(Validators.validateFontSize(newSize, 'translation'));
+                  }}
                   className="font-size-range"
                 />
               </div>
@@ -558,11 +611,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 </div>
                 <input
                   type="range"
-                  min="0.7"
-                  max="2.0"
-                  step="0.1"
+                  min={CONSTRAINTS.FONT_SIZES.TRANSLITERATION.MIN}
+                  max={CONSTRAINTS.FONT_SIZES.TRANSLITERATION.MAX}
+                  step={CONSTRAINTS.FONT_SIZES.TRANSLITERATION.STEP}
                   value={transliterationFontSize}
-                  onChange={(e) => setTransliterationFontSize(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const newSize = parseFloat(e.target.value);
+                    setTransliterationFontSize(Validators.validateFontSize(newSize, 'transliteration'));
+                  }}
                   className="font-size-range"
                 />
               </div>

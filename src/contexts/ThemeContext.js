@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { STORAGE_KEYS, DEFAULT_VALUES, VALID_VALUES, StorageHelpers, Validators } from '../constants/storageConstants';
 
 const ThemeContext = createContext();
 
@@ -12,20 +13,21 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    // Initialize theme from localStorage or default to 'light'
-    const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'light';
+    // Initialize theme from localStorage or default
+    const savedTheme = StorageHelpers.getItem(STORAGE_KEYS.THEME, DEFAULT_VALUES.THEME);
+    // Validate theme value
+    return Validators.isValidTheme(savedTheme) ? savedTheme : DEFAULT_VALUES.THEME;
   });
 
   useEffect(() => {
     // Apply theme to document whenever theme changes
     document.documentElement.setAttribute('data-theme', theme);
     // Save to localStorage whenever theme changes
-    localStorage.setItem('theme', theme);
+    StorageHelpers.setItem(STORAGE_KEYS.THEME, theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    setTheme(prevTheme => prevTheme === VALID_VALUES.THEMES.LIGHT ? VALID_VALUES.THEMES.DARK : VALID_VALUES.THEMES.LIGHT);
   };
 
   const value = {

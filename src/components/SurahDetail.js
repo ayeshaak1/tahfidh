@@ -5,6 +5,14 @@ import { useSettings } from '../contexts/SettingsContext';
 import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X, HelpCircle } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
+import { 
+  STORAGE_KEYS, 
+  CONSTRAINTS,
+  VALID_VALUES,
+  StorageHelpers, 
+  Validators,
+  DATA_STRUCTURES 
+} from '../constants/storageConstants';
 
 const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const { id } = useParams();
@@ -397,7 +405,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       newProgress[id].verses[verseId].lastReviewed = new Date().toISOString();
       
       // Save to localStorage
-      localStorage.setItem('quranProgress', JSON.stringify(newProgress));
+      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
       
       return newProgress;
     });
@@ -447,7 +455,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         newProgress[id].verses[verseId].lastReviewed = new Date().toISOString();
       });
       
-      localStorage.setItem('quranProgress', JSON.stringify(newProgress));
+      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
       setSelectedVerses(new Set());
       setShowBulkActions(false);
       setBulkMode(false);
@@ -478,7 +486,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         newProgress[id].verses[i].lastReviewed = new Date().toISOString();
       }
       
-      localStorage.setItem('quranProgress', JSON.stringify(newProgress));
+      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
       setShowBulkActions(false);
       setBulkMode(false);
       return newProgress;
@@ -508,7 +516,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
 
   const goToNextSurah = () => {
     const nextId = parseInt(id) + 1;
-    if (nextId <= 114) {
+    if (nextId <= CONSTRAINTS.QURAN.TOTAL_SURAHS) {
       setLoading(true);
       navigate(`/surah/${nextId}`);
     }
@@ -595,9 +603,9 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
           <button 
               className="nav-btn nav-btn-next"
             onClick={goToNextSurah}
-            disabled={parseInt(id) >= 114}
+            disabled={parseInt(id) >= CONSTRAINTS.QURAN.TOTAL_SURAHS}
           >
-              {parseInt(id) < 114 ? `Surah ${parseInt(id) + 1}` : 'Next'}
+              {parseInt(id) < CONSTRAINTS.QURAN.TOTAL_SURAHS ? `Surah ${parseInt(id) + 1}` : 'Next'}
               <ChevronRight size={16} />
           </button>
           </div>
@@ -627,7 +635,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                       className="dropdown-trigger"
                       onClick={() => setShowFontDropdown(!showFontDropdown)}
                     >
-                      <span>{selectedFont === 'uthmani' ? 'Uthmani' : 'IndoPak'}</span>
+                      <span>{selectedFont === VALID_VALUES.FONT_TYPES.UTHMANI ? 'Uthmani' : 'IndoPak'}</span>
                       <ChevronDown 
                         size={16} 
                         className={`dropdown-arrow ${showFontDropdown ? 'rotated' : ''}`} 
@@ -636,14 +644,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     {showFontDropdown && (
                       <div className="dropdown-menu">
                         <div 
-                          className={`dropdown-item ${selectedFont === 'uthmani' ? 'active' : ''}`}
-                          onClick={() => { handleFontChange('uthmani'); setShowFontDropdown(false); }}
+                          className={`dropdown-item ${selectedFont === VALID_VALUES.FONT_TYPES.UTHMANI ? 'active' : ''}`}
+                          onClick={() => { handleFontChange(VALID_VALUES.FONT_TYPES.UTHMANI); setShowFontDropdown(false); }}
                         >
                           Uthmani
                         </div>
                         <div 
-                          className={`dropdown-item ${selectedFont === 'indopak' ? 'active' : ''}`}
-                          onClick={() => { handleFontChange('indopak'); setShowFontDropdown(false); }}
+                          className={`dropdown-item ${selectedFont === VALID_VALUES.FONT_TYPES.INDOPAK ? 'active' : ''}`}
+                          onClick={() => { handleFontChange(VALID_VALUES.FONT_TYPES.INDOPAK); setShowFontDropdown(false); }}
                         >
                           IndoPak
                         </div>
@@ -716,11 +724,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     </div>
                     <input
                       type="range"
-                      min="1.0"
-                      max="4.0"
-                      step="0.1"
+                      min={CONSTRAINTS.FONT_SIZES.ARABIC.MIN}
+                      max={CONSTRAINTS.FONT_SIZES.ARABIC.MAX}
+                      step={CONSTRAINTS.FONT_SIZES.ARABIC.STEP}
                       value={arabicFontSize}
-                      onChange={(e) => setArabicFontSize(parseFloat(e.target.value))}
+                      onChange={(e) => {
+                        const newSize = parseFloat(e.target.value);
+                        setArabicFontSize(Validators.validateFontSize(newSize, 'arabic'));
+                      }}
                       className="font-size-range"
                     />
                   </div>
@@ -738,11 +749,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     </div>
                     <input
                       type="range"
-                      min="0.7"
-                      max="2.0"
-                      step="0.1"
+                      min={CONSTRAINTS.FONT_SIZES.TRANSLATION.MIN}
+                      max={CONSTRAINTS.FONT_SIZES.TRANSLATION.MAX}
+                      step={CONSTRAINTS.FONT_SIZES.TRANSLATION.STEP}
                       value={translationFontSize}
-                      onChange={(e) => setTranslationFontSize(parseFloat(e.target.value))}
+                      onChange={(e) => {
+                        const newSize = parseFloat(e.target.value);
+                        setTranslationFontSize(Validators.validateFontSize(newSize, 'translation'));
+                      }}
                       className="font-size-range"
                     />
                   </div>
@@ -760,11 +774,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     </div>
                     <input
                       type="range"
-                      min="0.7"
-                      max="2.0"
-                      step="0.1"
+                      min={CONSTRAINTS.FONT_SIZES.TRANSLITERATION.MIN}
+                      max={CONSTRAINTS.FONT_SIZES.TRANSLITERATION.MAX}
+                      step={CONSTRAINTS.FONT_SIZES.TRANSLITERATION.STEP}
                       value={transliterationFontSize}
-                      onChange={(e) => setTransliterationFontSize(parseFloat(e.target.value))}
+                      onChange={(e) => {
+                        const newSize = parseFloat(e.target.value);
+                        setTransliterationFontSize(Validators.validateFontSize(newSize, 'transliteration'));
+                      }}
                       className="font-size-range"
                     />
                   </div>
@@ -775,7 +792,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                 <label className="setting-label">Preview</label>
                 <div className="preview-container">
                   <div 
-                    className={`preview-arabic-text ${selectedFont}`}
+                    className={`preview-arabic-text ${selectedFont === VALID_VALUES.FONT_TYPES.UTHMANI ? VALID_VALUES.FONT_TYPES.UTHMANI : VALID_VALUES.FONT_TYPES.INDOPAK}`}
                     style={{ fontSize: `${arabicFontSize}rem` }}
                   >
                     بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
@@ -902,7 +919,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                     marginBottom: `${arabicFontSize * 0.4}rem`
                   }}
                 >
-                  {selectedFont === 'uthmani' ? verse.text_uthmani : verse.text_indopak}
+                  {selectedFont === VALID_VALUES.FONT_TYPES.UTHMANI ? verse.text_uthmani : verse.text_indopak}
                 </div>
                 
                 {showTransliteration && (
