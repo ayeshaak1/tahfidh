@@ -233,24 +233,24 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       
       let intensity = 0;
       // Check if there was actual activity on this day (only from memorized verses)
-      const dateKey = currentDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
-      if (progress.memorizedVerses > 0) {
-        // Look for actual activity in userProgress
-        Object.values(userProgress).forEach(surah => {
-          if (surah.verses) {
-            Object.values(surah.verses).forEach(verse => {
+        const dateKey = currentDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+        if (progress.memorizedVerses > 0) {
+          // Look for actual activity in userProgress
+          Object.values(userProgress).forEach(surah => {
+            if (surah.verses) {
+              Object.values(surah.verses).forEach(verse => {
               // Only count memorized verses for activity
               if (verse.memorized && verse.lastReviewed) {
-                const verseDate = new Date(verse.lastReviewed);
-                const verseDateKey = verseDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
-                if (verseDateKey === dateKey) {
-                  intensity = Math.min(3, intensity + 1);
+                  const verseDate = new Date(verse.lastReviewed);
+                  const verseDateKey = verseDate.toLocaleDateString('en-CA'); // Use YYYY-MM-DD format
+                  if (verseDateKey === dateKey) {
+                    intensity = Math.min(3, intensity + 1);
+                  }
                 }
-              }
-            });
-          }
-        });
-      }
+              });
+            }
+          });
+        }
       
       weekData.push({
         date: currentDate,
