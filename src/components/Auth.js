@@ -262,7 +262,7 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
                   </div>
                 )}
 
-                <form onSubmit={handleSignInSubmit} className="auth-form">
+                <form onSubmit={handleSignInSubmit} className="auth-form" noValidate>
                   <div className="form-group">
                     <label htmlFor="email">Email</label>
                     <div className="input-wrapper">
@@ -388,7 +388,7 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
                   </div>
                 )}
 
-                <form onSubmit={handleSignUpSubmit} className="auth-form">
+                <form onSubmit={handleSignUpSubmit} className="auth-form" noValidate>
                   <div className="form-group">
                     <label htmlFor="name">Name</label>
                     <div className="input-wrapper">

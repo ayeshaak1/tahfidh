@@ -536,10 +536,14 @@ function AppContent() {
           <Route 
             path="/" 
             element={
-              <LandingPage 
-                onGuestMode={handleGuestMode}
-                setCurrentPath={setCurrentPath}
-              />
+              !authLoading && isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <LandingPage 
+                  onGuestMode={handleGuestMode}
+                  setCurrentPath={setCurrentPath}
+                />
+              )
             } 
           />
           <Route 
