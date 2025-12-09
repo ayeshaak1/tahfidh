@@ -628,7 +628,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     link.click();
     URL.revokeObjectURL(url);
     setShowExportDialog(false);
-    navigate('/signup');
   };
 
   const importProgress = (event) => {
