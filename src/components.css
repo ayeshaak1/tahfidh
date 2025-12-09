@@ -3698,12 +3698,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: 100vh;
+  width: 100%;
   text-align: center;
   padding: 2rem;
   position: relative;
   overflow: hidden;
   background: transparent;
+  margin: 0 auto;
 }
 
 .lottie-loader-container::before {
@@ -3761,6 +3763,9 @@
   filter: drop-shadow(0 4px 16px rgba(226, 182, 179, 0.2));
   z-index: 1;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lottie-small {

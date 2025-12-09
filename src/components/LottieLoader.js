@@ -12,8 +12,24 @@ const LottieLoader = ({ size = 'medium', className = '', showVerse = true }) => 
 
   useEffect(() => {
     if (showVerse) {
-      const verse = versePreloader.getRandomVerse();
-      setRandomVerse(verse);
+      // Preload verses if not already done
+      if (!versePreloader.hasPreloaded) {
+        versePreloader.preloadRandomVerses(10).then(() => {
+          const verse = versePreloader.getRandomVerse();
+          setRandomVerse(verse);
+        });
+      } else {
+        const verse = versePreloader.getRandomVerse();
+        setRandomVerse(verse);
+      }
+      
+      // Rotate verses every 5 seconds for variety
+      const interval = setInterval(() => {
+        const verse = versePreloader.getRandomVerse();
+        setRandomVerse(verse);
+      }, 5000);
+      
+      return () => clearInterval(interval);
     }
   }, [showVerse]);
 

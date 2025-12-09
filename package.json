@@ -23,7 +23,8 @@
         "dev": "npm start",
         "backend": "cd backend && npm run dev",
         "backend:start": "cd backend && npm start",
-        "install:all": "npm install && cd backend && npm install"
+        "install:all": "npm install && cd backend && npm install",
+        "test:production": "node test-production.js"
     },
     "eslintConfig": {
         "extends": [

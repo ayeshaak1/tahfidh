@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Test Suite - Browser Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .config-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .config-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .button:hover {
+            background: #5568d3;
+        }
+        
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .button-secondary {
+            background: #6c757d;
+        }
+        
+        .button-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .button-success {
+            background: #28a745;
+        }
+        
+        .button-success:hover {
+            background: #218838;
+        }
+        
+        .button-danger {
+            background: #dc3545;
+        }
+        
+        .button-danger:hover {
+            background: #c82333;
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .test-item {
+            background: #f8f9fa;
+            border-left: 4px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .test-item.pass {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .test-item.fail {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .test-item.running {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .test-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .test-status {
+            font-size: 0.9em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .test-status.pass {
+            background: #28a745;
+            color: white;
+        }
+        
+        .test-status.fail {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .test-status.running {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .test-message {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .summary {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        
+        .summary h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        
+        .success {
+            color: #155724;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Production Test Suite</h1>
+        <p class="subtitle">Browser-based testing for your deployed app</p>
+        
+        <div class="config-section">
+            <h2>Configuration</h2>
+            <div class="input-group">
+                <label for="backendUrl">Backend URL</label>
+                <input type="text" id="backendUrl" placeholder="https://your-backend.onrender.com" value="">
+            </div>
+            <div class="input-group">
+                <label for="frontendUrl">Frontend URL</label>
+                <input type="text" id="frontendUrl" placeholder="https://your-app.netlify.app" value="">
+            </div>
+            <div class="input-group">
+                <label for="testEmail">Test Email</label>
+                <input type="email" id="testEmail" placeholder="test@example.com" value="">
+            </div>
+            <div class="input-group">
+                <label for="testPassword">Test Password</label>
+                <input type="password" id="testPassword" placeholder="Test123!" value="">
+            </div>
+            <button class="button" onclick="loadFromLocalStorage()">Load Saved Config</button>
+            <button class="button button-secondary" onclick="saveToLocalStorage()">Save Config</button>
+        </div>
+        
+        <div>
+            <button class="button button-success" onclick="runAllTests()">Run All Tests</button>
+            <button class="button" onclick="testHealth()">Test Health</button>
+            <button class="button" onclick="testSurahs()">Test Surahs</button>
+            <button class="button" onclick="testAuth()">Test Auth</button>
+            <button class="button" onclick="testOnboarding()">Test Onboarding</button>
+            <button class="button" onclick="testProgress()">Test Progress</button>
+            <button class="button" onclick="testFrontend()">Test Frontend</button>
+            <button class="button button-danger" onclick="clearResults()">Clear Results</button>
+        </div>
+        
+        <div class="results" id="results"></div>
+        
+        <div class="summary" id="summary" style="display: none;">
+            <h2>Test Summary</h2>
+            <div class="summary-stats">
+                <div class="stat">
+                    <div class="stat-value" id="totalTests">0</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="passedTests" style="color: #28a745;">0</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="failedTests" style="color: #dc3545;">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            tests: []
+        };
+        
+        let authToken = null;
+        
+        function getConfig() {
+            return {
+                backendUrl: document.getElementById('backendUrl').value.trim(),
+                frontendUrl: document.getElementById('frontendUrl').value.trim(),
+                testEmail: document.getElementById('testEmail').value.trim() || `test-${Date.now()}@example.com`,
+                testPassword: document.getElementById('testPassword').value.trim() || `TestPass123!${Date.now()}`
+            };
+        }
+        
+        function saveToLocalStorage() {
+            const config = getConfig();
+            localStorage.setItem('testConfig', JSON.stringify(config));
+            alert('Configuration saved!');
+        }
+        
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('testConfig');
+            if (saved) {
+                const config = JSON.parse(saved);
+                document.getElementById('backendUrl').value = config.backendUrl || '';
+                document.getElementById('frontendUrl').value = config.frontendUrl || '';
+                document.getElementById('testEmail').value = config.testEmail || '';
+                document.getElementById('testPassword').value = config.testPassword || '';
+                alert('Configuration loaded!');
+            } else {
+                alert('No saved configuration found.');
+            }
+        }
+        
+        function addTestResult(name, status, message = '', time = null) {
+            testResults.total++;
+            if (status === 'pass') testResults.passed++;
+            if (status === 'fail') testResults.failed++;
+            
+            testResults.tests.push({ name, status, message, time });
+            
+            const resultsDiv = document.getElementById('results');
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-item ${status}`;
+            testDiv.id = `test-${testResults.total}`;
+            
+            const timeStr = time ? ` (${time}ms)` : '';
+            const statusSymbol = status === 'pass' ? '✓' : status === 'fail' ? '✗' : '⟳';
+            
+            testDiv.innerHTML = `
+                <div class="test-header">
+                    <span class="test-name">${statusSymbol} ${name}${timeStr}</span>
+                    <span class="test-status ${status}">${status.toUpperCase()}</span>
+                </div>
+                ${message ? `<div class="test-message">${message}</div>` : ''}
+            `;
+            
+            resultsDiv.appendChild(testDiv);
+            testDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            updateSummary();
+        }
+        
+        function updateTestStatus(id, status, message = '') {
+            const testDiv = document.getElementById(id);
+            if (testDiv) {
+                testDiv.className = `test-item ${status}`;
+                const statusSpan = testDiv.querySelector('.test-status');
+                if (statusSpan) {
+                    statusSpan.className = `test-status ${status}`;
+                    statusSpan.textContent = status.toUpperCase();
+                }
+                if (message) {
+                    const messageDiv = testDiv.querySelector('.test-message');
+                    if (messageDiv) {
+                        messageDiv.textContent = message;
+                    }
+                }
+            }
+        }
+        
+        function updateSummary() {
+            document.getElementById('summary').style.display = 'block';
+            document.getElementById('totalTests').textContent = testResults.total;
+            document.getElementById('passedTests').textContent = testResults.passed;
+            document.getElementById('failedTests').textContent = testResults.failed;
+            
+            const successRate = testResults.total > 0 
+                ? Math.round((testResults.passed / testResults.total) * 100) 
+                : 0;
+            document.getElementById('successRate').textContent = successRate + '%';
+            document.getElementById('successRate').style.color = successRate >= 80 ? '#28a745' : successRate >= 60 ? '#ffc107' : '#dc3545';
+        }
+        
+        function clearResults() {
+            testResults = { total: 0, passed: 0, failed: 0, tests: [] };
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+            authToken = null;
+        }
+        
+        async function makeRequest(method, endpoint, data = null, headers = {}) {
+            const config = getConfig();
+            const startTime = Date.now();
+            
+            try {
+                const url = `${config.backendUrl}${endpoint}`;
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...headers
+                    }
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(url, options);
+                const time = Date.now() - startTime;
+                const responseData = await response.json().catch(() => ({}));
+                
+                return {
+                    success: response.ok,
+                    data: responseData,
+                    status: response.status,
+                    time
+                };
+            } catch (error) {
+                const time = Date.now() - startTime;
+                return {
+                    success: false,
+                    error: error.message,
+                    status: 0,
+                    time
+                };
+            }
+        }
+        
+        async function testHealth() {
+            const testId = `test-${testResults.total + 1}`;
+            addTestResult('Health Check', 'running', 'Testing...');
+            
+            const result = await makeRequest('GET', '/api/health');
+            
+            if (result.success && result.status === 200) {
+                updateTestStatus(testId, 'pass', `Status: ${result.data.status}`, result.time);
+                addTestResult('Health Check', 'pass', `Status: ${result.data.status}`, result.time);
+            } else {
+                updateTestStatus(testId, 'fail', `Status: ${result.status}`, result.time);
+                addTestResult('Health Check', 'fail', `Error: ${JSON.stringify(result.error)}`, result.time);
+            }
+        }
+        
+        async function testSurahs() {
+            const testId = `test-${testResults.total + 1}`;
+            addTestResult('Get Surahs', 'running', 'Testing...');
+            
+            const result = await makeRequest('GET', '/api/surahs');
+            
+            if (result.success && result.status === 200) {
+                const chapters = result.data?.chapters || result.data;
+                const count = Array.isArray(chapters) ? chapters.length : 0;
+                
+                if (count > 0) {
+                    updateTestStatus(testId, 'pass', `Retrieved ${count} surahs`, result.time);
+                    addTestResult('Get Surahs', 'pass', `Retrieved ${count} surahs`, result.time);
+                } else {
+                    updateTestStatus(testId, 'fail', 'No surahs returned', result.time);
+                    addTestResult('Get Surahs', 'fail', 'No surahs returned', result.time);
+                }
+            } else {
+                updateTestStatus(testId, 'fail', `Status: ${result.status}`, result.time);
+                addTestResult('Get Surahs', 'fail', `Error: ${JSON.stringify(result.error)}`, result.time);
+            }
+        }
+        
+        async function testAuth() {
+            const config = getConfig();
+            
+            // Sign Up
+            const signupId = `test-${testResults.total + 1}`;
+            addTestResult('Sign Up', 'running', 'Testing...');
+            
+            const signupResult = await makeRequest('POST', '/api/auth/signup', {
+                email: config.testEmail,
+                password: config.testPassword,
+                name: 'Test User'
+            });
+            
+            if (signupResult.success && (signupResult.status === 200 || signupResult.status === 201)) {
+                if (signupResult.data.token) {
+                    authToken = signupResult.data.token;
+                    updateTestStatus(signupId, 'pass', 'User created', signupResult.time);
+                    addTestResult('Sign Up', 'pass', `User created: ${config.testEmail}`, signupResult.time);
+                } else {
+                    updateTestStatus(signupId, 'fail', 'No token returned', signupResult.time);
+                    addTestResult('Sign Up', 'fail', 'No token returned', signupResult.time);
+                }
+            } else if (signupResult.status === 409) {
+                // User exists, try sign in
+                updateTestStatus(signupId, 'running', 'User exists, trying sign in...');
+                
+                const signinResult = await makeRequest('POST', '/api/auth/signin', {
+                    email: config.testEmail,
+                    password: config.testPassword
+                });
+                
+                if (signinResult.success && signinResult.data.token) {
+                    authToken = signinResult.data.token;
+                    updateTestStatus(signupId, 'pass', 'Signed in with existing account', signinResult.time);
+                    addTestResult('Sign In', 'pass', `Signed in: ${config.testEmail}`, signinResult.time);
+                } else {
+                    updateTestStatus(signupId, 'fail', 'Sign in failed', signinResult.time);
+                    addTestResult('Sign In', 'fail', `Error: ${JSON.stringify(signinResult.error)}`, signinResult.time);
+                }
+            } else {
+                updateTestStatus(signupId, 'fail', `Status: ${signupResult.status}`, signupResult.time);
+                addTestResult('Sign Up', 'fail', `Error: ${JSON.stringify(signupResult.error)}`, signupResult.time);
+            }
+            
+            // Token Verification
+            if (authToken) {
+                const verifyId = `test-${testResults.total + 1}`;
+                addTestResult('Token Verification', 'running', 'Testing...');
+                
+                const verifyResult = await makeRequest('GET', '/api/auth/verify', null, {
+                    'Authorization': `Bearer ${authToken}`
+                });
+                
+                if (verifyResult.success && verifyResult.data.valid) {
+                    updateTestStatus(verifyId, 'pass', 'Token valid', verifyResult.time);
+                    addTestResult('Token Verification', 'pass', `Token valid for: ${verifyResult.data.user.email}`, verifyResult.time);
+                } else {
+                    updateTestStatus(verifyId, 'fail', 'Token invalid', verifyResult.time);
+                    addTestResult('Token Verification', 'fail', `Error: ${JSON.stringify(verifyResult.error)}`, verifyResult.time);
+                }
+            }
+        }
+        
+        async function testOnboarding() {
+            if (!authToken) {
+                addTestResult('Onboarding', 'fail', 'No token available');
+                return;
+            }
+            
+            const testId = `test-${testResults.total + 1}`;
+            addTestResult('Onboarding', 'running', 'Testing...');
+            
+            const result = await makeRequest('POST', '/api/auth/onboarding', {
+                memorizedSurahs: [
+                    { surahId: 1, name: 'Al-Fatiha' },
+                    { surahId: 2, name: 'Al-Baqarah' },
+                    { surahId: 3, name: 'Ali Imran' }
+                ],
+                progress: {
+                    '1': { name: 'Al-Fatiha', verses: {} },
+                    '2': { name: 'Al-Baqarah', verses: {} },
+                    '3': { name: 'Ali Imran', verses: {} }
+                }
+            }, {
+                'Authorization': `Bearer ${authToken}`
+            });
+            
+            if (result.success && result.status === 200) {
+                updateTestStatus(testId, 'pass', 'Onboarding completed', result.time);
+                addTestResult('Onboarding', 'pass', 'Onboarding completed successfully', result.time);
+            } else {
+                updateTestStatus(testId, 'fail', `Status: ${result.status}`, result.time);
+                addTestResult('Onboarding', 'fail', `Error: ${JSON.stringify(result.error)}`, result.time);
+            }
+        }
+        
+        async function testProgress() {
+            if (!authToken) {
+                addTestResult('Get Progress', 'fail', 'No token available');
+                return;
+            }
+            
+            // Get Progress
+            const getProgressId = `test-${testResults.total + 1}`;
+            addTestResult('Get Progress', 'running', 'Testing...');
+            
+            const getResult = await makeRequest('GET', '/api/auth/progress', null, {
+                'Authorization': `Bearer ${authToken}`
+            });
+            
+            if (getResult.success && getResult.status === 200) {
+                updateTestStatus(getProgressId, 'pass', 'Progress retrieved', getResult.time);
+                addTestResult('Get Progress', 'pass', 'Progress retrieved successfully', getResult.time);
+            } else {
+                updateTestStatus(getProgressId, 'fail', `Status: ${getResult.status}`, getResult.time);
+                addTestResult('Get Progress', 'fail', `Error: ${JSON.stringify(getResult.error)}`, getResult.time);
+                return;
+            }
+            
+            // Update Progress
+            const updateProgressId = `test-${testResults.total + 1}`;
+            addTestResult('Update Progress', 'running', 'Testing...');
+            
+            const testProgress = {
+                '1': {
+                    name: 'Al-Fatiha',
+                    verses: {
+                        '1': true,
+                        '2': false,
+                    }
+                }
+            };
+            
+            const updateResult = await makeRequest('PUT', '/api/auth/progress', { progress: testProgress }, {
+                'Authorization': `Bearer ${authToken}`
+            });
+            
+            if (updateResult.success && updateResult.status === 200) {
+                updateTestStatus(updateProgressId, 'pass', 'Progress updated', updateResult.time);
+                addTestResult('Update Progress', 'pass', 'Progress updated successfully', updateResult.time);
+            } else {
+                updateTestStatus(updateProgressId, 'fail', `Status: ${updateResult.status}`, updateResult.time);
+                addTestResult('Update Progress', 'fail', `Error: ${JSON.stringify(updateResult.error)}`, updateResult.time);
+            }
+        }
+        
+        async function testFrontend() {
+            const config = getConfig();
+            
+            if (!config.frontendUrl) {
+                addTestResult('Frontend Accessibility', 'fail', 'Frontend URL not provided');
+                return;
+            }
+            
+            const testId = `test-${testResults.total + 1}`;
+            addTestResult('Frontend Accessibility', 'running', 'Testing...');
+            
+            const startTime = Date.now();
+            try {
+                const response = await fetch(config.frontendUrl, {
+                    method: 'GET',
+                    mode: 'no-cors' // Avoid CORS issues
+                });
+                const time = Date.now() - startTime;
+                
+                // With no-cors, we can't check status, but if no error, assume success
+                updateTestStatus(testId, 'pass', `Frontend accessible`, time);
+                addTestResult('Frontend Accessibility', 'pass', `Frontend loads successfully`, time);
+            } catch (error) {
+                const time = Date.now() - startTime;
+                updateTestStatus(testId, 'fail', `Error: ${error.message}`, time);
+                addTestResult('Frontend Accessibility', 'fail', `Error: ${error.message}`, time);
+            }
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            
+            const config = getConfig();
+            if (!config.backendUrl) {
+                alert('Please enter your backend URL');
+                return;
+            }
+            
+            addTestResult('Starting Tests', 'running', 'Running all tests...');
+            
+            await testHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testSurahs();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testAuth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testOnboarding();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testProgress();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testFrontend();
+            
+            addTestResult('All Tests Complete', testResults.failed === 0 ? 'pass' : 'fail', 
+                `${testResults.passed} passed, ${testResults.failed} failed`);
+        }
+        
+        // Load saved config on page load
+        window.addEventListener('load', () => {
+            loadFromLocalStorage();
+        });
+    </script>
+</body>
+</html>
+

@@ -368,7 +368,29 @@ REACT_APP_API_URL = https://tahfidh-backend.onrender.com/api
 
 ## Final Verification
 
-### Test Checklist
+### Automated Testing
+
+**Quick Test (Recommended):**
+```bash
+npm run test:production
+```
+
+Or run directly:
+```bash
+node test-production.js
+```
+
+This will test all backend endpoints, authentication, and core functionality automatically.
+
+**Browser-Based Testing:**
+1. Open `test-production.html` in your browser
+2. Enter your backend and frontend URLs
+3. Click "Run All Tests"
+4. Review the results
+
+**For detailed testing instructions, see `PRODUCTION_TESTS.md`**
+
+### Manual Test Checklist
 
 Go through each of these on your live site:
 

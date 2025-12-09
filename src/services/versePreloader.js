@@ -8,17 +8,17 @@ class VersePreloader {
     this.hasPreloaded = false; // Track if we've already preloaded
   }
 
-  async preloadRandomVerses(count = 20) {
-    // Prevent multiple preloads (especially in React StrictMode)
-    if (this.isPreloading || this.hasPreloaded) {
+  async preloadRandomVerses(count = 20, force = false) {
+    // Allow force reload if needed
+    if (!force && (this.isPreloading || this.hasPreloaded)) {
       return;
     }
     
     this.isPreloading = true;
     
-    // Reduce count to avoid rate limiting (especially in production)
+    // Increase count to get more variety (but still reasonable)
     // Always use a reasonable limit
-    const actualCount = Math.min(count, 5);
+    const actualCount = Math.min(count, 10);
     
     try {
       const promises = [];
@@ -35,19 +35,34 @@ class VersePreloader {
         .filter(verse => verse && verse.verse)
         .filter(verse => {
           // Check if verse has words and calculate total length
+          // Increase length limit to allow more verses through
           if (verse.verse.words && Array.isArray(verse.verse.words)) {
             const totalLength = verse.verse.words.reduce((total, word) => total + (word.text ? word.text.length : 0), 0);
-            if (totalLength > 25) {
+            // Increased from 25 to 50 to allow more verses
+            if (totalLength > 50) {
+              return false;
+            }
+          }
+          // Also check translation length
+          if (verse.verse.translations && verse.verse.translations.length > 0) {
+            const translationText = verse.verse.translations[0].text || '';
+            // Filter out very long translations
+            if (translationText.length > 200) {
               return false;
             }
           }
           return true;
         });
       
-      // Fallback if we couldn't get enough verses after length filtering
-      if (this.randomVerses.length < 3) {
-        this.randomVerses.push(...this.getDefaultVerses());
-      }
+      // Always include default verses for variety
+      // Merge with defaults instead of replacing
+      const defaultVerses = this.getDefaultVerses();
+      const existingKeys = new Set(this.randomVerses.map(v => v.verse?.verse_key));
+      const newDefaults = defaultVerses.filter(v => !existingKeys.has(v.verse?.verse_key));
+      this.randomVerses.push(...newDefaults);
+      
+      // Shuffle the array for better variety
+      this.randomVerses = this.shuffleArray([...this.randomVerses]);
       
       this.hasPreloaded = true; // Mark as preloaded
     } catch (error) {
@@ -70,18 +85,32 @@ class VersePreloader {
 
   getRandomVerse() {
     if (this.randomVerses.length === 0) {
-      return this.getDefaultVerses()[0];
+      // If no verses loaded, return a random default
+      const defaults = this.getDefaultVerses();
+      return defaults[Math.floor(Math.random() * defaults.length)];
     }
     
-    const verse = this.randomVerses[this.currentIndex % this.randomVerses.length];
+    // Use random selection instead of sequential for more variety
+    const randomIndex = Math.floor(Math.random() * this.randomVerses.length);
+    const verse = this.randomVerses[randomIndex];
     this.currentIndex++;
     
     // Preload more verses when we're halfway through
     if (this.currentIndex >= Math.floor(this.randomVerses.length / 2)) {
-      this.preloadRandomVerses(5); // Preload 5 more verses
+      this.preloadRandomVerses(10, true); // Force reload more verses
     }
     
     return verse;
+  }
+  
+  // Helper to shuffle array
+  shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   }
 
   getDefaultVerses() {
