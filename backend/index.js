@@ -59,8 +59,56 @@ const QURAN_API_CONFIG = {
   }
 };
 
-// Use pre-production for development
-const API_CONFIG = QURAN_API_CONFIG.preProduction;
+// Determine which API config to use
+// Use production API when NODE_ENV=production (unless explicitly overridden)
+const isProduction = process.env.NODE_ENV === 'production';
+const forcePreProd = process.env.QURAN_USE_PREPROD === 'true';
+const API_CONFIG = (isProduction && !forcePreProd)
+  ? QURAN_API_CONFIG.production 
+  : QURAN_API_CONFIG.preProduction;
+
+// Debug: Log which config is being used
+if (process.env.NODE_ENV === 'production') {
+  console.log('=== PRODUCTION MODE ===');
+  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`QURAN_USE_PREPROD: ${process.env.QURAN_USE_PREPROD || 'not set (using production)'}`);
+  console.log(`Selected config: ${(isProduction && !forcePreProd) ? 'PRODUCTION' : 'PRE-PRODUCTION'}`);
+  console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
+  console.log(`Auth URL: ${API_CONFIG.authUrl}`);
+  console.log(`Expected Production URL: ${QURAN_API_CONFIG.production.baseUrl}`);
+  console.log(`Expected Production Auth: ${QURAN_API_CONFIG.production.authUrl}`);
+  if (API_CONFIG.baseUrl !== QURAN_API_CONFIG.production.baseUrl) {
+    console.error('⚠️ WARNING: Not using production API endpoints!');
+    console.error('This should not happen in production mode.');
+  }
+  console.log('======================');
+}
+
+// Log configuration for debugging
+if (process.env.NODE_ENV !== 'production') {
+  console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+  console.log(`Using API config: ${isProduction ? 'PRODUCTION' : 'PRE-PRODUCTION'}`);
+  console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
+  console.log(`Client ID set: ${!!API_CONFIG.clientId}`);
+  console.log(`Client Secret set: ${!!API_CONFIG.clientSecret}`);
+}
+
+// Validate Quran API credentials
+if (!API_CONFIG.clientId || !API_CONFIG.clientSecret) {
+  console.error('ERROR: Quran API credentials are missing!');
+  console.error('Please set QURAN_CLIENT_ID and QURAN_CLIENT_SECRET environment variables.');
+  console.error('For production, you need PRODUCTION credentials from Quran.com API.');
+  if (isProduction) {
+    console.error('Current environment: PRODUCTION - using production API endpoints');
+    console.error('Make sure you have PRODUCTION credentials, not development/pre-production ones.');
+    console.error(`Expected API URL: ${QURAN_API_CONFIG.production.baseUrl}`);
+    console.error(`Expected Auth URL: ${QURAN_API_CONFIG.production.authUrl}`);
+  } else {
+    console.error('Current environment: DEVELOPMENT - using pre-production API endpoints');
+    console.error(`API URL: ${QURAN_API_CONFIG.preProduction.baseUrl}`);
+    console.error(`Auth URL: ${QURAN_API_CONFIG.preProduction.authUrl}`);
+  }
+}
 
 // Cache for access token
 let accessToken = null;
@@ -125,6 +173,11 @@ async function getAccessToken() {
       return accessToken;
     }
 
+    // Validate credentials exist
+    if (!API_CONFIG.clientId || !API_CONFIG.clientSecret) {
+      throw new Error('Quran API credentials are missing. Please set QURAN_CLIENT_ID and QURAN_CLIENT_SECRET.');
+    }
+    
     const auth = Buffer.from(`${API_CONFIG.clientId}:${API_CONFIG.clientSecret}`).toString('base64');
     
     const response = await axios({
@@ -143,7 +196,33 @@ async function getAccessToken() {
     
     return accessToken;
   } catch (error) {
-    console.error('Error getting access token:', error.response?.data || error.message);
+    const errorData = error.response?.data || error.message;
+    console.error('Error getting access token:', errorData);
+    console.error(`Attempted Auth URL: ${API_CONFIG.authUrl}`);
+    console.error(`Environment: ${process.env.NODE_ENV || 'not set'}`);
+    console.error(`Using ${isProduction ? 'PRODUCTION' : 'PRE-PRODUCTION'} configuration`);
+    console.error(`Client ID present: ${!!API_CONFIG.clientId}`);
+    console.error(`Client Secret present: ${!!API_CONFIG.clientSecret}`);
+    
+    if (error.response?.status === 401 || error.response?.data?.error === 'invalid_client') {
+      console.error('\n=== AUTHENTICATION FAILED - TROUBLESHOOTING ===');
+      console.error('Possible causes:');
+      console.error('1. Client ID or Secret is incorrect/typo');
+      console.error('2. Credentials are for wrong environment:');
+      console.error(`   - You're using ${isProduction ? 'PRODUCTION' : 'PRE-PRODUCTION'} API endpoints`);
+      console.error(`   - Make sure your credentials are for ${isProduction ? 'PRODUCTION' : 'PRE-PRODUCTION'}`);
+      console.error('3. Credentials have extra spaces or quotes (check in Render dashboard)');
+      console.error('4. Credentials expired or revoked');
+      console.error('\nExpected configuration:');
+      if (isProduction) {
+        console.error(`   Auth URL: ${QURAN_API_CONFIG.production.authUrl}`);
+        console.error(`   Base URL: ${QURAN_API_CONFIG.production.baseUrl}`);
+      } else {
+        console.error(`   Auth URL: ${QURAN_API_CONFIG.preProduction.authUrl}`);
+        console.error(`   Base URL: ${QURAN_API_CONFIG.preProduction.baseUrl}`);
+      }
+      console.error('===========================================\n');
+    }
     throw new Error('Failed to authenticate with Quran API');
   }
 }
@@ -1285,15 +1364,35 @@ app.get('/api/test/list-translations', async (req, res) => {
 
 // Start server
 app.listen(PORT, async () => {
+  // Always log critical configuration info
   console.log(`Quran API proxy server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+  console.log(`QURAN_USE_PREPROD: ${process.env.QURAN_USE_PREPROD || 'not set'}`);
+  console.log(`Using ${(isProduction && !forcePreProd) ? 'PRODUCTION' : 'PRE-PRODUCTION'} API configuration`);
   console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
-  console.log('Caching enabled with the following TTLs:');
-  console.log(`  - All Surahs: 24 hours`);
-  console.log(`  - Individual Surahs: 12 hours`);
-  console.log(`  - Juz-based Surahs: 6 hours`);
-  console.log(`  - Verses: 6 hours`);
-  console.log(`  - Translations: 24 hours`);
+  console.log(`Auth URL: ${API_CONFIG.authUrl}`);
+  console.log(`Client ID configured: ${!!API_CONFIG.clientId}`);
+  console.log(`Client Secret configured: ${!!API_CONFIG.clientSecret}`);
+  
+  // Verify production config is being used
+  if (isProduction && !forcePreProd) {
+    if (API_CONFIG.baseUrl === QURAN_API_CONFIG.production.baseUrl) {
+      console.log('✅ Using PRODUCTION API endpoints (correct)');
+    } else {
+      console.error('❌ ERROR: Should be using PRODUCTION but using PRE-PRODUCTION!');
+      console.error(`Expected: ${QURAN_API_CONFIG.production.baseUrl}`);
+      console.error(`Actual: ${API_CONFIG.baseUrl}`);
+    }
+  }
+  
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Caching enabled with the following TTLs:');
+    console.log(`  - All Surahs: 24 hours`);
+    console.log(`  - Individual Surahs: 12 hours`);
+    console.log(`  - Juz-based Surahs: 6 hours`);
+    console.log(`  - Verses: 6 hours`);
+    console.log(`  - Translations: 24 hours`);
+  }
   
   // Initialize database
   try {
@@ -1360,6 +1459,7 @@ setInterval(() => {
 // JWT Secret - MUST be set in environment variables
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
+  // Always log this error - it's critical
   console.error('ERROR: JWT_SECRET is not set in environment variables!');
   console.error('Generate a secret key using: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
   process.exit(1);

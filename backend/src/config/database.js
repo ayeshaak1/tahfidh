@@ -15,10 +15,13 @@ const pool = new Pool({
 
 // Test the connection
 pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Connected to PostgreSQL database');
+  }
 });
 
 pool.on('error', (err) => {
+  // Always log errors, even in production
   console.error('Unexpected error on idle client', err);
   process.exit(-1);
 });
@@ -113,8 +116,11 @@ async function initializeDatabase() {
       CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id)
     `);
 
-    console.log('Database tables initialized successfully');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Database tables initialized successfully');
+    }
   } catch (error) {
+    // Always log errors, even in production
     console.error('Error initializing database:', error);
     throw error;
   }
