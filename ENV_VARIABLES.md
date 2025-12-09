@@ -25,6 +25,7 @@ SESSION_SECRET=<same-as-JWT-or-different>
 ```
 GOOGLE_CLIENT_ID=<your-production-google-client-id>
 GOOGLE_CLIENT_SECRET=<your-production-google-client-secret>
+GOOGLE_CALLBACK_URL=https://your-backend-name.onrender.com/api/auth/google/callback
 ```
 
 ### Quran API

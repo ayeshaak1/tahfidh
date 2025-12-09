@@ -67,6 +67,28 @@ const API_CONFIG = (isProduction && !forcePreProd)
   ? QURAN_API_CONFIG.production 
   : QURAN_API_CONFIG.preProduction;
 
+// Determine callback URL for OAuth (needed early for logging)
+// In production, try to construct from RENDER_SERVICE_URL if available
+// Otherwise, use explicit GOOGLE_CALLBACK_URL or default to localhost
+let googleCallbackURL = process.env.GOOGLE_CALLBACK_URL;
+
+if (!googleCallbackURL && isProduction) {
+  // Try to construct from Render service URL
+  const renderServiceUrl = process.env.RENDER_SERVICE_URL || process.env.RENDER_EXTERNAL_URL;
+  if (renderServiceUrl) {
+    googleCallbackURL = `${renderServiceUrl}/api/auth/google/callback`;
+    console.log(`⚠️  GOOGLE_CALLBACK_URL not set. Auto-constructed from RENDER_SERVICE_URL: ${googleCallbackURL}`);
+    console.log(`⚠️  For production, it's recommended to explicitly set GOOGLE_CALLBACK_URL in Render environment variables.`);
+  } else {
+    googleCallbackURL = `http://localhost:5000/api/auth/google/callback`;
+    console.error('❌ ERROR: GOOGLE_CALLBACK_URL not set in production!');
+    console.error('❌ This will cause OAuth redirects to fail. Please set GOOGLE_CALLBACK_URL in Render environment variables.');
+    console.error('❌ Example: https://your-backend-name.onrender.com/api/auth/google/callback');
+  }
+} else if (!googleCallbackURL) {
+  googleCallbackURL = `http://localhost:5000/api/auth/google/callback`;
+}
+
 // Debug: Log which config is being used
 if (process.env.NODE_ENV === 'production') {
   console.log('=== PRODUCTION MODE ===');
@@ -1374,6 +1396,24 @@ app.listen(PORT, async () => {
   console.log(`Client ID configured: ${!!API_CONFIG.clientId}`);
   console.log(`Client Secret configured: ${!!API_CONFIG.clientSecret}`);
   
+  // Log OAuth configuration
+  console.log('\n=== GOOGLE OAUTH CONFIGURATION ===');
+  console.log(`GOOGLE_CLIENT_ID configured: ${!!process.env.GOOGLE_CLIENT_ID}`);
+  console.log(`GOOGLE_CLIENT_SECRET configured: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
+  console.log(`GOOGLE_CALLBACK_URL: ${googleCallbackURL}`);
+  console.log(`FRONTEND_URL: ${process.env.FRONTEND_URL || 'NOT SET (will use localhost:3000)'}`);
+  if (isProduction) {
+    if (!process.env.GOOGLE_CALLBACK_URL) {
+      console.error('⚠️  WARNING: GOOGLE_CALLBACK_URL not explicitly set in production!');
+      console.error('⚠️  Set it in Render environment variables for reliable OAuth redirects.');
+    }
+    if (!process.env.FRONTEND_URL) {
+      console.error('⚠️  WARNING: FRONTEND_URL not set in production!');
+      console.error('⚠️  OAuth redirects will fail. Set it in Render environment variables.');
+    }
+  }
+  console.log('===================================\n');
+  
   // Verify production config is being used
   if (isProduction && !forcePreProd) {
     if (API_CONFIG.baseUrl === QURAN_API_CONFIG.production.baseUrl) {
@@ -1646,7 +1686,7 @@ app.get('/api/auth/verify', authenticateToken, async (req, res) => {
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL || `http://localhost:5000/api/auth/google/callback`,
+  callbackURL: googleCallbackURL,
   // Only request basic scopes that don't require verification
   scope: ['profile', 'email']
 }, async (accessToken, refreshToken, profile, done) => {
@@ -1742,15 +1782,31 @@ app.get('/api/auth/google/callback',
       const token = generateToken({ id: user.id.toString(), email: user.email });
 
       // Redirect to frontend with token
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      let frontendUrl = process.env.FRONTEND_URL;
+      
+      if (!frontendUrl) {
+        if (process.env.NODE_ENV === 'production') {
+          console.error('❌ ERROR: FRONTEND_URL not set in production!');
+          console.error('❌ This will cause OAuth redirects to fail. Please set FRONTEND_URL in Render environment variables.');
+          console.error('❌ Example: https://your-app-name.netlify.app');
+          frontendUrl = 'http://localhost:3000'; // Fallback, but will fail
+        } else {
+          frontendUrl = 'http://localhost:3000';
+        }
+      }
+      
       const redirectUrl = user.onboarding_complete
         ? `${frontendUrl}/dashboard?token=${token}`
         : `${frontendUrl}/onboarding?token=${token}`;
 
+      console.log(`🔄 Redirecting to: ${redirectUrl}`);
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('Google OAuth callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      if (!process.env.FRONTEND_URL && process.env.NODE_ENV === 'production') {
+        console.error('❌ ERROR: FRONTEND_URL not set in production!');
+      }
       res.redirect(`${frontendUrl}/signin?error=oauth_failed`);
     }
   }
