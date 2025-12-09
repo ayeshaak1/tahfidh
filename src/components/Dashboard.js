@@ -570,10 +570,9 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
               <svg width="300" height="300" viewBox="0 0 300 300">
                 <defs>
                   <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#e3a19c" />
-                    <stop offset="50%" stopColor="#e3a19c" />
-                    <stop offset="50%" stopColor="#9A86A4" />
-                    <stop offset="100%" stopColor="#9A86A4" />
+                    <stop offset="0%" stopColor="var(--lavender)" />
+                    <stop offset="50%" stopColor="var(--lavender)" />
+                    <stop offset="100%" stopColor="var(--rose)" />
                   </linearGradient>
                   <linearGradient id="shimmerGradient" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stopColor="transparent" stopOpacity="0" />
