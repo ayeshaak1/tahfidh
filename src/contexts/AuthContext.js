@@ -57,26 +57,22 @@ export const AuthProvider = ({ children }) => {
                   return;
                 } else if (response.status === 401 || response.status === 403) {
                   // Token invalid, clear storage
-                  console.log('⚠️ Token verification failed - clearing auth');
                   clearAuth();
                   return;
                 } else if (response.status === 429) {
                   // Rate limited - wait a bit and retry
                   if (retries > 0) {
-                    console.warn('⚠️ Rate limited during user data fetch, retrying...');
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     retries--;
                     continue;
                   } else {
                     // Out of retries, but token is still valid - clear and let user retry
-                    console.warn('⚠️ Rate limited - too many retries, clearing auth');
                     clearAuth();
                     return;
                   }
                 } else {
                   // Other error - retry if we have retries left
                   if (retries > 0) {
-                    console.warn(`⚠️ Error ${response.status} fetching user data, retrying...`);
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     retries--;
                     continue;
@@ -89,7 +85,6 @@ export const AuthProvider = ({ children }) => {
               } catch (fetchError) {
                 // Network error - retry if we have retries left
                 if (retries > 0) {
-                  console.warn('⚠️ Network error fetching user data, retrying...', fetchError);
                   await new Promise(resolve => setTimeout(resolve, 1000));
                   retries--;
                   continue;
@@ -113,13 +108,11 @@ export const AuthProvider = ({ children }) => {
             verifyToken(token).then(isValid => {
               if (!isValid) {
                 // Token invalid (401/403), clear storage
-                console.log('⚠️ Token verification failed - clearing auth');
                 clearAuth();
               }
             }).catch(error => {
               // Network errors are handled in verifyToken to return true
               // So this catch should rarely happen, but if it does, keep user authenticated
-              console.warn('⚠️ Token verification error (non-fatal):', error);
             });
           }
         }
@@ -132,7 +125,6 @@ export const AuthProvider = ({ children }) => {
         const userData = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA, null);
         if (token && userData) {
           // Assume token is valid if we have both - network error, not auth failure
-          console.log('⚠️ Network error during auth check - keeping user authenticated');
           setUser(userData);
           setIsAuthenticated(true);
           const onboardingStatus = StorageHelpers.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'false');
@@ -165,7 +157,6 @@ export const AuthProvider = ({ children }) => {
 
       // 429 or 5xx → assume token still valid to avoid logging user out on transient issues
       if (response.status === 429 || response.status >= 500) {
-        console.warn(`⚠️ Token verify returned ${response.status} - keeping user authenticated`);
         return true;
       }
 
@@ -173,7 +164,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // Network errors - assume token might still be valid, don't log out user
       // Only clear auth if we get a definitive auth failure response
-      console.warn('⚠️ Network error during token verification - keeping user authenticated to prevent accidental logout');
       return true; // Assume token is valid on network errors to prevent accidental logout
     }
   };
@@ -299,7 +289,6 @@ export const AuthProvider = ({ children }) => {
   const signOut = () => {
     // CRITICAL: Clear all authenticated data completely
     // This ensures no auth data can leak into guest mode after logout
-    console.log('🚪 Logging out - clearing all authenticated data');
     clearAuth();
     // Force a small delay to ensure state updates propagate
     // The App.js useEffect will handle switching to guest mode when isAuthenticated becomes false

@@ -90,12 +90,9 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     e.stopPropagation();
     // Check if user has any progress to export
     const hasProgress = userProgress && typeof userProgress === 'object' && Object.keys(userProgress).length > 0;
-    console.log('Create Account clicked - hasProgress:', hasProgress, 'userProgress:', userProgress);
     if (hasProgress) {
-      console.log('Showing export dialog');
       setShowExportDialog(true);
     } else {
-      console.log('No progress, navigating to signup');
       // No progress, go directly to signup
       navigate('/signup');
     }
@@ -572,9 +569,10 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
             <div className="circular-progress">
               <svg width="300" height="300" viewBox="0 0 300 300">
                 <defs>
-                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#E2B6B3" />
-                    <stop offset="100%" stopColor="#9A86A4" />
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="var(--lavender)" />
+                    <stop offset="50%" stopColor="var(--lavender)" />
+                    <stop offset="100%" stopColor="var(--rose)" />
                   </linearGradient>
                   <linearGradient id="shimmerGradient" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stopColor="transparent" stopOpacity="0" />

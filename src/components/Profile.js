@@ -186,10 +186,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             if (Object.keys(mapping).length > 2) {
               setJuzMapping(mapping);
             } else {
-              console.warn('Juz mapping incomplete (likely test mode), using fallback');
             }
           } else {
-            console.warn('No juzs data in response:', juzsResponse);
           }
         } catch (juzErr) {
           console.error('Failed to fetch juz data:', juzErr);
@@ -393,7 +391,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const handleLogout = () => {
     // CRITICAL: Logout should clear all auth data and switch to guest mode
     // The App.js useEffect will handle the mode switch when isAuthenticated becomes false
-    console.log('🚪 User initiated logout');
     signOut();
     // Navigate to landing page - the app will automatically switch to guest mode
     navigate('/');
@@ -674,7 +671,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               // StorageHelpers.setItem is called automatically in useEffect when userName changes
             } else if (importedData.userName !== null) {
               // Invalid type, but not critical - just skip it
-              console.warn('Invalid userName type in import, skipping');
             }
           }
           
@@ -684,7 +680,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               setTheme(importedData.theme);
               // ThemeContext automatically saves to localStorage via useEffect
             } else {
-              console.warn('Invalid theme in import, using default');
             }
           }
           
@@ -693,7 +688,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             if (Validators.isValidFontType(importedData.quranFont)) {
               setQuranFont(importedData.quranFont);
             } else {
-              console.warn('Invalid quranFont in import, using default');
             }
           }
           
@@ -701,7 +695,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             if (typeof importedData.showTranslation === 'boolean') {
               setShowTranslation(importedData.showTranslation);
             } else {
-              console.warn('Invalid showTranslation type in import, skipping');
             }
           }
           
@@ -709,7 +702,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             if (typeof importedData.showTransliteration === 'boolean') {
               setShowTransliteration(importedData.showTransliteration);
             } else {
-              console.warn('Invalid showTransliteration type in import, skipping');
             }
           }
           
@@ -717,7 +709,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             if (typeof importedData.autoScroll === 'boolean') {
               setAutoScroll(importedData.autoScroll);
             } else {
-              console.warn('Invalid autoScroll type in import, skipping');
             }
           }
           
@@ -726,7 +717,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               const validatedSize = Validators.validateFontSize(importedData.arabicFontSize, 'arabic');
               setArabicFontSize(validatedSize);
             } else {
-              console.warn('Invalid arabicFontSize type in import, skipping');
             }
           }
           
@@ -735,7 +725,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               const validatedSize = Validators.validateFontSize(importedData.translationFontSize, 'translation');
               setTranslationFontSize(validatedSize);
             } else {
-              console.warn('Invalid translationFontSize type in import, skipping');
             }
           }
           
@@ -744,7 +733,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               const validatedSize = Validators.validateFontSize(importedData.transliterationFontSize, 'transliteration');
               setTransliterationFontSize(validatedSize);
             } else {
-              console.warn('Invalid transliterationFontSize type in import, skipping');
             }
           }
           
@@ -795,7 +783,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         if (isAuthenticated) {
           try {
             await progressApi.clearProgress();
-            console.log('Progress cleared from database');
           } catch (error) {
             console.error('Failed to clear progress from database:', error);
             // Still show success since local cache is cleared

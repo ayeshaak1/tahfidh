@@ -182,7 +182,6 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
     if (juz === 'All') {
       setSurahs(allSurahs); // Show all surahs
       setError(null); // Clear any previous errors
-      console.log('Showing all surahs');
     } else {
       try {
         setLoading(true);

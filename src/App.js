@@ -46,7 +46,6 @@ function AppContent() {
     const hasAuthToken = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN, null);
     if (hasAuthToken && !isAuthenticated) {
       // Auth is still being verified, wait for it to complete
-      console.log('⏳ Waiting for auth verification to complete before switching modes');
       return;
     }
 
@@ -72,7 +71,6 @@ function AppContent() {
       StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
         // Reset userProgress state - will be loaded from database
         setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
-      console.log('🔄 AUTH MODE - initialized quranProgress in localStorage');
       
       // CRITICAL: Clear transition flag and force load effect to re-run
       // Use requestAnimationFrame to ensure it happens after React state updates
@@ -80,7 +78,6 @@ function AppContent() {
         modeTransitionRef.current = false;
         // Force load effect to re-run by updating state
         setForceLoadTrigger(prev => prev + 1);
-        console.log('✅ Mode transition complete - forcing load effect to run');
       });
       } else {
         // User is logged out, switch to guest mode
@@ -111,7 +108,6 @@ function AppContent() {
         StorageHelpers.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
         // Reset userProgress state - will be loaded from GUEST_PROGRESS
         setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
-      console.log('🔄 Switched to guest mode - cleared all auth data');
       
       // CRITICAL: Clear transition flag and force load effect to re-run
       // Use requestAnimationFrame to ensure it happens after React state updates
@@ -119,7 +115,6 @@ function AppContent() {
         modeTransitionRef.current = false;
         // Force load effect to re-run by updating state
         setForceLoadTrigger(prev => prev + 1);
-        console.log('✅ Mode transition complete (guest) - forcing load effect to run');
       });
     }
   }, [isAuthenticated, authLoading]);
@@ -157,7 +152,6 @@ function AppContent() {
       // Reload to trigger auth check
       window.location.reload();
     } else if (error === 'oauth_failed') {
-      console.error('Google OAuth authentication failed');
       // Clear error from URL
       window.history.replaceState({}, '', window.location.pathname);
     }
@@ -185,7 +179,6 @@ function AppContent() {
     // Wait until user completes onboarding and navigates to dashboard
     if (isAuthenticated && !hasCompletedOnboarding) {
       // User is still on onboarding page - don't load progress yet
-      console.log('⏳ Waiting for onboarding to complete before loading progress');
       return;
     }
     
@@ -194,7 +187,6 @@ function AppContent() {
     // BUT: If modeRef is null (initial state), allow it to proceed
     const expectedMode = isAuthenticated ? 'authenticated' : 'guest';
     if (modeRef.current !== null && modeRef.current !== expectedMode) {
-      console.log('⏳ Waiting for mode switch to complete. Current mode:', modeRef.current, 'Expected:', expectedMode);
       return;
     }
     
@@ -211,7 +203,6 @@ function AppContent() {
     if (onboardingJustCompleted === 'true') {
       // Clear the flag and force reload
       StorageHelpers.removeItem('onboarding_just_completed');
-      console.log('🔄 Onboarding just completed - forcing progress reload');
       // Reset progressLoaded to allow reload
       setProgressLoaded(false);
       // Continue to load progress below
@@ -226,8 +217,6 @@ function AppContent() {
 
     // Load progress: from backend if authenticated, otherwise from localStorage (guest mode)
     const loadProgress = async () => {
-      console.log('🔄 Loading progress...');
-      
       // CRITICAL: Reset state FIRST before loading to prevent any contamination
       setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
       
@@ -235,7 +224,6 @@ function AppContent() {
       // If mode changed during load, abort and let the mode switch effect handle it
       const currentMode = isAuthenticated ? 'authenticated' : 'guest';
       if (modeRef.current !== null && modeRef.current !== currentMode) {
-        console.warn('⚠️ Mode changed during load, aborting');
         setProgressLoading(false);
         loadingRef.current = false;
         return;
@@ -245,7 +233,6 @@ function AppContent() {
         // CRITICAL: Re-check mode after async delay (mode might have changed during load)
         const finalMode = isAuthenticated ? 'authenticated' : 'guest';
         if (modeRef.current !== null && modeRef.current !== finalMode) {
-          console.warn('⚠️ Mode changed during async load, aborting');
           setProgressLoading(false);
           loadingRef.current = false;
           return;
@@ -253,7 +240,6 @@ function AppContent() {
         
         if (isAuthenticated) {
           // For authenticated users: ONLY fetch from database, NEVER touch guest data
-          console.log('📡 Fetching progress from backend database (authenticated user)...');
           
           // CRITICAL: Ensure we're NOT reading from guest cache during load
           // Note: Guest data may exist in localStorage (preserved for when user logs out)
@@ -265,7 +251,6 @@ function AppContent() {
           // Final mode check after async operation
           const postAsyncMode = isAuthenticated ? 'authenticated' : 'guest';
           if (modeRef.current !== null && modeRef.current !== postAsyncMode) {
-            console.warn('⚠️ Mode changed after async fetch, aborting');
             setProgressLoading(false);
             loadingRef.current = false;
             setProgressLoaded(true); // CRITICAL: Set progressLoaded even on early return
@@ -284,16 +269,13 @@ function AppContent() {
           if (backendProgress !== null && backendProgress !== undefined && Validators.isValidUserProgress(backendProgress) && Object.keys(backendProgress).length > 0) {
             // Backend has data - use it (source of truth)
             finalProgress = backendProgress;
-            console.log('✅ Using progress from backend:', Object.keys(backendProgress).length, 'surahs');
           } else if (hasExistingProgress && Validators.isValidUserProgress(existingProgress)) {
             // Backend is empty but localStorage has data (e.g., just completed onboarding)
             // Use localStorage data - backend will sync on next save
             finalProgress = existingProgress;
-            console.log('✅ Backend empty, using existing localStorage progress:', Object.keys(existingProgress).length, 'surahs');
           } else {
             // Both are empty - start fresh
             finalProgress = DEFAULT_VALUES.USER_PROGRESS;
-            console.log('⚠️ No progress found, starting fresh (authenticated user)');
           }
           
           // CRITICAL: Set QURAN_PROGRESS in localStorage FIRST, before setting state
@@ -304,24 +286,18 @@ function AppContent() {
           const verifyProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
           if (verifyProgress === null || verifyProgress === undefined) {
             console.error('❌ CRITICAL: Failed to set QURAN_PROGRESS in localStorage!');
-          } else {
-            const surahCount = Object.keys(verifyProgress).length;
-            console.log('✅ QURAN_PROGRESS set in localStorage:', surahCount, surahCount === 1 ? 'surah' : 'surahs');
           }
           
           // Now set the state - this will trigger the save effect, which will sync to backend
           setUserProgress(finalProgress);
-          console.log('✅ Progress loaded and cached (authenticated):', Object.keys(finalProgress).length, 'surahs');
           
           // CRITICAL: Clear loading flags and set progressLoaded immediately
           // This ensures the loader disappears as soon as data is loaded
           loadingRef.current = false;
           setProgressLoading(false);
           setProgressLoaded(true);
-          console.log('✅ All loading flags cleared - progressLoaded set to true, loader should disappear now');
         } else {
           // Guest mode: ONLY use GUEST_PROGRESS, NEVER touch authenticated cache
-          console.log('💾 Loading guest data...');
           
           // CRITICAL: Aggressively clear ALL auth data before loading guest data
           // This prevents any auth data from leaking into guest mode on refresh
@@ -329,13 +305,11 @@ function AppContent() {
           StorageHelpers.removeItem(STORAGE_KEYS.USER_DATA);
           StorageHelpers.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
           StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
-          console.log('🧹 Cleared auth data');
           
           // CRITICAL: Verify we're NOT reading from authenticated cache
           // Double-check that QURAN_PROGRESS is not being read
           const authCheck = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
           if (authCheck && Object.keys(authCheck).length > 0) {
-            console.warn('⚠️ Auth data found in QURAN_PROGRESS during guest load - it should have been cleared');
             // Force clear it again
             StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
           }
@@ -347,7 +321,6 @@ function AppContent() {
           // Final mode check after reading cache
           const postCacheMode = isAuthenticated ? 'authenticated' : 'guest';
           if (modeRef.current !== null && modeRef.current !== postCacheMode) {
-            console.warn('⚠️ Mode changed after reading cache, aborting');
             setProgressLoading(false);
             loadingRef.current = false;
             setProgressLoaded(true); // CRITICAL: Set progressLoaded even on early return
@@ -356,15 +329,12 @@ function AppContent() {
           
           if (guestProgress && Validators.isValidUserProgress(guestProgress)) {
             setUserProgress(guestProgress);
-            console.log('✅ Loaded guest:', Object.keys(guestProgress).length, 'surahs');
           } else if (guestProgress) {
             // If progress exists but is invalid, reset to empty
-            console.warn('⚠️ Invalid progress data detected, resetting to empty progress');
             setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
           } else {
             // No saved progress, start with empty
             setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
-            console.log('ℹ️ No guest data');
           }
         }
       } catch (error) {
@@ -375,7 +345,6 @@ function AppContent() {
           // Final mode check - ensure we're still authenticated
           const errorMode = isAuthenticated ? 'authenticated' : 'guest';
           if (modeRef.current !== null && modeRef.current !== errorMode) {
-            console.warn('⚠️ Mode changed during error handling, aborting');
             setProgressLoading(false);
             loadingRef.current = false;
             return;
@@ -385,7 +354,6 @@ function AppContent() {
           // Start fresh - NEVER use guestProgress
           setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
           StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
-          console.log('⚠️ Backend fetch failed, starting fresh (authenticated user) - guest data NOT used');
         } else {
           // For guest users: start fresh on error
           setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
@@ -398,7 +366,6 @@ function AppContent() {
         // CRITICAL: Set progressLoaded to true immediately - this makes the loader disappear
         // Don't use setTimeout as it can cause the loader to stay visible
         setProgressLoaded(true);
-        console.log('✅ Loading complete - progressLoaded set to true, loader should disappear');
       }
     };
 
@@ -425,14 +392,12 @@ function AppContent() {
     
     // CRITICAL: Don't save during mode transitions - this prevents authenticated progress from being saved to guestProgress
     if (modeTransitionRef.current) {
-      console.log('⚠️ Mode transition in progress, skipping save to prevent data contamination');
       return;
     }
     
     // CRITICAL: Only save if we're in the correct mode (prevent cross-contamination)
     const currentMode = isAuthenticated ? 'authenticated' : 'guest';
     if (modeRef.current !== currentMode) {
-      console.warn('⚠️ Mode mismatch detected, skipping save. Current mode:', currentMode, 'Tracked mode:', modeRef.current);
       return;
     }
 
@@ -469,7 +434,6 @@ function AppContent() {
       const beforeAuth = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
       // Clear any auth data that might exist
       if (beforeAuth && Object.keys(beforeAuth).length > 0) {
-        console.warn('⚠️ Auth data found in QURAN_PROGRESS during guest save - clearing it');
         StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
       }
       // Save ONLY to GUEST_PROGRESS for guest users
@@ -482,16 +446,12 @@ function AppContent() {
         StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
       }
       // NEVER save to QURAN_PROGRESS when in guest mode
-    } else {
-      // Mode mismatch - don't save to prevent contamination
-      console.warn('⚠️ Mode mismatch during save - skipping to prevent data contamination');
     }
   }, [userProgress, isAuthenticated, progressLoaded, authLoading, progressLoading]);
 
   const handleGuestMode = () => {
     // If authenticated, do NOT allow switching to guest data; keep modes isolated
     if (isAuthenticated) {
-      console.warn('Guest mode ignored because user is authenticated');
       return;
     }
 
