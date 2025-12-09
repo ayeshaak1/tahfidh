@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { CONSTRAINTS } from '../constants/storageConstants';
+import { useSettings } from '../contexts/SettingsContext';
+import { CONSTRAINTS, STORAGE_KEYS, StorageHelpers, ExportHelpers } from '../constants/storageConstants';
 import quranApi from '../services/quranApi';
 import { 
   Menu, 
@@ -21,12 +22,24 @@ import {
   Lock,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
-  Repeat
+  Repeat,
+  Download,
+  X,
+  AlertTriangle
 } from 'lucide-react';
 
 const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
   const { theme, toggleTheme, isDark } = useTheme();
+  const {
+    quranFont,
+    showTranslation,
+    showTransliteration,
+    autoScroll,
+    arabicFontSize,
+    translationFontSize,
+    transliterationFontSize,
+  } = useSettings();
   const [activityView, setActivityView] = useState('weekly'); // weekly, monthly, yearly
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -40,6 +53,49 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     return startOfWeek;
   });
   const [surahNamesCache, setSurahNamesCache] = useState({});
+  const [showExportDialog, setShowExportDialog] = useState(false);
+
+  // Export guest progress function - GUEST ONLY
+  const exportGuestProgress = () => {
+    // Use GUEST_USER_NAME for guest users only
+    const userName = StorageHelpers.getItem(STORAGE_KEYS.GUEST_USER_NAME, 'Guest User');
+    const exportData = ExportHelpers.createExportData(
+      userProgress,
+      userName,
+      theme,
+      {
+        quranFont,
+        showTranslation,
+        showTransliteration,
+        autoScroll,
+        arabicFontSize,
+        translationFontSize,
+        transliterationFontSize,
+      }
+    );
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `quran-progress-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setShowExportDialog(false);
+    navigate('/signup');
+  };
+
+  const handleCreateAccountClick = () => {
+    // Check if user has any progress to export
+    const hasProgress = userProgress && Object.keys(userProgress).length > 0;
+    if (hasProgress) {
+      setShowExportDialog(true);
+    } else {
+      // No progress, go directly to signup
+      navigate('/signup');
+    }
+  };
 
   useEffect(() => {
     setCurrentPath('/dashboard');
@@ -496,7 +552,12 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       {isGuest && (
         <div className="guest-warning">
           <span>Guest Mode: Progress saved locally only</span>
-          {/* <button className="create-account-btn">Create Account</button> */}
+          <button 
+            className="create-account-btn" 
+            onClick={handleCreateAccountClick}
+          >
+            Create Account
+          </button>
         </div>
       )}
 
@@ -841,6 +902,53 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
           ))}
         </div>
       </div>
+
+      {/* Export Dialog for Guest Users Creating Account */}
+      {showExportDialog && (
+        <>
+          <div className="settings-popup-overlay" onClick={() => setShowExportDialog(false)}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <AlertTriangle size={24} color="var(--rose)" />
+                <h3>Export Your Progress</h3>
+              </div>
+              <button 
+                className="settings-close-btn"
+                onClick={() => setShowExportDialog(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                Before creating an account, please export your guest progress data. 
+                After creating your account, you can import this data to transfer your progress.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowExportDialog(false);
+                    navigate('/signup');
+                  }}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  Skip
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={exportGuestProgress}
+                  style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Download size={16} />
+                  Export & Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

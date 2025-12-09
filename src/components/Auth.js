@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Mail, Lock, User, Sun, Moon, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Sun, Moon, ArrowLeft, Eye, EyeOff, Download, X, AlertTriangle } from 'lucide-react';
 
 const Auth = ({ setCurrentPath, onGuestMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signOut } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   
   // Determine initial mode from URL
@@ -95,6 +95,30 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
     return '';
   };
 
+  // Attempt sign in with optional single retry on 429 (rate limit)
+  const attemptSignIn = async (allowRetry = true) => {
+    try {
+      const result = await signIn(email.trim(), password);
+      if (result.needsOnboarding) {
+        navigate('/onboarding');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      const msg = err.message || 'Failed to sign in. Please check your credentials.';
+      // If rate-limited, clear auth and retry once automatically
+      if (allowRetry && msg.toLowerCase().includes('too many')) {
+        try {
+          await signOut();
+        } catch (logoutErr) {
+          console.warn('Failed to clear auth after 429:', logoutErr);
+        }
+        return attemptSignIn(false);
+      }
+      throw err;
+    }
+  };
+
   // Sign In handlers
   const handleSignInSubmit = async (e) => {
     e.preventDefault();
@@ -118,12 +142,7 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
     setSignInLoading(true);
 
     try {
-      const result = await signIn(email.trim(), password);
-      if (result.needsOnboarding) {
-        navigate('/onboarding');
-      } else {
-        navigate('/dashboard');
-      }
+      await attemptSignIn(true);
     } catch (err) {
       setSignInError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
@@ -165,7 +184,9 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
     setSignUpLoading(true);
 
     try {
+      // DO NOT transfer guest data automatically - user must export and import manually
       const result = await signUp(signUpEmail.trim(), signUpPassword, name.trim());
+      
       if (result.needsOnboarding) {
         navigate('/onboarding');
       } else {
@@ -334,8 +355,8 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
               </div>
             ) : (
               <div className="auth-side-cta" onClick={() => switchMode('signin')}>
-                <h2 className="auth-cta-title">Welcome Back!</h2>
-                <p className="auth-cta-text">To continue your memorization journey, please sign in with your personal info</p>
+                <h2 className="auth-cta-title">Welcome Back</h2>
+                <p className="auth-cta-text">Sign in to access your memorization progress and continue your journey</p>
                 <button 
                   type="button" 
                   className="btn btn-cta"
@@ -519,8 +540,8 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
               </div>
             ) : (
               <div className="auth-side-cta" onClick={() => switchMode('signup')}>
-                <h2 className="auth-cta-title">Hello, Friend!</h2>
-                <p className="auth-cta-text">Enter your personal details and start your journey with us</p>
+                <h2 className="auth-cta-title">Create Account</h2>
+                <p className="auth-cta-text">Join us to begin tracking your Quran memorization progress</p>
                 <button 
                   type="button" 
                   className="btn btn-cta"

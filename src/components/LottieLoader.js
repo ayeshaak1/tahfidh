@@ -14,7 +14,6 @@ const LottieLoader = ({ size = 'medium', className = '', showVerse = true }) => 
   useEffect(() => {
     if (showVerse) {
       const verse = versePreloader.getRandomVerse();
-      console.log('LottieLoader received verse:', JSON.stringify(verse, null, 2));
       setRandomVerse(verse);
     }
   }, [showVerse]);

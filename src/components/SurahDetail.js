@@ -348,13 +348,9 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       setLoading(true);
       setError(null);
       const data = await quranApi.getSurah(id, selectedFont);
-      console.log('Surah data received:', data);
-      console.log('Translation data:', data.translation);
-      console.log('Transliteration data:', data.transliteration);
       setSurah(data);
       setCurrentVerse(1);
     } catch (err) {
-      console.error('Failed to fetch surah:', err);
       setError('Failed to load surah. Please try again later.');
     } finally {
       setLoading(false);
@@ -370,7 +366,6 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       const data = await quranApi.getSurah(id, font);
       setSurah(data);
     } catch (err) {
-      console.error('Failed to fetch surah with new font:', err);
     } finally {
       setLoading(false);
     }
@@ -473,8 +468,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       newProgress[id].verses[verseId].memorized = !newProgress[id].verses[verseId].memorized;
       newProgress[id].verses[verseId].lastReviewed = new Date().toISOString();
       
-      // Save to localStorage
-      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
+      // Don't save directly - App.js will handle saving to correct location (GUEST_PROGRESS or QURAN_PROGRESS + database)
       
       return newProgress;
     });
@@ -524,7 +518,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         newProgress[id].verses[verseId].lastReviewed = new Date().toISOString();
       });
       
-      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
+      // Don't save directly - App.js will handle saving to correct location (GUEST_PROGRESS or QURAN_PROGRESS + database)
       setSelectedVerses(new Set());
       setShowBulkActions(false);
       setBulkMode(false);
@@ -555,7 +549,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         newProgress[id].verses[i].lastReviewed = new Date().toISOString();
       }
       
-      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
+      // Don't save directly - App.js will handle saving to correct location (GUEST_PROGRESS or QURAN_PROGRESS + database)
       setShowBulkActions(false);
       setBulkMode(false);
       return newProgress;

@@ -12,32 +12,36 @@
 // ============================================================================
 
 export const STORAGE_KEYS = {
-  // User Progress
-  QURAN_PROGRESS: 'quranProgress',
+  // ============================================================================
+  // GUEST USER DATA (completely separate from authenticated users)
+  // ============================================================================
+  GUEST_PROGRESS: 'guestProgress',           // Guest user memorization progress
+  GUEST_USER_NAME: 'guestUserName',           // Guest user display name
   
-  // Theme
+  // ============================================================================
+  // AUTHENTICATED USER DATA (completely separate from guest users)
+  // ============================================================================
+  QURAN_PROGRESS: 'quranProgress',            // Authenticated user progress (cached from DB)
+  AUTH_TOKEN: 'authToken',                    // JWT token for authenticated user
+  USER_DATA: 'userData',                      // Authenticated user profile (name, email, etc.)
+  ONBOARDING_COMPLETE: 'onboardingComplete',  // Whether auth user completed onboarding
+  
+  // ============================================================================
+  // SHARED SETTINGS (apply to both user types - UI preferences only)
+  // ============================================================================
   THEME: 'theme',
-  
-  // User Profile
-  USER_NAME: 'userName',
-  
-  // Authentication
-  AUTH_TOKEN: 'authToken',
-  USER_DATA: 'userData',
-  ONBOARDING_COMPLETE: 'onboardingComplete',
-  
-  // Settings - Font Preference
   QURAN_FONT_PREFERENCE: 'quranFontPreference',
-  
-  // Settings - Display Preferences
   SHOW_TRANSLATION_PREFERENCE: 'showTranslationPreference',
   SHOW_TRANSLITERATION_PREFERENCE: 'showTransliterationPreference',
   AUTO_SCROLL_PREFERENCE: 'autoScrollPreference',
-  
-  // Settings - Font Sizes
   ARABIC_FONT_SIZE: 'arabicFontSize',
   TRANSLATION_FONT_SIZE: 'translationFontSize',
   TRANSLITERATION_FONT_SIZE: 'transliterationFontSize',
+  
+  // ============================================================================
+  // DEPRECATED - DO NOT USE (kept for migration/cleanup)
+  // ============================================================================
+  USER_NAME: 'userName', // DEPRECATED: Use GUEST_USER_NAME for guests, USER_DATA.name for auth
 };
 
 // ============================================================================
@@ -327,19 +331,45 @@ export const Validators = {
    * @returns {boolean}
    */
   isValidUserProgress: (progress) => {
-    if (!progress || typeof progress !== 'object') return false;
+    // Empty object is valid (no progress yet)
+    if (!progress || typeof progress !== 'object') {
+      return false;
+    }
+    
+    // Empty progress object is valid
+    if (Object.keys(progress).length === 0) {
+      return true;
+    }
     
     // Check each surah entry
     for (const [surahId, surahData] of Object.entries(progress)) {
-      if (!surahData || typeof surahData !== 'object') return false;
-      if (!surahData.name || typeof surahData.name !== 'string') return false;
-      if (!surahData.verses || typeof surahData.verses !== 'object') return false;
+      if (!surahData || typeof surahData !== 'object') {
+        return false;
+      }
       
-      // Check each verse entry
+      // Name is optional (can be added later), but if present must be string
+      if (surahData.name !== undefined && typeof surahData.name !== 'string') {
+        return false;
+      }
+      
+      // Verses is required and must be an object
+      if (!surahData.verses || typeof surahData.verses !== 'object') {
+        return false;
+      }
+      
+      // Check each verse entry (if any)
       for (const [verseNum, verseData] of Object.entries(surahData.verses)) {
-        if (!verseData || typeof verseData !== 'object') return false;
-        if (typeof verseData.memorized !== 'boolean') return false;
-        if (verseData.lastReviewed && typeof verseData.lastReviewed !== 'string') return false;
+        if (!verseData || typeof verseData !== 'object') {
+          return false;
+        }
+        // memorized must be boolean
+        if (typeof verseData.memorized !== 'boolean') {
+          return false;
+        }
+        // lastReviewed is optional, but if present must be string
+        if (verseData.lastReviewed !== undefined && typeof verseData.lastReviewed !== 'string') {
+          return false;
+        }
       }
     }
     

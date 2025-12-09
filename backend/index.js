@@ -1848,6 +1848,149 @@ app.put('/api/auth/profile/password', authenticateToken, async (req, res) => {
   }
 });
 
+// Get user progress endpoint
+app.get('/api/auth/progress', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    // Get user ID
+    const userResult = await client.query(
+      'SELECT id FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    // Get progress from user_progress table
+    const progressResult = await client.query(
+      'SELECT surah_id, surah_name, verses FROM user_progress WHERE user_id = $1',
+      [userId]
+    );
+
+    // Build progress object from database
+    const progress = {};
+    progressResult.rows.forEach(row => {
+      progress[row.surah_id] = {
+        name: row.surah_name,
+        verses: row.verses || {}
+      };
+    });
+
+    res.json({
+      success: true,
+      progress
+    });
+  } catch (error) {
+    console.error('Get progress error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Update user progress endpoint
+app.put('/api/auth/progress', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { progress } = req.body;
+
+    if (!progress || typeof progress !== 'object') {
+      return res.status(400).json({ message: 'Progress data is required' });
+    }
+
+    // Get user ID
+    const userResult = await client.query(
+      'SELECT id FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    await client.query('BEGIN');
+
+    // Update or insert progress for each surah
+    for (const [surahId, surahData] of Object.entries(progress)) {
+      const versesData = surahData.verses || {};
+      await client.query(
+        `INSERT INTO user_progress (user_id, surah_id, surah_name, verses)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, surah_id)
+         DO UPDATE SET surah_name = $3, verses = $4, updated_at = CURRENT_TIMESTAMP`,
+        [userId, surahId, surahData.name || '', JSON.stringify(versesData)]
+      );
+    }
+
+    // Also update the progress JSONB in users table for backward compatibility
+    await client.query(
+      'UPDATE users SET progress = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [JSON.stringify(progress), userId]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      progress,
+      message: 'Progress updated successfully',
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Update progress error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Delete user progress endpoint
+app.delete('/api/auth/progress', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    // Get user ID
+    const userResult = await client.query(
+      'SELECT id FROM users WHERE email = $1',
+      [req.user.email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    await client.query('BEGIN');
+
+    // Delete all progress for the user
+    await client.query('DELETE FROM user_progress WHERE user_id = $1', [userId]);
+
+    // Also clear the progress JSONB in users table
+    await client.query(
+      'UPDATE users SET progress = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [JSON.stringify({}), userId]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: 'Progress cleared successfully',
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Delete progress error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
 // Delete account endpoint
 app.delete('/api/auth/account', authenticateToken, async (req, res) => {
   const client = await pool.connect();

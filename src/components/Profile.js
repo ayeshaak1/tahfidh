@@ -5,6 +5,8 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
 import quranApi from '../services/quranApi';
+import progressApi from '../services/progressApi';
+import LottieLoader from './LottieLoader';
 import { 
   STORAGE_KEYS, 
   DEFAULT_VALUES, 
@@ -25,12 +27,25 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showImportSuccessDialog, setShowImportSuccessDialog] = useState(false);
   const [importError, setImportError] = useState(null);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [isClearingData, setIsClearingData] = useState(false);
+  const [isImportingData, setIsImportingData] = useState(false);
   const [userName, setUserName] = useState(() => {
-    // Use authenticated user's name if available, otherwise localStorage
+    // COMPLETELY SEPARATE: Guest uses GUEST_USER_NAME, Auth uses USER_DATA.name
+    if (isGuest) {
+      // Guest mode: ONLY use GUEST_USER_NAME, never touch auth data
+      const guestName = StorageHelpers.getItem(STORAGE_KEYS.GUEST_USER_NAME, '');
+      return guestName || '';
+    }
+    // Authenticated mode: ONLY use USER_DATA.name, never touch guest data
     const authUser = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA);
-    return authUser?.name || StorageHelpers.getItem(STORAGE_KEYS.USER_NAME, DEFAULT_VALUES.USER_NAME);
+    return authUser?.name || '';
   });
   const [userEmail, setUserEmail] = useState(() => {
+    // For guest mode, don't show email. For authenticated users, use auth data.
+    if (isGuest) {
+      return '';
+    }
     const authUser = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA);
     return authUser?.email || '';
   });
@@ -69,6 +84,72 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setCurrentPath('/profile');
   }, [setCurrentPath]);
 
+  // Reset userName when switching between guest and authenticated mode
+  // COMPLETELY SEPARATE: Guest uses GUEST_USER_NAME, Auth uses user object from context
+  useEffect(() => {
+    // CRITICAL: Check isGuest FIRST - if guest, never read auth data
+    if (isGuest) {
+      // Guest mode: ONLY use GUEST_USER_NAME, never touch auth data
+      // Defensive: Clear any auth data that might be lingering
+      StorageHelpers.removeItem(STORAGE_KEYS.USER_DATA);
+      StorageHelpers.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      
+      const guestName = StorageHelpers.getItem(STORAGE_KEYS.GUEST_USER_NAME, '');
+      setUserName(guestName || '');
+      setUserEmail(''); // Guests don't have email
+    } else if (isAuthenticated && user) {
+      // Authenticated mode: ONLY use user object from auth context, never touch guest data
+      setUserName(user.name || '');
+      setUserEmail(user.email || '');
+    } else {
+      // Neither guest nor authenticated - reset to empty
+      setUserName('');
+      setUserEmail('');
+    }
+  }, [isGuest, isAuthenticated, user]);
+
+  // Listen for storage changes (when localStorage is cleared) - GUEST ONLY
+  useEffect(() => {
+    if (!isGuest) return;
+
+    const checkUserName = () => {
+      // Guest mode: ONLY use GUEST_USER_NAME
+      const guestName = StorageHelpers.getItem(STORAGE_KEYS.GUEST_USER_NAME, '');
+      const newName = guestName || '';
+      if (userName !== newName) {
+        setUserName(newName);
+      }
+    };
+
+    // Listen for storage events (when localStorage is cleared from another tab/window)
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEYS.GUEST_USER_NAME || e.key === null) {
+        checkUserName();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check on focus (when user returns to tab after clearing data)
+    const handleFocus = () => {
+      checkUserName();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+
+    // Also check periodically (every 500ms) to catch manual localStorage clears in same tab
+    // This is needed because storage event doesn't fire for same-tab clears
+    const intervalId = setInterval(() => {
+      checkUserName();
+    }, 500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(intervalId);
+    };
+  }, [isGuest, userName]);
+
   // Fetch surahs data and juz mapping for accurate juz calculation
   useEffect(() => {
     const fetchData = async () => {
@@ -84,7 +165,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         // In production with full API access, all surahs will be mapped correctly
         try {
           const juzsResponse = await quranApi.getJuzs();
-          console.log('Juzs response:', juzsResponse);
           if (juzsResponse && juzsResponse.juzs) {
             const mapping = {};
             juzsResponse.juzs.forEach(juz => {
@@ -104,7 +184,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 });
               }
             });
-            console.log('Juz mapping created:', mapping);
             // Only use mapping if it has sufficient data (more than just test surahs)
             // In production, this will have all 114 surahs mapped
             if (Object.keys(mapping).length > 2) {
@@ -126,22 +205,27 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     fetchData();
   }, []);
 
-  // Update userName and userEmail from auth context when user changes
+  // Update userName and userEmail from auth context when user changes (only for authenticated users)
+  // CRITICAL: Only update if NOT in guest mode
   useEffect(() => {
-    if (user) {
+    if (isGuest) {
+      // In guest mode, ignore auth user changes
+      return;
+    }
+    if (isAuthenticated && user) {
       if (user.name) setUserName(user.name);
       if (user.email) setUserEmail(user.email);
     }
-  }, [user]);
+  }, [user, isGuest, isAuthenticated]);
 
-  // Save userName to localStorage whenever it changes (for guest mode)
+  // Save userName to localStorage - GUEST ONLY
+  // Authenticated users' names are stored in USER_DATA (managed by backend)
   useEffect(() => {
-    if (userName && isGuest) {
-      StorageHelpers.setItem(STORAGE_KEYS.USER_NAME, userName);
-    } else if (!isGuest && userName) {
-      // For authenticated users, also save to localStorage as backup
-      StorageHelpers.setItem(STORAGE_KEYS.USER_NAME, userName);
+    if (isGuest && userName) {
+      // Guest mode: ONLY save to GUEST_USER_NAME
+      StorageHelpers.setItem(STORAGE_KEYS.GUEST_USER_NAME, userName);
     }
+    // Authenticated users: DO NOT save to localStorage - name is in USER_DATA from backend
   }, [userName, isGuest]);
 
   const handleEditName = () => {
@@ -324,7 +408,11 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   };
 
   const handleLogout = () => {
+    // CRITICAL: Logout should clear all auth data and switch to guest mode
+    // The App.js useEffect will handle the mode switch when isAuthenticated becomes false
+    console.log('🚪 User initiated logout');
     signOut();
+    // Navigate to landing page - the app will automatically switch to guest mode
     navigate('/');
   };
 
@@ -561,6 +649,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const importProgress = (event) => {
     const file = event.target.files[0];
     if (file) {
+      setIsImportingData(true);
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -571,6 +660,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           if (!validation.valid) {
             setImportError(validation.error || 'Invalid file format');
             setShowImportSuccessDialog(false);
+            setIsImportingData(false);
             return;
           }
           
@@ -581,11 +671,12 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           // This is the most important data - contains all memorization progress
           if (importedData.progress && Validators.isValidUserProgress(importedData.progress)) {
             setUserProgress(importedData.progress);
-            StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, importedData.progress);
+            // Don't save directly - App.js will handle saving to correct location (GUEST_PROGRESS or QURAN_PROGRESS + database)
           } else {
             // If progress is missing or invalid, that's a critical error
             setImportError('Invalid or missing progress data');
             setShowImportSuccessDialog(false);
+            setIsImportingData(false);
             return;
           }
           
@@ -673,16 +764,19 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           // All data imported successfully
           setShowImportSuccessDialog(true);
           setImportError(null);
+          setIsImportingData(false);
         } catch (error) {
           // Handle JSON parse errors or other unexpected errors
           setImportError(error.message || 'Failed to parse import file. Please ensure it is a valid JSON file.');
           setShowImportSuccessDialog(false);
+          setIsImportingData(false);
         }
       };
       
       reader.onerror = () => {
         setImportError('Failed to read file. Please try again.');
         setShowImportSuccessDialog(false);
+        setIsImportingData(false);
       };
       
       reader.readAsText(file);
@@ -695,11 +789,42 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmClear = () => {
-    setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
-    StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
-    setShowConfirmDialog(false);
-    setShowSuccessDialog(true);
+  const handleConfirmClear = async () => {
+    setIsClearingData(true);
+    try {
+      // Clear local cache first - this will trigger App.js to save empty progress
+      setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
+      
+      // Use appropriate storage key based on user type - COMPLETELY SEPARATE
+      if (isGuest) {
+        StorageHelpers.removeItem(STORAGE_KEYS.GUEST_PROGRESS);
+        StorageHelpers.setItem(STORAGE_KEYS.GUEST_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
+        StorageHelpers.removeItem(STORAGE_KEYS.GUEST_USER_NAME);
+        setUserName(''); // Reset to empty so "Guest User" is displayed
+      } else {
+        StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
+        StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
+        // For authenticated users, also clear from database
+        if (isAuthenticated) {
+          try {
+            await progressApi.clearProgress();
+            console.log('Progress cleared from database');
+          } catch (error) {
+            console.error('Failed to clear progress from database:', error);
+            // Still show success since local cache is cleared
+          }
+        }
+      }
+      
+      setShowConfirmDialog(false);
+      setShowSuccessDialog(true);
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      setProfileError('Failed to clear data. Please try again.');
+      setShowConfirmDialog(false);
+    } finally {
+      setIsClearingData(false);
+    }
   };
 
   const handleCancelClear = () => {
@@ -749,6 +874,26 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   };
 
 
+  // Show loading screen while clearing or importing data
+  if (isClearingData || isImportingData) {
+    return (
+      <div className={`profile-page ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <header className="app-header">
+          <div className="header-left">
+            <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              <Menu size={24} />
+            </button>
+            <h1 className="page-title">Profile & Settings</h1>
+          </div>
+        </header>
+        <LottieLoader 
+          size="large" 
+          showVerse={true}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`profile-page ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       {/* App Header */}
@@ -765,6 +910,21 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       {isGuest && (
         <div className="guest-warning">
           <span>Guest Mode: Progress saved locally only</span>
+          <button 
+            className="create-account-btn" 
+            onClick={() => {
+              // Check if user has any progress to export
+              const hasProgress = userProgress && Object.keys(userProgress).length > 0;
+              if (hasProgress) {
+                setShowExportDialog(true);
+              } else {
+                // No progress, go directly to signup
+                navigate('/signup');
+              }
+            }}
+          >
+            Create Account
+          </button>
         </div>
       )}
 
@@ -777,16 +937,93 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           </div>
           <div className="user-info">
               <div className="user-name-container">
-                <h2>{userName || (isGuest ? 'Guest User' : 'User Name')}</h2>
-                {!isGuest && isAuthenticated && (
-                  <button
-                    onClick={handleOpenEditProfile}
-                    className="btn btn-secondary"
-                    style={{ width: 'auto', minWidth: '120px' }}
-                  >
-                    <Edit2 size={16} />
-                    Edit Profile
-                  </button>
+                {isGuest ? (
+                  // Guest mode: use old simple edit design
+                  isEditingName ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSaveName();
+                          } else if (e.key === 'Escape') {
+                            handleCancelEditName();
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          minWidth: '200px',
+                          padding: '0.5rem 1rem',
+                          border: '1px solid var(--border)',
+                          borderRadius: '20px',
+                          background: 'var(--cream)',
+                          color: 'var(--text)',
+                          fontSize: '1.8rem',
+                          fontWeight: 600,
+                          fontFamily: 'inherit',
+                          outline: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'var(--rose)';
+                          e.target.style.background = 'var(--beige)';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(226, 182, 179, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'var(--border)';
+                          e.target.style.background = 'var(--cream)';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                        placeholder="Enter your name"
+                        autoFocus
+                        disabled={isUpdating}
+                      />
+                      <button
+                        onClick={handleSaveName}
+                        className="user-name-action-btn user-name-save-btn"
+                        title="Save name"
+                        disabled={isUpdating}
+                      >
+                        <Check size={20} />
+                      </button>
+                      <button
+                        onClick={handleCancelEditName}
+                        className="user-name-action-btn user-name-cancel-btn"
+                        title="Cancel editing"
+                        disabled={isUpdating}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="edit-profile-display">
+                      <h2>{userName || 'Guest User'}</h2>
+                      <button
+                        onClick={handleEditName}
+                        className="user-name-edit-btn"
+                        title="Edit name"
+                      >
+                        <Edit2 size={20} />
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  // Authenticated users: show name with edit profile button
+                  <>
+                    <h2>{userName || 'User Name'}</h2>
+                    {isAuthenticated && (
+                      <button
+                        onClick={handleOpenEditProfile}
+                        className="btn btn-secondary"
+                        style={{ width: 'auto', minWidth: '120px' }}
+                      >
+                        <Edit2 size={16} />
+                        Edit Profile
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             <p>{isGuest ? 'Local progress tracking' : 'Premium Member'}</p>
@@ -1086,10 +1323,16 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 Clear Local Data
               </button>
             ) : (
+              <>
+                <button className="btn btn-danger" onClick={clearLocalData} style={{ marginRight: '1rem' }}>
+                  <Trash2 size={16} />
+                  Clear Data
+                </button>
                 <button className="btn btn-danger" onClick={handleDeleteAccount}>
-                <Trash2 size={16} />
-                Delete Account
-              </button>
+                  <Trash2 size={16} />
+                  Delete Account
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -1123,11 +1366,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               onClick={handleLogout}
               className="btn"
               style={{ 
-                width: 'auto',
-                minWidth: '120px',
+                width: '100%',
+                maxWidth: '100%',
+                minWidth: '100%',
                 border: '2px solid var(--error-red)',
                 color: 'var(--error-red)',
-                backgroundColor: 'transparent'
+                backgroundColor: 'transparent',
+                boxSizing: 'border-box'
               }}
               onMouseEnter={(e) => {
                 e.target.style.backgroundColor = 'var(--error-red-light)';
@@ -1151,7 +1396,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <div className="settings-popup-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <AlertTriangle size={24} color="var(--error-red)" />
-                <h3>Clear Local Data</h3>
+                <h3>{isGuest ? 'Clear Local Data' : 'Clear Data'}</h3>
           </div>
               <button 
                 className="settings-close-btn"
@@ -1162,7 +1407,10 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         </div>
             <div className="settings-popup-content">
               <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
-                Are you sure you want to clear all local progress data? This action cannot be undone.
+                {isGuest 
+                  ? 'Are you sure you want to clear all local progress data? This action cannot be undone.'
+                  : 'Are you sure you want to clear all progress data from both the database and local cache? This action cannot be undone.'
+                }
               </p>
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                 <button 
@@ -1614,6 +1862,57 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Export Dialog for Guest Users Creating Account */}
+      {showExportDialog && (
+        <>
+          <div className="settings-popup-overlay" onClick={() => setShowExportDialog(false)}></div>
+          <div className="settings-popup confirmation-dialog">
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <AlertTriangle size={24} color="var(--rose)" />
+                <h3>Export Your Progress</h3>
+              </div>
+              <button 
+                className="settings-close-btn"
+                onClick={() => setShowExportDialog(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+                Before creating an account, please export your guest progress data. 
+                After creating your account, you can import this data to transfer your progress.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowExportDialog(false);
+                    navigate('/signup');
+                  }}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  Skip
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => {
+                    exportProgress();
+                    setShowExportDialog(false);
+                    navigate('/signup');
+                  }}
+                  style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Download size={16} />
+                  Export & Continue
+                </button>
               </div>
             </div>
           </div>

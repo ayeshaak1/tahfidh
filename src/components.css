@@ -1353,18 +1353,22 @@
 }
 
 .create-account-btn {
-  background: white;
+  margin-left: 1rem;
+  padding: 0.8rem 1.5rem;
+  background: var(--cream);
   color: var(--rose);
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 25px;
+  border-radius: 9999px;
   cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .create-account-btn:hover {
-  background: var(--beige);
+  background: var(--cream);
+  color: var(--rose);
+  transform: scale(1.05);
 }
 
 .profile-section {
@@ -2058,6 +2062,13 @@
   text-align: center;
 }
 
+.profile-footer .footer-content .btn {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 .mandatory-disclaimer {
   color: var(--text);
   font-size: 0.8rem;
@@ -2215,6 +2226,10 @@
   align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+  height: auto !important;
+  min-height: 48px !important;
+  max-height: none !important;
 }
 
 /* Ensure auth-card itself doesn't shrink */
@@ -4249,6 +4264,11 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: auto;
+  min-height: 48px;
+  width: auto;
 }
 
 .auth-side-signup .btn-cta {
@@ -4280,7 +4300,9 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding: 2rem;
   opacity: 0;
+  overflow-y: auto;
 }
 
 /* Fade in form after gradient slides are done (0.3s delay + 0.5s slide = 0.8s total) */
@@ -4358,6 +4380,7 @@
 
 .auth-form {
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .form-group {
@@ -4453,6 +4476,10 @@
   width: 100%;
   margin-top: 1rem;
   min-width: 0;
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: auto;
+  min-height: 48px;
 }
 
 .auth-submit {
@@ -4460,6 +4487,10 @@
   min-width: 0;
   margin-top: 1rem;
   box-sizing: border-box;
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: auto;
+  min-height: 48px;
 }
 
 .auth-divider {
@@ -4501,6 +4532,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: auto;
+  min-height: 48px;
 }
 
 .btn-google:hover {

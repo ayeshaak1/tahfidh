@@ -41,25 +41,20 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
       setLoading(true);
       setError(null);
       const data = await quranApi.getSurahs();
-      console.log('API Response:', data); // Debug: Check what we're getting
       
       if (!data || !data.chapters) {
-        console.error('Invalid API response structure:', data);
         setError('Invalid response from API. Please check backend connection.');
         return;
       }
       
       if (data.chapters.length === 0) {
-        console.warn('No chapters returned from API');
         setError('No surahs found. This may be due to test mode limitations.');
         return;
       }
       
       setAllSurahs(data.chapters); // Store all surahs
       setSurahs(data.chapters);
-      console.log(`Loaded ${data.chapters.length} surahs`);
     } catch (err) {
-      console.error('Failed to fetch surahs:', err);
       setError(`Failed to load surahs: ${err.message}. Please try again later.`);
     } finally {
       setLoading(false);
@@ -150,8 +145,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
         newProgress[surahId].verses[verseKey].lastReviewed = todayTimestamp;
       }
       
-      // Save to localStorage
-      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, newProgress);
+      // Don't save directly - App.js will handle saving to correct location (GUEST_PROGRESS or QURAN_PROGRESS + database)
       
       return newProgress;
     });
@@ -194,21 +188,16 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
       try {
         setLoading(true);
         setError(null); // Clear any previous errors
-        console.log(`Fetching surahs for Juz ${juz}...`);
         const data = await quranApi.getSurahsByJuz(juz);
-        console.log('Juz API response:', data);
         
         if (data && data.surahs && data.surahs.length > 0) {
           setSurahs(data.surahs);
-          console.log(`Loaded ${data.surahs.length} surahs for Juz ${juz}`);
         } else {
-          console.log(`No surahs found for Juz ${juz}`);
           setSurahs([]);
           // Show a user-friendly message
           setError(`No surahs found for Juz ${juz}. This may be due to API limitations or the Juz may be empty.`);
         }
       } catch (err) {
-        console.error(`Failed to fetch surahs for Juz ${juz}:`, err);
         setSurahs([]);
         setError(`Failed to load surahs for Juz ${juz}. Please try again or select "All Juz".`);
       } finally {
@@ -406,11 +395,6 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
             const isInProgress = progress.status === 'In Progress';
             
             // Debug: Log the revelation place for each surah
-            console.log(`Surah ${surah.id}: revelation_place = "${surah.revelation_place}"`);
-            console.log(`Surah ${surah.id} full object:`, surah);
-            console.log(`Surah ${surah.id} Arabic name: "${surah.name_arabic}"`);
-            console.log(`Surah ${surah.id} Arabic name length: ${surah.name_arabic.length}`);
-            console.log(`Surah ${surah.id} Arabic name char codes:`, Array.from(surah.name_arabic).map(c => c.charCodeAt(0)));
 
             return (
               <div

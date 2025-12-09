@@ -27,19 +27,36 @@ export const AuthProvider = ({ children }) => {
         
         if (token && userData) {
           // Verify token is still valid
+          // CRITICAL: Don't clear auth on network errors or rate limits - only on actual auth failures
           const isValid = await verifyToken(token);
           if (isValid) {
             setUser(userData);
             setIsAuthenticated(true);
             setHasCompletedOnboarding(onboardingStatus === 'true');
           } else {
-            // Token invalid, clear storage
+            // Token invalid (401/403), clear storage
+            console.log('⚠️ Token verification failed - clearing auth');
             clearAuth();
           }
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        clearAuth();
+        // CRITICAL: Don't clear auth on network errors - user might just have connectivity issues
+        // Only clear auth if we get a definitive auth failure
+        console.error('Auth check error (non-fatal):', error);
+        // Keep user authenticated if they have token and userData - might just be a network issue
+        const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN, null);
+        const userData = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA, null);
+        if (token && userData) {
+          // Assume token is valid if we have both - network error, not auth failure
+          console.log('⚠️ Network error during auth check - keeping user authenticated');
+          setUser(userData);
+          setIsAuthenticated(true);
+          const onboardingStatus = StorageHelpers.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'false');
+          setHasCompletedOnboarding(onboardingStatus === 'true');
+        } else {
+          // No token/userData, clear auth
+          clearAuth();
+        }
       } finally {
         setLoading(false);
       }
@@ -55,16 +72,30 @@ export const AuthProvider = ({ children }) => {
           'Authorization': `Bearer ${token}`,
         },
       });
+      
+      // CRITICAL: 429 (rate limit) doesn't mean token is invalid
+      // Only treat actual auth failures (401, 403) as invalid tokens
+      if (response.status === 429) {
+        console.warn('⚠️ Rate limited during token verification - token is still valid, keeping user authenticated');
+        return true; // Token is valid, just rate limited
+      }
+      
       return response.ok;
     } catch (error) {
-      return false;
+      // Network errors - assume token might still be valid, don't log out user
+      // Only clear auth if we get a definitive auth failure response
+      console.warn('⚠️ Network error during token verification - keeping user authenticated to prevent accidental logout');
+      return true; // Assume token is valid on network errors to prevent accidental logout
     }
   };
 
   const clearAuth = () => {
+    // ONLY clear authenticated user data - DO NOT touch guest data
     StorageHelpers.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     StorageHelpers.removeItem(STORAGE_KEYS.USER_DATA);
     StorageHelpers.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
+    StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS); // Auth user cache only
+    // DO NOT clear GUEST_PROGRESS or GUEST_USER_NAME - they belong to guest mode
     setUser(null);
     setIsAuthenticated(false);
     setHasCompletedOnboarding(false);
@@ -81,7 +112,24 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        // Handle rate limiting and other non-JSON errors
+        if (response.status === 429) {
+          // If user is already authenticated, log them out so they can try again
+          if (isAuthenticated) {
+            clearAuth();
+            throw new Error('Too many requests. You have been logged out. Please wait a moment and try again.');
+          }
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        }
+        
+        // Try to parse as JSON, but handle non-JSON responses
+        let error;
+        try {
+          error = await response.json();
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          throw new Error(response.statusText || 'Sign in failed');
+        }
         throw new Error(error.message || 'Sign in failed');
       }
 
@@ -114,7 +162,19 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        // Handle rate limiting and other non-JSON errors
+        if (response.status === 429) {
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        }
+        
+        // Try to parse as JSON, but handle non-JSON responses
+        let error;
+        try {
+          error = await response.json();
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          throw new Error(response.statusText || 'Sign up failed');
+        }
         throw new Error(error.message || 'Sign up failed');
       }
 
@@ -148,7 +208,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = () => {
+    // CRITICAL: Clear all authenticated data completely
+    // This ensures no auth data can leak into guest mode after logout
+    console.log('🚪 Logging out - clearing all authenticated data');
     clearAuth();
+    // Force a small delay to ensure state updates propagate
+    // The App.js useEffect will handle switching to guest mode when isAuthenticated becomes false
   };
 
   const completeOnboarding = async (memorizedSurahs, progress = null) => {
