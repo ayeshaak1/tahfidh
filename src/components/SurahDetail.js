@@ -47,6 +47,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const [surah, setSurah] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const processingVersesRef = useRef(new Set()); // Track verses currently being processed
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
@@ -452,8 +453,18 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
 
   // Handle verse memorization toggle
   const toggleVerseMemorization = (verseId) => {
+    // Prevent rapid clicks on the same verse
+    if (processingVersesRef.current.has(verseId)) {
+      return;
+    }
+    
     // Ensure verseId is a number for proper comparison
     const verseIdNum = typeof verseId === 'string' ? parseInt(verseId, 10) : verseId;
+    
+    // Mark this verse as being processed
+    processingVersesRef.current.add(verseId);
+    
+    // Read current state before update to determine if we should auto-scroll
     const wasMemorized = userProgress[id]?.verses?.[verseId]?.memorized || false;
     
     setUserProgress(prev => {
@@ -465,22 +476,42 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         newProgress[id].verses[verseId] = { memorized: false, lastReviewed: null };
       }
       
-      newProgress[id].verses[verseId].memorized = !newProgress[id].verses[verseId].memorized;
-      newProgress[id].verses[verseId].lastReviewed = new Date().toISOString();
+      // Read the current memorized state from the previous state to avoid race conditions
+      const currentMemorized = newProgress[id].verses[verseId]?.memorized || false;
+      
+      // Deep clone the verse object to ensure proper state update
+      newProgress[id] = {
+        ...newProgress[id],
+        verses: {
+          ...newProgress[id].verses,
+          [verseId]: {
+            ...newProgress[id].verses[verseId],
+            memorized: !currentMemorized,
+            lastReviewed: new Date().toISOString(),
+          }
+        }
+      };
       
       // Don't save directly - App.js will handle saving to correct location (GUEST_PROGRESS or QURAN_PROGRESS + database)
       
       return newProgress;
     });
-
+    
     // Auto-scroll to next verse if enabled and verse was just marked as memorized
     if (autoScroll && !wasMemorized && verseIdNum < totalVerses) {
-      // Small delay to ensure state update is processed and DOM is ready
-      setTimeout(() => {
-        const nextVerseId = verseIdNum + 1;
-        scrollToVerse(nextVerseId);
-      }, 300);
+      // Use requestAnimationFrame to ensure state update is processed
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const nextVerseId = verseIdNum + 1;
+          scrollToVerse(nextVerseId);
+        }, 100);
+      });
     }
+    
+    // Remove from processing set after a short delay to allow state to update
+    setTimeout(() => {
+      processingVersesRef.current.delete(verseId);
+    }, 100);
   };
 
   // Bulk actions
