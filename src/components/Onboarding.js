@@ -141,8 +141,28 @@ const Onboarding = ({ setCurrentPath }) => {
     }
   };
 
-  const handleSkip = () => {
-    navigate('/dashboard');
+  const handleSkip = async () => {
+    setSubmitting(true);
+    setError('');
+
+    try {
+      // Mark onboarding as complete with no memorized surahs
+      await completeOnboarding([], {});
+      
+      // Clear any existing progress in localStorage (user is starting fresh)
+      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, {});
+      
+      // Set flag to indicate onboarding just completed
+      StorageHelpers.setItem('onboarding_just_completed', 'true');
+      
+      // Small delay to ensure localStorage write completes
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Failed to skip onboarding. Please try again.');
+      setSubmitting(false);
+    }
   };
 
   if (loading) {

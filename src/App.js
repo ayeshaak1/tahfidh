@@ -561,7 +561,7 @@ function AppContent() {
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute requireAuth={true} requireOnboarding={true}>
+              <ProtectedRoute requireAuth={false} requireOnboarding={false}>
                 <Dashboard 
                   isGuest={isGuest || (!isAuthenticated && !authLoading)}
                   userProgress={userProgress}

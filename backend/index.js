@@ -1460,9 +1460,9 @@ app.post('/api/auth/signin', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Find user
+    // Find user (include auth_provider to check if they're an OAuth user)
     const result = await pool.query(
-      'SELECT id, email, name, password, onboarding_complete FROM users WHERE email = $1',
+      'SELECT id, email, name, password, onboarding_complete, auth_provider, google_id FROM users WHERE email = $1',
       [email]
     );
 
@@ -1471,6 +1471,18 @@ app.post('/api/auth/signin', async (req, res) => {
     }
 
     const user = result.rows[0];
+
+    // Check if user signed up with Google OAuth (no password)
+    if (!user.password && (user.auth_provider === 'google' || user.google_id)) {
+      return res.status(401).json({ 
+        message: 'This account was created with Google. Please sign in using Google OAuth.' 
+      });
+    }
+
+    // If user has no password and no OAuth provider, something is wrong
+    if (!user.password) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
     // Verify password
     const isValid = await bcrypt.compare(password, user.password);

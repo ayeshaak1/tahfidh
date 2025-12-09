@@ -10,10 +10,12 @@ const ProtectedRoute = ({ children, requireAuth = false, requireOnboarding = fal
     return <div>Loading...</div>;
   }
 
+  // Only require auth if explicitly set (guests can access routes with requireAuth=false)
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/signin" replace />;
   }
 
+  // Only require onboarding for authenticated users (guests don't need onboarding)
   if (requireOnboarding && isAuthenticated && !hasCompletedOnboarding) {
     return <Navigate to="/onboarding" replace />;
   }
