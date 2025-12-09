@@ -30,7 +30,6 @@ export const AuthProvider = ({ children }) => {
           if (!userData) {
             // Retry logic for OAuth tokens (signup flow)
             let retries = 2;
-            let lastError = null;
             
             while (retries >= 0) {
               try {

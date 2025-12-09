@@ -138,7 +138,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
   }, [userProgress, surahNamesCache]);
 
   // Calculate progress statistics
-  const calculateProgress = () => {
+  const calculateProgress = useCallback(() => {
     const totalSurahs = CONSTRAINTS.QURAN.TOTAL_SURAHS;
     const totalVerses = CONSTRAINTS.QURAN.TOTAL_VERSES;
     
@@ -165,9 +165,9 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       surahPercentage,
       versePercentage
     };
-  };
+  }, [userProgress]);
 
-  const progress = useMemo(() => calculateProgress(), [userProgress]);
+  const progress = useMemo(() => calculateProgress(), [calculateProgress]);
 
   // Calculate real data from userProgress - recalculate when userProgress changes
   const realData = useMemo(() => {

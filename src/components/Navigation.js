@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { Home, BookOpen, User, Sun, Moon } from 'lucide-react';
 

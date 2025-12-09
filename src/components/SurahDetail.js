@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X, HelpCircle } from 'lucide-react';
 import quranApi from '../services/quranApi';
@@ -59,6 +58,20 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const navigationInstance = useRef(0);
   // Ref to track the last location key we processed
   const lastLocationKey = useRef(null);
+
+  const fetchSurah = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await quranApi.getSurah(id, selectedFont);
+      setSurah(data);
+      setCurrentVerse(1);
+    } catch (err) {
+      setError('Failed to load surah. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, [id, selectedFont]);
 
   useEffect(() => {
     setCurrentPath(`/surah/${id}`);
@@ -340,20 +353,6 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       };
     }
   }, [showSettings]);
-
-  const fetchSurah = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await quranApi.getSurah(id, selectedFont);
-      setSurah(data);
-      setCurrentVerse(1);
-    } catch (err) {
-      setError('Failed to load surah. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, selectedFont]);
 
   const handleFontChange = async (font) => {
     setSelectedFont(font);
