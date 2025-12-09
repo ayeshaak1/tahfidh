@@ -54,12 +54,31 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Rate limiting
+// Rate limiting - more lenient in production
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 500 : 100, // Higher limit in production
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for successful cached responses
+  skip: (req) => {
+    // Don't count requests that hit cache (though we can't easily detect this here)
+    return false;
+  }
 });
+
+// Apply rate limiting to all routes
 app.use(limiter);
+
+// More lenient rate limiting for Quran API endpoints (they're cached)
+const quranApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 1000 : 200, // Very high limit for cached endpoints
+  message: 'Too many requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Quran.com API configuration
 const QURAN_API_CONFIG = {
@@ -293,7 +312,7 @@ async function makeQuranApiCall(endpoint) {
 // API Routes
 
 // Get all surahs/chapters
-app.get('/api/surahs', async (req, res) => {
+app.get('/api/surahs', quranApiLimiter, async (req, res) => {
   try {
     // Check cache first
     if (isCacheValid(surahCache.allSurahs, surahCache.allSurahs.ttl)) {
@@ -332,7 +351,7 @@ app.get('/api/juzs', async (req, res) => {
 });
 
 // Get surahs by Juz
-app.get('/api/surahs/by-juz/:juzNumber', async (req, res) => {
+app.get('/api/surahs/by-juz/:juzNumber', quranApiLimiter, async (req, res) => {
   try {
     const { juzNumber } = req.params;
     const cacheKey = getJuzCacheKey(juzNumber);
@@ -454,7 +473,7 @@ app.get('/api/surahs/by-juz/:juzNumber', async (req, res) => {
 });
 
 // Get specific surah with verses
-app.get('/api/surah/:id', async (req, res) => {
+app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { font = 'uthmani', clearCache = false, forceRefresh = false } = req.query;
@@ -685,7 +704,7 @@ app.get('/api/surah/:id', async (req, res) => {
 });
 
 // Get verses in specific font
-app.get('/api/surah/:id/verses/:font', async (req, res) => {
+app.get('/api/surah/:id/verses/:font', quranApiLimiter, async (req, res) => {
   try {
     const { id, font } = req.params;
     const data = await makeQuranApiCall(`/quran/verses/${font}?chapter_number=${id}`);
@@ -696,7 +715,7 @@ app.get('/api/surah/:id/verses/:font', async (req, res) => {
 });
 
 // Get translation
-app.get('/api/surah/:id/translation', async (req, res) => {
+app.get('/api/surah/:id/translation', quranApiLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const data = await makeQuranApiCall(`/quran/translations/131?chapter_number=${id}`);
@@ -1207,7 +1226,7 @@ app.get('/api/test/juzs', async (req, res) => {
 });
 
 // Get random verse
-app.get('/api/verses/random', async (req, res) => {
+app.get('/api/verses/random', quranApiLimiter, async (req, res) => {
   try {
     const { translations = '85,131' } = req.query;
     console.log('Fetching random verse with endpoint:', `/verses/random?translations=${translations}&words=true`);

@@ -4748,6 +4748,7 @@
   overflow-y: auto;
   margin-bottom: 2rem;
   margin-top: 1rem;
+  padding-right: 1rem; /* Add spacing between scrollbar and content */
 }
 
 /* Export dialog button - solid color, no gradient */

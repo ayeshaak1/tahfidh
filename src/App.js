@@ -153,8 +153,8 @@ function AppContent() {
       window.history.replaceState({}, '', window.location.pathname);
     }
 
-    // Initialize verse preloader
-    versePreloader.preloadRandomVerses(10);
+    // Initialize verse preloader - reduced count to avoid rate limiting
+    versePreloader.preloadRandomVerses(5);
   }, []);
 
   // Load progress when auth state is determined

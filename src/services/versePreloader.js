@@ -16,9 +16,13 @@ class VersePreloader {
     
     this.isPreloading = true;
     
+    // Reduce count to avoid rate limiting (especially in production)
+    // Always use a reasonable limit
+    const actualCount = Math.min(count, 5);
+    
     try {
       const promises = [];
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < actualCount; i++) {
         promises.push(this.fetchRandomVerse());
       }
       
