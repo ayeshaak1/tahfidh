@@ -90,10 +90,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     // CRITICAL: Check isGuest FIRST - if guest, never read auth data
     if (isGuest) {
       // Guest mode: ONLY use GUEST_USER_NAME, never touch auth data
-      // Defensive: Clear any auth data that might be lingering
-      StorageHelpers.removeItem(STORAGE_KEYS.USER_DATA);
-      StorageHelpers.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      
+      // Do NOT clear auth data here; AuthContext owns auth lifecycle
       const guestName = StorageHelpers.getItem(STORAGE_KEYS.GUEST_USER_NAME, '');
       setUserName(guestName || '');
       setUserEmail(''); // Guests don't have email

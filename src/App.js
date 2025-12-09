@@ -41,6 +41,15 @@ function AppContent() {
       return;
     }
 
+    // CRITICAL: If we have an auth token but isAuthenticated is still false, wait for auth to resolve
+    // This prevents switching to guest mode when we're actually authenticated but auth check is still in progress
+    const hasAuthToken = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN, null);
+    if (hasAuthToken && !isAuthenticated) {
+      // Auth is still being verified, wait for it to complete
+      console.log('⏳ Waiting for auth verification to complete before switching modes');
+      return;
+    }
+
     const currentMode = isAuthenticated ? 'authenticated' : 'guest';
     
     // Only switch if mode actually changed

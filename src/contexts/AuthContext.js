@@ -102,18 +102,25 @@ export const AuthProvider = ({ children }) => {
               }
             }
           } else {
-            // We have both token and userData - verify token is still valid
-            // CRITICAL: Don't clear auth on network errors or rate limits - only on actual auth failures
-          const isValid = await verifyToken(token);
-          if (isValid) {
+            // We have both token and userData - set authenticated state immediately
+            // Then verify token in background (non-blocking)
             setUser(userData);
             setIsAuthenticated(true);
             setHasCompletedOnboarding(onboardingStatus === 'true');
-          } else {
-              // Token invalid (401/403), clear storage
-              console.log('⚠️ Token verification failed - clearing auth');
-            clearAuth();
-            }
+            
+            // Verify token in background - if invalid, we'll clear auth
+            // This allows the UI to show authenticated state immediately while verification happens
+            verifyToken(token).then(isValid => {
+              if (!isValid) {
+                // Token invalid (401/403), clear storage
+                console.log('⚠️ Token verification failed - clearing auth');
+                clearAuth();
+              }
+            }).catch(error => {
+              // Network errors are handled in verifyToken to return true
+              // So this catch should rarely happen, but if it does, keep user authenticated
+              console.warn('⚠️ Token verification error (non-fatal):', error);
+            });
           }
         }
       } catch (error) {
@@ -149,14 +156,19 @@ export const AuthProvider = ({ children }) => {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
-      // CRITICAL: 429 (rate limit) doesn't mean token is invalid
-      // Only treat actual auth failures (401, 403) as invalid tokens
-      if (response.status === 429) {
-        console.warn('⚠️ Rate limited during token verification - token is still valid, keeping user authenticated');
-        return true; // Token is valid, just rate limited
+
+      // Only treat explicit auth failures as invalid
+      // Keep user authenticated on rate limits or server errors
+      if (response.status === 401 || response.status === 403) {
+        return false; // invalid token
       }
-      
+
+      // 429 or 5xx → assume token still valid to avoid logging user out on transient issues
+      if (response.status === 429 || response.status >= 500) {
+        console.warn(`⚠️ Token verify returned ${response.status} - keeping user authenticated`);
+        return true;
+      }
+
       return response.ok;
     } catch (error) {
       // Network errors - assume token might still be valid, don't log out user
