@@ -2047,7 +2047,8 @@
 }
 
 .profile-footer {
-  margin-top: 3rem;
+  max-width: 1200px;
+  margin: 3rem auto 0 auto;
   padding: 2rem;
   background: var(--beige);
   border-radius: 25px;
@@ -2092,6 +2093,8 @@
 }
 
 .profile-footer {
+  max-width: 1200px;
+  margin: 3rem auto 0 auto;
   background: var(--beige);
   border-radius: 25px;
   padding: 2rem;
