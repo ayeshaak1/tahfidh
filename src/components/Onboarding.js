@@ -18,6 +18,7 @@ const Onboarding = ({ setCurrentPath }) => {
   const [error, setError] = useState('');
   const [importError, setImportError] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+  const [importedProgress, setImportedProgress] = useState(null);
 
   // Most commonly memorized surahs in ascending order of surah number
   // These are the most frequently memorized surahs by everyone
@@ -83,6 +84,9 @@ const Onboarding = ({ setCurrentPath }) => {
         // Import progress data
         if (importedData.progress && Validators.isValidUserProgress(importedData.progress)) {
           const importedProgressData = importedData.progress;
+          
+          // Store imported progress in state for use in handleSubmit
+          setImportedProgress(importedProgressData);
           
           // Extract memorized surahs from imported progress
           const memorizedSurahs = Object.keys(importedProgressData).map(surahId => {

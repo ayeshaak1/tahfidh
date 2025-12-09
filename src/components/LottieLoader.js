@@ -51,16 +51,6 @@ const LottieLoader = ({ size = 'medium', className = '', showVerse = true }) => 
           </div>
         </div>
       )}
-      {showVerse && verseLoading && (
-        <div className="verse-loading">
-          <div className="loading-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <p>Fetching a beautiful verse for you...</p>
-        </div>
-      )}
       <div className="loading-message">
         <p>Please wait while we prepare your memorization journey.</p>
       </div>
