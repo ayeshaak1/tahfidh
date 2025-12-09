@@ -14,9 +14,27 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+// Normalize FRONTEND_URL to ensure it has a protocol
+const normalizeOrigin = (url) => {
+  if (!url) return 'http://localhost:3000';
+  // If URL doesn't start with http:// or https://, add https://
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    // In production, default to https
+    if (process.env.NODE_ENV === 'production') {
+      return `https://${url}`;
+    }
+    return `http://${url}`;
+  }
+  return url;
+};
+
+const corsOrigin = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: corsOrigin,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -1396,12 +1414,13 @@ app.listen(PORT, async () => {
   console.log(`Client ID configured: ${!!API_CONFIG.clientId}`);
   console.log(`Client Secret configured: ${!!API_CONFIG.clientSecret}`);
   
-  // Log OAuth configuration
+  // Log OAuth and CORS configuration
   console.log('\n=== GOOGLE OAUTH CONFIGURATION ===');
   console.log(`GOOGLE_CLIENT_ID configured: ${!!process.env.GOOGLE_CLIENT_ID}`);
   console.log(`GOOGLE_CLIENT_SECRET configured: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
   console.log(`GOOGLE_CALLBACK_URL: ${googleCallbackURL}`);
-  console.log(`FRONTEND_URL: ${process.env.FRONTEND_URL || 'NOT SET (will use localhost:3000)'}`);
+  console.log(`FRONTEND_URL (raw): ${process.env.FRONTEND_URL || 'NOT SET'}`);
+  console.log(`CORS Origin (normalized): ${corsOrigin}`);
   if (isProduction) {
     if (!process.env.GOOGLE_CALLBACK_URL) {
       console.error('⚠️  WARNING: GOOGLE_CALLBACK_URL not explicitly set in production!');
@@ -1410,6 +1429,8 @@ app.listen(PORT, async () => {
     if (!process.env.FRONTEND_URL) {
       console.error('⚠️  WARNING: FRONTEND_URL not set in production!');
       console.error('⚠️  OAuth redirects will fail. Set it in Render environment variables.');
+    } else if (!process.env.FRONTEND_URL.startsWith('http://') && !process.env.FRONTEND_URL.startsWith('https://')) {
+      console.log('ℹ️  INFO: FRONTEND_URL was missing protocol, auto-added https://');
     }
   }
   console.log('===================================\n');
