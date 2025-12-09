@@ -148,4 +148,5 @@ class VersePreloader {
   }
 }
 
-export default new VersePreloader();
+const versePreloader = new VersePreloader();
+export default versePreloader;

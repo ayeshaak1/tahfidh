@@ -288,13 +288,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setProfileSuccess('');
   };
 
-  const handleEditEmail = () => {
-    setEditedEmail(userEmail);
-    setIsEditingEmail(true);
-    setProfileError('');
-    setProfileSuccess('');
-  };
-
   const handleSaveEmail = async () => {
     const trimmedEmail = editedEmail.trim();
     if (!trimmedEmail) {
@@ -341,13 +334,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const handleCancelEditEmail = () => {
     setIsEditingEmail(false);
     setEditedEmail('');
-    setProfileError('');
-    setProfileSuccess('');
-  };
-
-  const handleEditPassword = () => {
-    setPasswordData({ current: '', new: '', confirm: '' });
-    setIsEditingPassword(true);
     setProfileError('');
     setProfileSuccess('');
   };

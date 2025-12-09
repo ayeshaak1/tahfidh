@@ -142,4 +142,5 @@ class QuranApiService {
   }
 }
 
-export default new QuranApiService();
+const quranApiService = new QuranApiService();
+export default quranApiService;

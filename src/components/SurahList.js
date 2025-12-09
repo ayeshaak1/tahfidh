@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, Filter, Menu, CheckCircle, Circle, Clock, BookOpen, ChevronDown } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
-import { StorageHelpers, STORAGE_KEYS } from '../constants/storageConstants';
 
 const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();

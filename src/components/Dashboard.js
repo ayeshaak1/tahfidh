@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -22,7 +22,6 @@ import {
   Lock,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
-  Repeat,
   Download,
   X,
   AlertTriangle
@@ -283,7 +282,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
   }, [userProgress, progress, surahNamesCache]);
 
   // Generate weekly activity data for selected week
-  const generateWeeklyActivity = () => {
+  const generateWeeklyActivity = useCallback(() => {
     const startOfWeek = new Date(selectedWeekStart);
     startOfWeek.setHours(0, 0, 0, 0);
     
@@ -320,10 +319,10 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       });
     }
     return weekData;
-  };
+  }, [userProgress, progress, selectedWeekStart]);
 
   // Generate monthly activity data for selected month
-  const generateMonthlyActivity = () => {
+  const generateMonthlyActivity = useCallback(() => {
     const year = selectedYear;
     const month = selectedMonth;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -383,10 +382,10 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     }
     
     return calendar;
-  };
+  }, [userProgress, progress, selectedYear, selectedMonth]);
 
   // Generate yearly activity data for selected year
-  const generateYearlyActivity = () => {
+  const generateYearlyActivity = useCallback(() => {
     const months = [];
     for (let month = 0; month < 12; month++) {
       let intensity = 0;
@@ -412,7 +411,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       months.push({ month, intensity });
     }
     return months;
-  };
+  }, [userProgress, progress, selectedYear]);
 
   // Generate activity data based on actual progress and selected view
   const activityData = useMemo(() => {
@@ -423,7 +422,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     } else { // yearly
       return generateYearlyActivity();
     }
-  }, [userProgress, progress, activityView, selectedWeekStart, selectedMonth, selectedYear]);
+  }, [activityView, generateWeeklyActivity, generateMonthlyActivity, generateYearlyActivity]);
 
   // Generate achievements based on actual progress
   const generateAchievements = () => {

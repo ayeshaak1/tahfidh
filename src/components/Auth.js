@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Mail, Lock, User, Sun, Moon, ArrowLeft, Eye, EyeOff, Download, X, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, User, Sun, Moon, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 const Auth = ({ setCurrentPath, onGuestMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, signUp, signInWithGoogle, signOut } = useAuth();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
   
   // Determine initial mode from URL
   const [activeMode, setActiveMode] = useState(location.pathname === '/signup' ? 'signup' : 'signin');

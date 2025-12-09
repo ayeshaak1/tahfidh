@@ -88,7 +88,6 @@ export const AuthProvider = ({ children }) => {
                   }
                 }
               } catch (fetchError) {
-                lastError = fetchError;
                 // Network error - retry if we have retries left
                 if (retries > 0) {
                   console.warn('⚠️ Network error fetching user data, retrying...', fetchError);

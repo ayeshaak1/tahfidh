@@ -6,7 +6,7 @@ import { BookOpen, BarChart3, Award, Sun, Moon } from 'lucide-react';
 
 const LandingPage = ({ onGuestMode, setCurrentPath }) => {
   const navigate = useNavigate();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -20,10 +20,6 @@ const LandingPage = ({ onGuestMode, setCurrentPath }) => {
   const handleGuestMode = () => {
     onGuestMode();
     navigate('/dashboard');
-  };
-
-  const handleSignUp = () => {
-    navigate('/signup');
   };
 
   return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -394,7 +394,7 @@ function AppContent() {
     };
 
     loadProgress();
-  }, [isAuthenticated, authLoading, hasCompletedOnboarding, forceLoadTrigger]);
+  }, [isAuthenticated, authLoading, hasCompletedOnboarding, forceLoadTrigger, progressLoaded]);
 
 
   // Save progress to backend (if authenticated) and localStorage whenever userProgress changes
@@ -477,7 +477,7 @@ function AppContent() {
       // Mode mismatch - don't save to prevent contamination
       console.warn('⚠️ Mode mismatch during save - skipping to prevent data contamination');
     }
-  }, [userProgress, isAuthenticated, progressLoaded, authLoading]);
+  }, [userProgress, isAuthenticated, progressLoaded, authLoading, progressLoading]);
 
   const handleGuestMode = () => {
     // If authenticated, do NOT allow switching to guest data; keep modes isolated

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { BookOpen, Check, Sun, Moon, ArrowRight, Upload } from 'lucide-react';
+import { Check, Sun, Moon, ArrowRight, Upload } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
 import { StorageHelpers, STORAGE_KEYS, ExportHelpers, Validators } from '../constants/storageConstants';
@@ -10,14 +10,13 @@ import { StorageHelpers, STORAGE_KEYS, ExportHelpers, Validators } from '../cons
 const Onboarding = ({ setCurrentPath }) => {
   const navigate = useNavigate();
   const { completeOnboarding } = useAuth();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
   const [surahs, setSurahs] = useState([]);
   const [selectedSurahs, setSelectedSurahs] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [importError, setImportError] = useState('');
-  const [importedProgress, setImportedProgress] = useState(null); // Store imported progress to merge with selections
   const [isImporting, setIsImporting] = useState(false);
 
   // Most commonly memorized surahs in ascending order of surah number
@@ -177,10 +176,10 @@ const Onboarding = ({ setCurrentPath }) => {
           console.error(`Failed to fetch surah ${surahId}:`, err);
           // Fallback: create empty verses object, user can mark verses later
           if (!progress[surahId.toString()]) {
-            progress[surahId.toString()] = {
-              name: surah.name_simple,
-              verses: {},
-            };
+          progress[surahId.toString()] = {
+            name: surah.name_simple,
+            verses: {},
+          };
           }
         }
       }
@@ -205,7 +204,7 @@ const Onboarding = ({ setCurrentPath }) => {
         finalProgress = { ...result.progress, ...progress };
       }
       
-      // Store in localStorage
+        // Store in localStorage
       StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, finalProgress);
       
       // Set a flag to indicate we just completed onboarding - App.js will reload progress
@@ -240,7 +239,7 @@ const Onboarding = ({ setCurrentPath }) => {
       // Small delay to ensure localStorage write completes
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      navigate('/dashboard');
+    navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to skip onboarding. Please try again.');
       setSubmitting(false);

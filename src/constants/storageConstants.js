@@ -342,7 +342,7 @@ export const Validators = {
     }
     
     // Check each surah entry
-    for (const [surahId, surahData] of Object.entries(progress)) {
+    for (const [, surahData] of Object.entries(progress)) {
       if (!surahData || typeof surahData !== 'object') {
         return false;
       }
@@ -358,7 +358,7 @@ export const Validators = {
       }
       
       // Check each verse entry (if any)
-      for (const [verseNum, verseData] of Object.entries(surahData.verses)) {
+      for (const [, verseData] of Object.entries(surahData.verses)) {
         if (!verseData || typeof verseData !== 'object') {
           return false;
         }

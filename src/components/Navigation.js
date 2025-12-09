@@ -4,8 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Home, BookOpen, User, Sun, Moon } from 'lucide-react';
 
 const Navigation = ({ sidebarOpen, setSidebarOpen }) => {
-  const { theme, toggleTheme, isDark } = useTheme();
-  const location = useLocation();
+  const { toggleTheme, isDark } = useTheme();
   const navigate = useNavigate();
 
   const handleLogoClick = (e) => {

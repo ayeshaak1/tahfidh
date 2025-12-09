@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -6,12 +6,9 @@ import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, Chevr
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
 import { 
-  STORAGE_KEYS, 
   CONSTRAINTS,
   VALID_VALUES,
-  StorageHelpers, 
-  Validators,
-  DATA_STRUCTURES 
+  Validators
 } from '../constants/storageConstants';
 
 const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
@@ -19,7 +16,6 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { theme, toggleTheme, isDark } = useTheme();
   const {
     quranFont,
     setQuranFont,
@@ -81,7 +77,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 10);
     fetchSurah();
-  }, [id, location.key, setCurrentPath]);
+  }, [id, location.key, setCurrentPath, fetchSurah]);
 
   useEffect(() => {
     let originalWidth = null;
@@ -291,6 +287,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     const timeoutId = setTimeout(() => checkAndScroll(), 300);
 
     return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surah, loading, id, location.key]); // Only depend on location.key to detect navigation, not userProgress
 
   // Settings are now managed by SettingsContext, no need for local useEffect hooks
@@ -344,7 +341,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     }
   }, [showSettings]);
 
-  const fetchSurah = async () => {
+  const fetchSurah = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -356,7 +353,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, selectedFont]);
 
   const handleFontChange = async (font) => {
     setSelectedFont(font);

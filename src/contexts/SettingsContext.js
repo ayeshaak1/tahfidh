@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   STORAGE_KEYS, 
   DEFAULT_VALUES, 
-  VALID_VALUES, 
-  CONSTRAINTS,
   StorageHelpers, 
   Validators 
 } from '../constants/storageConstants';

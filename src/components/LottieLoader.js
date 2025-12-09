@@ -9,7 +9,6 @@ const LottieLoader = ({ size = 'medium', className = '', showVerse = true }) => 
   const { isDark } = useTheme();
   const animationData = isDark ? darkLoader : lightLoader;
   const [randomVerse, setRandomVerse] = useState(null);
-  const [verseLoading, setVerseLoading] = useState(false);
 
   useEffect(() => {
     if (showVerse) {
