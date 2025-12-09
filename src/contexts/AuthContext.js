@@ -25,18 +25,97 @@ export const AuthProvider = ({ children }) => {
         const userData = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA, null);
         const onboardingStatus = StorageHelpers.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'false');
         
-        if (token && userData) {
-          // Verify token is still valid
-          // CRITICAL: Don't clear auth on network errors or rate limits - only on actual auth failures
-          const isValid = await verifyToken(token);
-          if (isValid) {
-            setUser(userData);
-            setIsAuthenticated(true);
-            setHasCompletedOnboarding(onboardingStatus === 'true');
+        if (token) {
+          // If we have a token but no userData (e.g., after Google OAuth redirect), fetch user data
+          if (!userData) {
+            // Retry logic for OAuth tokens (signup flow)
+            let retries = 2;
+            let lastError = null;
+            
+            while (retries >= 0) {
+              try {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/verify`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  const fetchedUserData = data.user;
+                  const fetchedOnboardingStatus = data.onboardingComplete;
+                  
+                  // Store fetched user data
+                  StorageHelpers.setItem(STORAGE_KEYS.USER_DATA, fetchedUserData);
+                  StorageHelpers.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, fetchedOnboardingStatus ? 'true' : 'false');
+                  
+                  // Clear OAuth redirect path if it exists
+                  StorageHelpers.removeItem('oauth_redirect_path');
+                  
+                  setUser(fetchedUserData);
+                  setIsAuthenticated(true);
+                  setHasCompletedOnboarding(fetchedOnboardingStatus);
+                  return;
+                } else if (response.status === 401 || response.status === 403) {
+                  // Token invalid, clear storage
+                  console.log('⚠️ Token verification failed - clearing auth');
+                  clearAuth();
+                  return;
+                } else if (response.status === 429) {
+                  // Rate limited - wait a bit and retry
+                  if (retries > 0) {
+                    console.warn('⚠️ Rate limited during user data fetch, retrying...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    retries--;
+                    continue;
+                  } else {
+                    // Out of retries, but token is still valid - clear and let user retry
+                    console.warn('⚠️ Rate limited - too many retries, clearing auth');
+                    clearAuth();
+                    return;
+                  }
+                } else {
+                  // Other error - retry if we have retries left
+                  if (retries > 0) {
+                    console.warn(`⚠️ Error ${response.status} fetching user data, retrying...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    retries--;
+                    continue;
+                  } else {
+                    console.error(`⚠️ Failed to fetch user data after retries: ${response.status}`);
+                    clearAuth();
+                    return;
+                  }
+                }
+              } catch (fetchError) {
+                lastError = fetchError;
+                // Network error - retry if we have retries left
+                if (retries > 0) {
+                  console.warn('⚠️ Network error fetching user data, retrying...', fetchError);
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  retries--;
+                  continue;
+                } else {
+                  // Out of retries - clear auth
+                  console.error('⚠️ Network error - failed after retries:', fetchError);
+                  clearAuth();
+                  return;
+                }
+              }
+            }
           } else {
-            // Token invalid (401/403), clear storage
-            console.log('⚠️ Token verification failed - clearing auth');
-            clearAuth();
+            // We have both token and userData - verify token is still valid
+            // CRITICAL: Don't clear auth on network errors or rate limits - only on actual auth failures
+            const isValid = await verifyToken(token);
+            if (isValid) {
+              setUser(userData);
+              setIsAuthenticated(true);
+              setHasCompletedOnboarding(onboardingStatus === 'true');
+            } else {
+              // Token invalid (401/403), clear storage
+              console.log('⚠️ Token verification failed - clearing auth');
+              clearAuth();
+            }
           }
         }
       } catch (error) {

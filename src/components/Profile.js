@@ -1892,12 +1892,11 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               </p>
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button 
-                  className="btn btn-secondary"
+                  className="skip-button"
                   onClick={() => {
                     setShowExportDialog(false);
                     navigate('/signup');
                   }}
-                  style={{ width: 'auto', minWidth: '120px' }}
                 >
                   Skip
                 </button>

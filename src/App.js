@@ -136,10 +136,15 @@ function AppContent() {
     const error = urlParams.get('error');
 
     if (token) {
-      // Store token and verify user
+      // Store token and preserve the current path (onboarding or dashboard)
+      const currentPath = window.location.pathname;
       StorageHelpers.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+      // Store the intended path so we can navigate there after auth loads
+      if (currentPath === '/onboarding' || currentPath === '/dashboard') {
+        StorageHelpers.setItem('oauth_redirect_path', currentPath);
+      }
       // Clear the token from URL
-      window.history.replaceState({}, '', window.location.pathname);
+      window.history.replaceState({}, '', currentPath);
       // Reload to trigger auth check
       window.location.reload();
     } else if (error === 'oauth_failed') {
@@ -167,6 +172,14 @@ function AppContent() {
       return;
     }
     
+    // CRITICAL: If authenticated but onboarding not complete, don't load progress yet
+    // Wait until user completes onboarding and navigates to dashboard
+    if (isAuthenticated && !hasCompletedOnboarding) {
+      // User is still on onboarding page - don't load progress yet
+      console.log('⏳ Waiting for onboarding to complete before loading progress');
+      return;
+    }
+    
     // CRITICAL: If we're authenticated but mode hasn't switched yet, wait
     // This prevents race conditions during mode switches
     // BUT: If modeRef is null (initial state), allow it to proceed
@@ -184,8 +197,17 @@ function AppContent() {
       return;
     }
 
-    // Don't reload if we've already loaded
-    if (progressLoaded) {
+    // Check if we just completed onboarding - if so, force reload
+    const onboardingJustCompleted = StorageHelpers.getItem('onboarding_just_completed', null);
+    if (onboardingJustCompleted === 'true') {
+      // Clear the flag and force reload
+      StorageHelpers.removeItem('onboarding_just_completed');
+      console.log('🔄 Onboarding just completed - forcing progress reload');
+      // Reset progressLoaded to allow reload
+      setProgressLoaded(false);
+      // Continue to load progress below
+    } else if (progressLoaded) {
+      // Don't reload if we've already loaded (and not coming from onboarding)
       return;
     }
 
@@ -224,24 +246,11 @@ function AppContent() {
           // For authenticated users: ONLY fetch from database, NEVER touch guest data
           console.log('📡 Fetching progress from backend database (authenticated user)...');
           
-          // CRITICAL: Don't clear QURAN_PROGRESS if it's already empty (just initialized)
-          // This ensures it exists in localStorage immediately, preventing infinite loading
-          // We'll overwrite it with backend data anyway
-          const existingProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
-          if (existingProgress && Object.keys(existingProgress).length > 0) {
-            // Only clear if it has data (might be stale) - if empty, keep it to prevent loading issues
-            console.log('⚠️ Clearing existing QURAN_PROGRESS cache to fetch fresh data from backend');
-            StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
-          } else {
-            console.log('✅ QURAN_PROGRESS already initialized (empty), will be updated with backend data');
-          }
-          
           // CRITICAL: Ensure we're NOT reading from guest cache during load
           // Note: Guest data may exist in localStorage (preserved for when user logs out)
           // This is EXPECTED and CORRECT - we just ensure we don't use it for authenticated users
           
-          // Double-check: ensure guest cache is NOT being read
-          // Only read from backend, never from localStorage
+          // Fetch from backend (source of truth for authenticated users)
           const backendProgress = await progressApi.fetchProgress();
           
           // Final mode check after async operation
@@ -254,57 +263,53 @@ function AppContent() {
             return;
           }
           
-          // CRITICAL: Don't check/clear quranProgress here - we want to keep it if it was just initialized
-          // We'll overwrite it with backend data anyway, so no need to clear it
+          // CRITICAL: Re-read localStorage AFTER backend fetch (onboarding might have saved during fetch)
+          // This ensures we catch progress saved by onboarding even if it happened during the async operation
+          const existingProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
+          const hasExistingProgress = existingProgress && Object.keys(existingProgress).length > 0;
+          
+          // Determine which progress to use: backend (if valid) or existing localStorage (if backend empty)
+          let finalProgress = null;
           
           // Check if backend returned valid progress
-          if (backendProgress !== null && backendProgress !== undefined && Validators.isValidUserProgress(backendProgress)) {
-            // Set progress from backend ONLY (source of truth for authenticated users)
-            // CRITICAL: NEVER use guestProgress as fallback - only use backend data
-            
-            // CRITICAL: Set QURAN_PROGRESS in localStorage FIRST, before setting state
-            // This ensures it exists immediately and prevents infinite loading
-            StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, backendProgress);
-            
-            // Verify it was set
-            const verifyProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
-            if (!verifyProgress || Object.keys(verifyProgress).length === 0) {
-              console.error('❌ CRITICAL: Failed to set QURAN_PROGRESS in localStorage!');
-            } else {
-              console.log('✅ QURAN_PROGRESS set in localStorage:', Object.keys(verifyProgress).length, 'surahs');
-            }
-            
-            // Now set the state - this will trigger the save effect, but quranProgress is already set
-            setUserProgress(backendProgress);
-            // CRITICAL: Ensure guest cache is NOT touched or read
-            console.log('✅ Progress loaded from database and cached (authenticated):', Object.keys(backendProgress).length, 'surahs');
-            
-            // CRITICAL: Clear loading flags and set progressLoaded immediately
-            // This ensures the loader disappears as soon as data is loaded
-            loadingRef.current = false;
-            setProgressLoading(false);
-            setProgressLoaded(true);
-            console.log('✅ All loading flags cleared - progressLoaded set to true, loader should disappear now');
+          if (backendProgress !== null && backendProgress !== undefined && Validators.isValidUserProgress(backendProgress) && Object.keys(backendProgress).length > 0) {
+            // Backend has data - use it (source of truth)
+            finalProgress = backendProgress;
+            console.log('✅ Using progress from backend:', Object.keys(backendProgress).length, 'surahs');
+          } else if (hasExistingProgress && Validators.isValidUserProgress(existingProgress)) {
+            // Backend is empty but localStorage has data (e.g., just completed onboarding)
+            // Use localStorage data - backend will sync on next save
+            finalProgress = existingProgress;
+            console.log('✅ Backend empty, using existing localStorage progress:', Object.keys(existingProgress).length, 'surahs');
           } else {
-            // Backend returned invalid/empty data - start completely fresh
-            // CRITICAL: NEVER fall back to guestProgress - authenticated users must only use backend data
-            
-            // CRITICAL: Set QURAN_PROGRESS in localStorage FIRST, even for empty progress
-            StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
-            
-            // Verify it was set
-            const verifyProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
-            console.log('✅ QURAN_PROGRESS set in localStorage (empty):', verifyProgress ? 'exists' : 'missing');
-            
-            setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
-            console.log('⚠️ No DB progress, starting fresh (authenticated user)');
-            
-            // CRITICAL: Clear loading flags and set progressLoaded immediately even for empty progress
-            loadingRef.current = false;
-            setProgressLoading(false);
-            setProgressLoaded(true);
-            console.log('✅ All loading flags cleared (empty progress) - progressLoaded set to true, loader should disappear now');
+            // Both are empty - start fresh
+            finalProgress = DEFAULT_VALUES.USER_PROGRESS;
+            console.log('⚠️ No progress found, starting fresh (authenticated user)');
           }
+          
+          // CRITICAL: Set QURAN_PROGRESS in localStorage FIRST, before setting state
+          // This ensures it exists immediately and prevents infinite loading
+          StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, finalProgress);
+          
+          // Verify it was set (empty object is valid, so only check if it's null/undefined)
+          const verifyProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
+          if (verifyProgress === null || verifyProgress === undefined) {
+            console.error('❌ CRITICAL: Failed to set QURAN_PROGRESS in localStorage!');
+          } else {
+            const surahCount = Object.keys(verifyProgress).length;
+            console.log('✅ QURAN_PROGRESS set in localStorage:', surahCount, surahCount === 1 ? 'surah' : 'surahs');
+          }
+          
+          // Now set the state - this will trigger the save effect, which will sync to backend
+          setUserProgress(finalProgress);
+          console.log('✅ Progress loaded and cached (authenticated):', Object.keys(finalProgress).length, 'surahs');
+          
+          // CRITICAL: Clear loading flags and set progressLoaded immediately
+          // This ensures the loader disappears as soon as data is loaded
+          loadingRef.current = false;
+          setProgressLoading(false);
+          setProgressLoaded(true);
+          console.log('✅ All loading flags cleared - progressLoaded set to true, loader should disappear now');
         } else {
           // Guest mode: ONLY use GUEST_PROGRESS, NEVER touch authenticated cache
           console.log('💾 Loading guest data...');
@@ -389,7 +394,7 @@ function AppContent() {
     };
 
     loadProgress();
-  }, [isAuthenticated, authLoading, forceLoadTrigger]);
+  }, [isAuthenticated, authLoading, hasCompletedOnboarding, forceLoadTrigger]);
 
 
   // Save progress to backend (if authenticated) and localStorage whenever userProgress changes
@@ -508,8 +513,8 @@ function AppContent() {
   // Show loading screen while progress is being loaded or auth is loading
   // This prevents accidental refreshes during critical data loading operations
   // CRITICAL: Show loader during ALL loading states to prevent accidental refreshes
-  // BUT: Allow landing page, signin, signup to show even if progress isn't loaded (they don't need it)
-  const isPublicRoute = ['/', '/signin', '/signup'].includes(currentPath);
+  // BUT: Allow landing page, signin, signup, onboarding to show even if progress isn't loaded (they don't need it)
+  const isPublicRoute = ['/', '/signin', '/signup', '/onboarding'].includes(currentPath);
   const shouldShowLoader = (progressLoading || authLoading || loadingRef.current || !progressLoaded) && !isPublicRoute;
   
   if (shouldShowLoader) {
@@ -548,7 +553,7 @@ function AppContent() {
           <Route 
             path="/onboarding" 
             element={
-              <ProtectedRoute requireAuth={true}>
+              <ProtectedRoute requireAuth={true} preventIfOnboardingComplete={true}>
                 <Onboarding setCurrentPath={setCurrentPath} />
               </ProtectedRoute>
             } 
@@ -556,14 +561,16 @@ function AppContent() {
           <Route 
             path="/dashboard" 
             element={
-              <Dashboard 
-                isGuest={isGuest || (!isAuthenticated && !authLoading)}
-                userProgress={userProgress}
-                setUserProgress={setUserProgress}
-                setCurrentPath={setCurrentPath}
-                sidebarOpen={sidebarOpen}
-                setSidebarOpen={setSidebarOpen}
-              />
+              <ProtectedRoute requireAuth={true} requireOnboarding={true}>
+                <Dashboard 
+                  isGuest={isGuest || (!isAuthenticated && !authLoading)}
+                  userProgress={userProgress}
+                  setUserProgress={setUserProgress}
+                  setCurrentPath={setCurrentPath}
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                />
+              </ProtectedRoute>
             } 
           />
           <Route 

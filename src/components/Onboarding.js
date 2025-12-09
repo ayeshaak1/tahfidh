@@ -16,8 +16,9 @@ const Onboarding = ({ setCurrentPath }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Most commonly memorized surahs (usually memorized first)
-  const commonSurahs = [1, 112, 113, 114, 109, 110, 111, 108, 107, 106];
+  // Most commonly memorized surahs in ascending order of surah number
+  // These are the most frequently memorized surahs by everyone
+  const commonSurahs = [1, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114];
 
   React.useEffect(() => {
     setCurrentPath('/onboarding');
@@ -28,16 +29,8 @@ const Onboarding = ({ setCurrentPath }) => {
       try {
         const data = await quranApi.getSurahs();
         if (data && data.chapters) {
-          // Sort surahs: common ones first, then by number
+          // Store all surahs sorted by number (ascending order)
           const sortedSurahs = [...data.chapters].sort((a, b) => {
-            const aIsCommon = commonSurahs.includes(parseInt(a.id));
-            const bIsCommon = commonSurahs.includes(parseInt(b.id));
-            
-            if (aIsCommon && !bIsCommon) return -1;
-            if (!aIsCommon && bIsCommon) return 1;
-            if (aIsCommon && bIsCommon) {
-              return commonSurahs.indexOf(parseInt(a.id)) - commonSurahs.indexOf(parseInt(b.id));
-            }
             return parseInt(a.id) - parseInt(b.id);
           });
           
@@ -124,12 +117,21 @@ const Onboarding = ({ setCurrentPath }) => {
       const result = await completeOnboarding(memorizedSurahs, progress);
       
       // Update local progress with fetched data
+      let finalProgress = progress;
       if (result && result.progress) {
         // Merge backend progress with our detailed progress
-        const mergedProgress = { ...result.progress, ...progress };
-        // Store in localStorage
-        StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, mergedProgress);
+        finalProgress = { ...result.progress, ...progress };
       }
+      
+      // Store in localStorage
+      StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, finalProgress);
+      
+      // Set a flag to indicate we just completed onboarding - App.js will reload progress
+      StorageHelpers.setItem('onboarding_just_completed', 'true');
+      
+      // Small delay to ensure localStorage write completes before navigation
+      // This ensures App.js can read the data when it loads
+      await new Promise(resolve => setTimeout(resolve, 50));
       
       navigate('/dashboard');
     } catch (err) {
@@ -153,9 +155,15 @@ const Onboarding = ({ setCurrentPath }) => {
     );
   }
 
-  // Split surahs into common and others
-  const commonSurahsList = surahs.filter(s => commonSurahs.includes(parseInt(s.id)));
-  const otherSurahsList = surahs.filter(s => !commonSurahs.includes(parseInt(s.id)));
+  // Split surahs into frequently memorized and all surahs
+  // Frequently memorized: sorted in ascending order of surah number
+  const commonSurahsList = surahs
+    .filter(s => commonSurahs.includes(parseInt(s.id)))
+    .sort((a, b) => parseInt(a.id) - parseInt(b.id));
+  
+  // All surahs: sorted in ascending order of surah number (includes frequently memorized ones)
+  const allSurahsList = surahs
+    .sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
   return (
     <div className="onboarding-page">
@@ -185,7 +193,7 @@ const Onboarding = ({ setCurrentPath }) => {
           <div className="onboarding-content">
             {commonSurahsList.length > 0 && (
               <div className="surah-section">
-                <h3 className="surah-section-title">Most Commonly Memorized</h3>
+                <h3 className="surah-section-title">Frequently Memorized</h3>
                 <div className="surah-grid">
                   {commonSurahsList.map(surah => (
                     <button
@@ -206,11 +214,11 @@ const Onboarding = ({ setCurrentPath }) => {
               </div>
             )}
 
-            {otherSurahsList.length > 0 && (
+            {allSurahsList.length > 0 && (
               <div className="surah-section">
                 <h3 className="surah-section-title">All Surahs</h3>
                 <div className="surah-grid">
-                  {otherSurahsList.map(surah => (
+                  {allSurahsList.map(surah => (
                     <button
                       key={surah.id}
                       className={`surah-select-btn ${selectedSurahs.has(surah.id) ? 'selected' : ''}`}
@@ -232,7 +240,7 @@ const Onboarding = ({ setCurrentPath }) => {
 
           <div className="onboarding-footer">
             <button
-              className="btn btn-secondary"
+              className="skip-button"
               onClick={handleSkip}
               disabled={submitting}
             >

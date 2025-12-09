@@ -2280,6 +2280,30 @@
   background: var(--rose);
 }
 
+/* Skip button - plain text in lavender (not pill) */
+.skip-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--lavender);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+  text-decoration: none;
+  display: inline;
+}
+
+.skip-button:hover {
+  color: var(--rose);
+  text-decoration: underline;
+}
+
+.skip-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Loading and Error States */
 .loading-state,
 .error-state {
