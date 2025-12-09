@@ -27,9 +27,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showImportSuccessDialog, setShowImportSuccessDialog] = useState(false);
   const [importError, setImportError] = useState(null);
-  const [showExportDialog, setShowExportDialog] = useState(false);
   const [isClearingData, setIsClearingData] = useState(false);
   const [isImportingData, setIsImportingData] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [userName, setUserName] = useState(() => {
     // COMPLETELY SEPARATE: Guest uses GUEST_USER_NAME, Auth uses USER_DATA.name
     if (isGuest) {
@@ -644,6 +644,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     link.download = `quran-progress-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
+    setShowExportDialog(false);
+    navigate('/signup');
   };
 
   const importProgress = (event) => {
@@ -1890,7 +1892,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 Before creating an account, please export your guest progress data. 
                 After creating your account, you can import this data to transfer your progress.
               </p>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
                 <button 
                   className="skip-button"
                   onClick={() => {
@@ -1898,15 +1900,11 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                     navigate('/signup');
                   }}
                 >
-                  Skip
+                  Skip for Now
                 </button>
                 <button 
-                  className="btn btn-primary"
-                  onClick={() => {
-                    exportProgress();
-                    setShowExportDialog(false);
-                    navigate('/signup');
-                  }}
+                  className="btn btn-primary export-dialog-btn"
+                  onClick={exportProgress}
                   style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Download size={16} />
@@ -1917,6 +1915,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           </div>
         </>
       )}
+
     </div>
   );
 };

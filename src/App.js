@@ -51,18 +51,18 @@ function AppContent() {
     // Mark that we're in a mode transition to prevent save effect from running
     modeTransitionRef.current = true;
 
-    if (isAuthenticated) {
-      // User is logged in, switch to authenticated mode
-      modeRef.current = 'authenticated';
-      setIsGuest(false);
-      setProgressLoaded(false);
-      loadingRef.current = false;
+      if (isAuthenticated) {
+        // User is logged in, switch to authenticated mode
+        modeRef.current = 'authenticated';
+        setIsGuest(false);
+        setProgressLoaded(false);
+        loadingRef.current = false;
       // CRITICAL: Initialize QURAN_PROGRESS immediately with empty progress
       // This ensures it exists in localStorage right away, preventing infinite loading
       // The backend fetch will update it with actual data
       StorageHelpers.setItem(STORAGE_KEYS.QURAN_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
-      // Reset userProgress state - will be loaded from database
-      setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
+        // Reset userProgress state - will be loaded from database
+        setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
       console.log('🔄 AUTH MODE - initialized quranProgress in localStorage');
       
       // CRITICAL: Clear transition flag and force load effect to re-run
@@ -73,8 +73,8 @@ function AppContent() {
         setForceLoadTrigger(prev => prev + 1);
         console.log('✅ Mode transition complete - forcing load effect to run');
       });
-    } else {
-      // User is logged out, switch to guest mode
+      } else {
+        // User is logged out, switch to guest mode
       // CRITICAL: Save authenticated progress to backend BEFORE clearing (if it exists)
       const authProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
       if (authProgress && Object.keys(authProgress).length > 0) {
@@ -89,19 +89,19 @@ function AppContent() {
         }
       }
       
-      modeRef.current = 'guest';
-      setIsGuest(true);
-      setProgressLoaded(false);
-      loadingRef.current = false;
-      // AGGRESSIVELY clear ALL authenticated data when switching to guest
-      // This ensures no auth data can leak into guest mode
+        modeRef.current = 'guest';
+        setIsGuest(true);
+        setProgressLoaded(false);
+        loadingRef.current = false;
+        // AGGRESSIVELY clear ALL authenticated data when switching to guest
+        // This ensures no auth data can leak into guest mode
       // CRITICAL: Clear auth data FIRST before loading guest data to prevent contamination
-      StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
-      StorageHelpers.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      StorageHelpers.removeItem(STORAGE_KEYS.USER_DATA);
-      StorageHelpers.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
-      // Reset userProgress state - will be loaded from GUEST_PROGRESS
-      setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
+        StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
+        StorageHelpers.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        StorageHelpers.removeItem(STORAGE_KEYS.USER_DATA);
+        StorageHelpers.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
+        // Reset userProgress state - will be loaded from GUEST_PROGRESS
+        setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
       console.log('🔄 Switched to guest mode - cleared all auth data');
       
       // CRITICAL: Clear transition flag and force load effect to re-run
@@ -497,12 +497,12 @@ function AppContent() {
     // Load progress from guest-specific localStorage key
     // Use setTimeout to ensure loading state is visible
     setTimeout(() => {
-      const guestProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.GUEST_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
-      if (guestProgress && Validators.isValidUserProgress(guestProgress)) {
-        setUserProgress(guestProgress);
-      } else {
-        // Only set to empty if there's no valid saved progress
-        setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
+    const guestProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.GUEST_PROGRESS, DEFAULT_VALUES.USER_PROGRESS);
+    if (guestProgress && Validators.isValidUserProgress(guestProgress)) {
+      setUserProgress(guestProgress);
+    } else {
+      // Only set to empty if there's no valid saved progress
+      setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
       }
       setProgressLoaded(true);
       setProgressLoading(false);
@@ -562,14 +562,14 @@ function AppContent() {
             path="/dashboard" 
             element={
               <ProtectedRoute requireAuth={false} requireOnboarding={false}>
-                <Dashboard 
-                  isGuest={isGuest || (!isAuthenticated && !authLoading)}
-                  userProgress={userProgress}
-                  setUserProgress={setUserProgress}
-                  setCurrentPath={setCurrentPath}
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                />
+              <Dashboard 
+                isGuest={isGuest || (!isAuthenticated && !authLoading)}
+                userProgress={userProgress}
+                setUserProgress={setUserProgress}
+                setCurrentPath={setCurrentPath}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+              />
               </ProtectedRoute>
             } 
           />

@@ -86,12 +86,17 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     navigate('/signup');
   };
 
-  const handleCreateAccountClick = () => {
+  const handleCreateAccountClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     // Check if user has any progress to export
-    const hasProgress = userProgress && Object.keys(userProgress).length > 0;
+    const hasProgress = userProgress && typeof userProgress === 'object' && Object.keys(userProgress).length > 0;
+    console.log('Create Account clicked - hasProgress:', hasProgress, 'userProgress:', userProgress);
     if (hasProgress) {
+      console.log('Showing export dialog');
       setShowExportDialog(true);
     } else {
+      console.log('No progress, navigating to signup');
       // No progress, go directly to signup
       navigate('/signup');
     }
@@ -553,6 +558,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
         <div className="guest-warning">
           <span>Guest Mode: Progress saved locally only</span>
           <button 
+            type="button"
             className="create-account-btn" 
             onClick={handleCreateAccountClick}
           >
@@ -925,7 +931,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
                 Before creating an account, please export your guest progress data. 
                 After creating your account, you can import this data to transfer your progress.
               </p>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
                 <button 
                   className="skip-button"
                   onClick={() => {
@@ -933,10 +939,10 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
                     navigate('/signup');
                   }}
                 >
-                  Skip
+                  Skip for Now
                 </button>
                 <button 
-                  className="btn btn-primary"
+                  className="btn btn-primary export-dialog-btn"
                   onClick={exportGuestProgress}
                   style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >

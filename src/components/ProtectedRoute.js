@@ -1,13 +1,18 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import LottieLoader from './LottieLoader';
 
 const ProtectedRoute = ({ children, requireAuth = false, requireOnboarding = false, preventIfOnboardingComplete = false }) => {
   const { isAuthenticated, hasCompletedOnboarding, loading } = useAuth();
 
   // Wait for auth to finish loading
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="App">
+        <LottieLoader size="large" showVerse={true} />
+      </div>
+    );
   }
 
   // Only require auth if explicitly set (guests can access routes with requireAuth=false)

@@ -106,15 +106,15 @@ export const AuthProvider = ({ children }) => {
           } else {
             // We have both token and userData - verify token is still valid
             // CRITICAL: Don't clear auth on network errors or rate limits - only on actual auth failures
-            const isValid = await verifyToken(token);
-            if (isValid) {
-              setUser(userData);
-              setIsAuthenticated(true);
-              setHasCompletedOnboarding(onboardingStatus === 'true');
-            } else {
+          const isValid = await verifyToken(token);
+          if (isValid) {
+            setUser(userData);
+            setIsAuthenticated(true);
+            setHasCompletedOnboarding(onboardingStatus === 'true');
+          } else {
               // Token invalid (401/403), clear storage
               console.log('⚠️ Token verification failed - clearing auth');
-              clearAuth();
+            clearAuth();
             }
           }
         }
@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }) => {
           setHasCompletedOnboarding(onboardingStatus === 'true');
         } else {
           // No token/userData, clear auth
-          clearAuth();
+        clearAuth();
         }
       } finally {
         setLoading(false);

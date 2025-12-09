@@ -4690,10 +4690,75 @@
   font-size: 0.9rem;
 }
 
+.onboarding-import-section {
+  background: var(--beige);
+  border: 2px solid var(--lavender);
+  border-radius: 25px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.onboarding-import-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.onboarding-import-text {
+  flex: 1;
+  min-width: 350px;
+  max-width: 400px;
+}
+
+.onboarding-import-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.onboarding-import-description {
+  font-size: 0.9rem;
+  color: var(--text);
+  opacity: 0.7;
+  margin: 0;
+}
+
+.onboarding-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.onboarding-import-error {
+  margin-top: 1rem;
+}
+
 .onboarding-content {
   max-height: 60vh;
   overflow-y: auto;
   margin-bottom: 2rem;
+  margin-top: 1rem;
+}
+
+/* Export dialog button - solid color, no gradient */
+.export-dialog-btn {
+  background: var(--lavender) !important;
+  color: white !important;
+}
+
+.export-dialog-btn:hover {
+  background: var(--rose) !important;
+  transform: translateY(-2px);
 }
 
 .surah-section {
