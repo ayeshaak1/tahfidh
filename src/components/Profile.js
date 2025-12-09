@@ -602,7 +602,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const achievements = generateAchievements();
 
   // Data management functions
-  const exportProgress = () => {
+  const exportProgress = (shouldNavigate = true) => {
     // Create export data with all user data
     const exportData = ExportHelpers.createExportData(
       userProgress,
@@ -628,6 +628,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     link.click();
     URL.revokeObjectURL(url);
     setShowExportDialog(false);
+    if (shouldNavigate) {
+      navigate('/signup');
+    }
   };
 
   const importProgress = (event) => {
@@ -1021,7 +1024,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           </div>
           <div className="stat-card">
             <div className="stat-value">{stats.overallPercentage}%</div>
-            <div className="stat-label">Completion</div>
+            <div className="stat-label">Verse Completion</div>
           </div>
           <div className="stat-card">
               <div className="stat-value">{stats.streak}</div>
@@ -1269,7 +1272,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <h4>Export Progress</h4>
               </div>
             <p>Download your progress data as JSON</p>
-            <button className="btn btn-secondary" onClick={exportProgress}>
+          <button className="btn btn-secondary" onClick={() => exportProgress(false)}>
               <Download size={16} />
               Download Backup
             </button>
@@ -1886,7 +1889,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                 </button>
                 <button 
                   className="btn btn-primary export-dialog-btn"
-                  onClick={exportProgress}
+                  onClick={() => exportProgress(true)}
                   style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <Download size={16} />
