@@ -1803,9 +1803,10 @@ app.get('/api/auth/google/callback',
       const token = generateToken({ id: user.id.toString(), email: user.email });
 
       // Redirect to frontend with token
-      let frontendUrl = process.env.FRONTEND_URL;
+      // Use the normalizeOrigin function to ensure protocol is included
+      let frontendUrl = normalizeOrigin(process.env.FRONTEND_URL);
       
-      if (!frontendUrl) {
+      if (!process.env.FRONTEND_URL) {
         if (process.env.NODE_ENV === 'production') {
           console.error('❌ ERROR: FRONTEND_URL not set in production!');
           console.error('❌ This will cause OAuth redirects to fail. Please set FRONTEND_URL in Render environment variables.');
@@ -1816,6 +1817,11 @@ app.get('/api/auth/google/callback',
         }
       }
       
+      // Ensure we have a valid URL with protocol
+      if (!frontendUrl.startsWith('http://') && !frontendUrl.startsWith('https://')) {
+        frontendUrl = `https://${frontendUrl}`;
+      }
+      
       const redirectUrl = user.onboarding_complete
         ? `${frontendUrl}/dashboard?token=${token}`
         : `${frontendUrl}/onboarding?token=${token}`;
@@ -1824,9 +1830,13 @@ app.get('/api/auth/google/callback',
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('Google OAuth callback error:', error);
-      let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      let frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
       if (!process.env.FRONTEND_URL && process.env.NODE_ENV === 'production') {
         console.error('❌ ERROR: FRONTEND_URL not set in production!');
+      }
+      // Ensure we have a valid URL with protocol
+      if (!frontendUrl.startsWith('http://') && !frontendUrl.startsWith('https://')) {
+        frontendUrl = `https://${frontendUrl}`;
       }
       res.redirect(`${frontendUrl}/signin?error=oauth_failed`);
     }
@@ -1835,7 +1845,11 @@ app.get('/api/auth/google/callback',
 
 // Google OAuth failure handler
 app.get('/api/auth/google/failure', (req, res) => {
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  let frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+  // Ensure we have a valid URL with protocol
+  if (!frontendUrl.startsWith('http://') && !frontendUrl.startsWith('https://')) {
+    frontendUrl = `https://${frontendUrl}`;
+  }
   res.redirect(`${frontendUrl}/signin?error=oauth_failed`);
 });
 
