@@ -44,9 +44,9 @@ DB_SSL=false
 JWT_SECRET=your-jwt-secret-key-here
 
 # Google OAuth Credentials
-# Your credentials from Google Cloud Console:
-GOOGLE_CLIENT_ID=419219087780-n6badp54fuit0c32c657nej2pnu7gd0f.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+# Get these from Google Cloud Console: https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET_HERE
 
 # OAuth URLs (update for production after deployment)
 GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback

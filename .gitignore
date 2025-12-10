@@ -40,3 +40,10 @@ yarn-error.log*
 **/client_secret*.json
 **/credentials.json
 **/*oauth*.json
+
+# Setup scripts with credentials (should not contain real secrets)
+# Note: These files should use placeholders, not real credentials
+# backend/ADD_TO_ENV.txt
+# setup-env.sh
+# setup-env.bat
+# backend/add-google-oauth.ps1

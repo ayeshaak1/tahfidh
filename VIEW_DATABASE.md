@@ -43,17 +43,17 @@ This guide shows you how to view what's in your production database.
 The script uses your `.env` file to connect to the database. Make sure you have:
 
 ```env
-DB_HOST=dpg-d4rr35c9c44c738e66s0-a.virginia-postgres.render.com
+DB_HOST=YOUR_DATABASE_HOST_HERE
 DB_PORT=5432
 DB_NAME=tahfidh
-DB_USER=tahfidh_user
-DB_PASSWORD=ZuGh3NuOIcMb2JI84vRdOyDujFk944cb
+DB_USER=YOUR_DATABASE_USER_HERE
+DB_PASSWORD=YOUR_DATABASE_PASSWORD_HERE
 DB_SSL=true
 ```
 
 **Or use the connection string:**
 ```env
-DATABASE_URL=postgresql://tahfidh_user:ZuGh3NuOIcMb2JI84vRdOyDujFk944cb@dpg-d4rr35c9c44c738e66s0-a.virginia-postgres.render.com/tahfidh
+DATABASE_URL=postgresql://YOUR_DATABASE_USER:YOUR_DATABASE_PASSWORD@YOUR_DATABASE_HOST/tahfidh
 ```
 
 ---
@@ -63,7 +63,7 @@ DATABASE_URL=postgresql://tahfidh_user:ZuGh3NuOIcMb2JI84vRdOyDujFk944cb@dpg-d4rr
 ### Connect via Render CLI:
 
 ```bash
-render psql dpg-d4rr35c9c44c738e66s0-a
+render psql YOUR_DATABASE_ID_HERE
 ```
 
 This will open a PostgreSQL shell connected to your database.
@@ -136,11 +136,11 @@ FROM users;
 1. Download [pgAdmin](https://www.pgadmin.org/)
 2. Add new server:
    - **Name:** Render Production
-   - **Host:** `dpg-d4rr35c9c44c738e66s0-a.virginia-postgres.render.com`
+   - **Host:** `YOUR_DATABASE_HOST_HERE`
    - **Port:** `5432`
    - **Database:** `tahfidh`
-   - **Username:** `tahfidh_user`
-   - **Password:** `ZuGh3NuOIcMb2JI84vRdOyDujFk944cb`
+   - **Username:** `YOUR_DATABASE_USER_HERE`
+   - **Password:** `YOUR_DATABASE_PASSWORD_HERE`
    - **SSL Mode:** Require
 
 ### Option 2: DBeaver
@@ -161,15 +161,15 @@ FROM users;
 If you have PostgreSQL client installed:
 
 ```bash
-psql "postgresql://tahfidh_user:ZuGh3NuOIcMb2JI84vRdOyDujFk944cb@dpg-d4rr35c9c44c738e66s0-a.virginia-postgres.render.com/tahfidh?sslmode=require"
+psql "postgresql://YOUR_DATABASE_USER:YOUR_DATABASE_PASSWORD@YOUR_DATABASE_HOST/tahfidh?sslmode=require"
 ```
 
 Or with separate parameters:
 
 ```bash
-psql -h dpg-d4rr35c9c44c738e66s0-a.virginia-postgres.render.com \
+psql -h YOUR_DATABASE_HOST_HERE \
      -p 5432 \
-     -U tahfidh_user \
+     -U YOUR_DATABASE_USER_HERE \
      -d tahfidh \
      --set=sslmode=require
 ```

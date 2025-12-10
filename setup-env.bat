@@ -23,8 +23,8 @@ REM Create .env file with template
 (
     echo # Quran.com API Credentials
     echo # Get these from: https://quran.com/api
-    echo QURAN_CLIENT_ID=99b3cedc-45f3-4e02-abae-14bb9f492983
-    echo QURAN_CLIENT_SECRET=MWai4iG9XJHKxnLN0bksbZy5ok
+    echo QURAN_CLIENT_ID=YOUR_QURAN_CLIENT_ID_HERE
+    echo QURAN_CLIENT_SECRET=YOUR_QURAN_CLIENT_SECRET_HERE
     echo.
     echo # Server Configuration
     echo PORT=5000
@@ -44,9 +44,9 @@ REM Create .env file with template
     echo JWT_SECRET=your-jwt-secret-key-here
     echo.
     echo # Google OAuth Credentials
-    echo # Your credentials from Google Cloud Console:
-    echo GOOGLE_CLIENT_ID=419219087780-n6badp54fuit0c32c657nej2pnu7gd0f.apps.googleusercontent.com
-    echo GOOGLE_CLIENT_SECRET=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
+    echo # Get these from Google Cloud Console: https://console.cloud.google.com/apis/credentials
+    echo GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com
+    echo GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET_HERE
     echo.
     echo # OAuth URLs (update for production after deployment)
     echo GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
