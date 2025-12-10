@@ -302,12 +302,9 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
             {searchTerm && (
               <button className="clear-search" onClick={clearSearch}>
                 <X size={16} />
-                  </button>
-                )}
-                <button className="close-search" onClick={() => setShowSearch(false)}>
-                  <X size={16} />
-                </button>
-              </div>
+              </button>
+            )}
+          </div>
             ) : (
               <button 
                 className="search-toggle-btn"
