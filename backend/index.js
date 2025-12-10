@@ -604,23 +604,101 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       });
     }
     
-    // Get translation (try multiple resource IDs until we find one that works)
+    // Get translation using the documented endpoint: /translations/:resource_id/by_chapter/:chapter_number
+    // IMPORTANT: Handle pagination to get ALL verses, not just first 10
     let translationData = { translations: [] };
     try {
       // Try multiple resource IDs for English translations - prioritize Clear Quran (131), then fallback to Abdul Haleem (85)
-      const translationResourceIds = [131, 85, 57, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // Start with 131 (Clear Quran), then 85 (Abdul Haleem), then 57 (English), then others
-      let response = null;
+      const translationResourceIds = [131, 85]; // Start with 131 (Clear Quran), then 85 (Abdul Haleem)
       let workingResourceId = null;
+      let allTranslations = [];
       
       for (const resourceId of translationResourceIds) {
         try {
           console.log(`Trying translation resource ID ${resourceId}...`);
-          response = await makeQuranApiCall(`/translations/${resourceId}/by_chapter/${id}`);
-          console.log(`Translation resource ${resourceId} response:`, JSON.stringify(response, null, 2));
+          
+          // Use the documented endpoint format: /translations/:resource_id/by_chapter/:chapter_number
+          // Add pagination query parameters
+          let currentPage = 1;
+          let hasMorePages = true;
+          const translations = [];
+          
+          while (hasMorePages) {
+            // Use query parameters for pagination: ?page=1&per_page=50
+            const endpoint = `/translations/${resourceId}/by_chapter/${id}?page=${currentPage}&per_page=50`;
+            const response = await makeQuranApiCall(endpoint);
+            console.log(`Translation resource ${resourceId} page ${currentPage} response:`, {
+              translationsCount: response.translations?.length || 0,
+              pagination: response.pagination
+            });
+            
+            // Log first translation structure for debugging
+            if (currentPage === 1 && translations.length === 0 && response.translations && response.translations.length > 0) {
+              console.log(`Sample translation structure (first item):`, JSON.stringify(response.translations[0], null, 2));
+            }
           
           if (response.translations && response.translations.length > 0) {
+              // Extract translations - check the actual structure from the API
+              response.translations.forEach((translation, index) => {
+                // The API returns translations array - each item should have verse info
+                // Check multiple possible structures
+                let verseKey = translation.verse_key;
+                let verseNumber = translation.verse_number;
+                let text = translation.text;
+                
+                // Check if verse object exists
+                if (!verseKey && translation.verse) {
+                  verseKey = translation.verse.verse_key;
+                  verseNumber = translation.verse.verse_number || verseNumber;
+                  text = text || translation.verse.text;
+                }
+                
+                // If still no verse_key, construct from chapter_number and verse_number
+                if (!verseKey) {
+                  if (verseNumber) {
+                    verseKey = `${id}:${verseNumber}`;
+                  } else {
+                    // Last resort: calculate from page and index
+                    const perPage = 50;
+                    const calculatedVerseNumber = (currentPage - 1) * perPage + index + 1;
+                    verseNumber = calculatedVerseNumber;
+                    verseKey = `${id}:${calculatedVerseNumber}`;
+                  }
+                }
+                
+                // Extract text from various possible fields
+                if (!text) {
+                  text = translation.translation || 
+                        translation.translated_text || 
+                        translation.resource_name ||
+                        '';
+                }
+                
+                translations.push({
+                  verse_key: verseKey,
+                  verse_number: verseNumber || parseInt(verseKey.split(':')[1]) || index + 1,
+                  text: text
+                });
+              });
+              
+              // Check if there are more pages
+              hasMorePages = response.pagination && response.pagination.next_page;
+              currentPage++;
+              
+              // Safety limit: don't fetch more than 300 verses (some surahs are very long)
+              if (currentPage > 20) {
+                console.log(`Reached page limit (20) for translations`);
+                break;
+              }
+            } else {
+              hasMorePages = false;
+            }
+          }
+          
+          if (translations.length > 0) {
             workingResourceId = resourceId;
-            console.log(`✅ Found working translation resource ID: ${resourceId}`);
+            allTranslations = translations;
+            console.log(`✅ Found working translation resource ID: ${resourceId} with ${translations.length} total translations`);
             break;
           } else {
             console.log(`❌ Resource ${resourceId} has no translations`);
@@ -630,17 +708,16 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
         }
       }
       
-      if (workingResourceId && response && response.translations && response.translations.length > 0) {
-        // Map the translations to include verse_key for frontend matching
-        const mappedTranslations = response.translations.map((translation, index) => ({
-          ...translation,
-          verse_key: `${id}:${index + 1}`,
-          verse_number: index + 1
-        }));
-        translationData = { translations: mappedTranslations };
-        console.log(`Found ${response.translations.length} translations using resource ID ${workingResourceId}`);
+      if (workingResourceId && allTranslations.length > 0) {
+        translationData = { translations: allTranslations };
+        console.log(`Found ${allTranslations.length} translations using resource ID ${workingResourceId}`);
         console.log(`Translation source: ${workingResourceId === 131 ? 'Clear Quran (Dr. Mustafa Khattab)' : workingResourceId === 85 ? 'Abdul Haleem (English)' : `Resource ${workingResourceId}`}`);
-        console.log(`Mapped translations:`, JSON.stringify(mappedTranslations, null, 2));
+        
+        // Log sample verse_keys for debugging
+        if (allTranslations.length > 0) {
+          console.log(`Sample translation verse_keys (first 5):`, allTranslations.slice(0, 5).map(t => t.verse_key));
+          console.log(`Sample translation texts (first 3):`, allTranslations.slice(0, 3).map(t => ({ verse_key: t.verse_key, text: t.text?.substring(0, 50) || 'NO TEXT' })));
+        }
       } else {
         console.log(`No translations found for surah ${id} with any resource ID`);
       }
@@ -648,23 +725,99 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       console.error(`Failed to fetch translation for surah ${id}:`, err);
     }
     
-    // Get transliteration (English transliteration - resource ID 57)
+    // Get transliteration using the documented endpoint: /translations/:resource_id/by_chapter/:chapter_number
+    // IMPORTANT: Handle pagination to get ALL verses, not just first 10
     let transliterationData = { translations: [] };
     try {
       // Use resource ID 57 for English transliteration
-      const response = await makeQuranApiCall(`/translations/57/by_chapter/${id}`);
-      console.log(`Transliteration response for surah ${id} (resource 57):`, JSON.stringify(response, null, 2));
+      console.log(`Fetching transliterations for surah ${id} (resource 57) with pagination...`);
+      
+      let currentPage = 1;
+      let hasMorePages = true;
+      const allTransliterations = [];
+      
+      while (hasMorePages) {
+        // Use the documented endpoint format: /translations/:resource_id/by_chapter/:chapter_number
+        // Add pagination query parameters
+        const endpoint = `/translations/57/by_chapter/${id}?page=${currentPage}&per_page=50`;
+        const response = await makeQuranApiCall(endpoint);
+        console.log(`Transliteration resource 57 page ${currentPage} response:`, {
+          translationsCount: response.translations?.length || 0,
+          pagination: response.pagination
+        });
+        
+        // Log first transliteration structure for debugging
+        if (currentPage === 1 && allTransliterations.length === 0 && response.translations && response.translations.length > 0) {
+          console.log(`Sample transliteration structure (first item):`, JSON.stringify(response.translations[0], null, 2));
+        }
       
       if (response.translations && response.translations.length > 0) {
-        // Map the transliterations to include verse_key for frontend matching
-        const mappedTransliterations = response.translations.map((transliteration, index) => ({
-          ...transliteration,
-          verse_key: `${id}:${index + 1}`,
-          verse_number: index + 1
-        }));
-        transliterationData = { translations: mappedTransliterations };
-        console.log(`Found ${response.translations.length} transliterations for surah ${id}`);
-        console.log(`Mapped transliterations:`, JSON.stringify(mappedTransliterations, null, 2));
+          // Extract transliterations - check the actual structure from the API
+          response.translations.forEach((transliteration, index) => {
+            // The API returns translations array - each item should have verse info
+            // Check multiple possible structures
+            let verseKey = transliteration.verse_key;
+            let verseNumber = transliteration.verse_number;
+            let text = transliteration.text;
+            
+            // Check if verse object exists
+            if (!verseKey && transliteration.verse) {
+              verseKey = transliteration.verse.verse_key;
+              verseNumber = transliteration.verse.verse_number || verseNumber;
+              text = text || transliteration.verse.text;
+            }
+            
+            // If still no verse_key, construct from chapter_number and verse_number
+            if (!verseKey) {
+              if (verseNumber) {
+                verseKey = `${id}:${verseNumber}`;
+              } else {
+                // Last resort: calculate from page and index
+                const perPage = 50;
+                const calculatedVerseNumber = (currentPage - 1) * perPage + index + 1;
+                verseNumber = calculatedVerseNumber;
+                verseKey = `${id}:${calculatedVerseNumber}`;
+              }
+            }
+            
+            // Extract text from various possible fields
+            if (!text) {
+              text = transliteration.transliteration || 
+                    transliteration.translated_text || 
+                    transliteration.resource_name ||
+                    '';
+            }
+            
+            allTransliterations.push({
+              verse_key: verseKey,
+              verse_number: verseNumber || parseInt(verseKey.split(':')[1]) || index + 1,
+              text: text
+            });
+          });
+          
+          // Check if there are more pages
+          hasMorePages = response.pagination && response.pagination.next_page;
+          currentPage++;
+          
+          // Safety limit: don't fetch more than 300 verses
+          if (currentPage > 20) {
+            console.log(`Reached page limit (20) for transliterations`);
+            break;
+          }
+        } else {
+          hasMorePages = false;
+        }
+      }
+      
+      if (allTransliterations.length > 0) {
+        transliterationData = { translations: allTransliterations };
+        console.log(`Found ${allTransliterations.length} transliterations for surah ${id}`);
+        
+        // Log sample verse_keys for debugging
+        if (allTransliterations.length > 0) {
+          console.log(`Sample transliteration verse_keys (first 5):`, allTransliterations.slice(0, 5).map(t => t.verse_key));
+          console.log(`Sample transliteration texts (first 3):`, allTransliterations.slice(0, 3).map(t => ({ verse_key: t.verse_key, text: t.text?.substring(0, 50) || 'NO TEXT' })));
+        }
       } else {
         console.log(`No transliterations found for surah ${id} with resource 57`);
       }
@@ -688,6 +841,22 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       translationCount: surah.translation?.length || 0,
       transliterationCount: surah.transliteration?.length || 0
     });
+    
+    // Log verse_key matching info for debugging
+    if (surah.verses && surah.verses.length > 0) {
+      const sampleVerseKeys = surah.verses.slice(0, 5).map(v => v.verse_key);
+      const sampleTranslationKeys = surah.translation?.slice(0, 5).map(t => t.verse_key) || [];
+      const sampleTransliterationKeys = surah.transliteration?.slice(0, 5).map(t => t.verse_key) || [];
+      console.log(`Sample verse keys:`, sampleVerseKeys);
+      console.log(`Sample translation keys:`, sampleTranslationKeys);
+      console.log(`Sample transliteration keys:`, sampleTransliterationKeys);
+      
+      // Check if first verse has matching translation/transliteration
+      const firstVerseKey = surah.verses[0]?.verse_key;
+      const hasTranslation = surah.translation?.some(t => t.verse_key === firstVerseKey);
+      const hasTransliteration = surah.transliteration?.some(t => t.verse_key === firstVerseKey);
+      console.log(`First verse (${firstVerseKey}) has translation: ${hasTranslation}, transliteration: ${hasTransliteration}`);
+    }
     
     // Cache the response
     surahCache.surahs.set(cacheKey, {

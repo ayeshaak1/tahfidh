@@ -19,8 +19,8 @@ const LottieLoader = ({ size = 'medium', className = '', showVerse = true }) => 
           setRandomVerse(verse);
         });
       } else {
-        const verse = versePreloader.getRandomVerse();
-        setRandomVerse(verse);
+      const verse = versePreloader.getRandomVerse();
+      setRandomVerse(verse);
       }
       
       // Rotate verses every 5 seconds for variety
