@@ -85,14 +85,16 @@ const QURAN_API_CONFIG = {
   preProduction: {
     authUrl: 'https://prelive-oauth2.quran.foundation/oauth2/token',
     baseUrl: 'https://apis-prelive.quran.foundation/content/api/v4',
-    clientId: process.env.QURAN_CLIENT_ID,
-    clientSecret: process.env.QURAN_CLIENT_SECRET
+    // Use separate pre-prod credentials if available, otherwise fall back to main credentials
+    clientId: process.env.QURAN_CLIENT_ID_PREPROD || process.env.QURAN_CLIENT_ID,
+    clientSecret: process.env.QURAN_CLIENT_SECRET_PREPROD || process.env.QURAN_CLIENT_SECRET
   },
   production: {
     authUrl: 'https://oauth2.quran.foundation/oauth2/token',
     baseUrl: 'https://apis.quran.foundation/content/api/v4',
-    clientId: process.env.QURAN_CLIENT_ID,
-    clientSecret: process.env.QURAN_CLIENT_SECRET
+    // Use separate prod credentials if available, otherwise fall back to main credentials
+    clientId: process.env.QURAN_CLIENT_ID_PROD || process.env.QURAN_CLIENT_ID,
+    clientSecret: process.env.QURAN_CLIENT_SECRET_PROD || process.env.QURAN_CLIENT_SECRET
   }
 };
 
