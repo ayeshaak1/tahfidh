@@ -272,15 +272,27 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  background: var(--rose);
   color: white;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--lavender), var(--rose));
+  background: var(--lavender);
   transform: translateY(-2px);
 }
 
+/* Allow dual-tone gradients only on landing/auth/onboarding */
+.landing-page .btn-primary,
+.auth-page .btn-primary,
+.onboarding-page .btn-primary {
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+}
+
+.landing-page .btn-primary:hover,
+.auth-page .btn-primary:hover,
+.onboarding-page .btn-primary:hover {
+  background: linear-gradient(135deg, var(--lavender), var(--rose));
+}
 .feature-showcase {
   padding: 3rem 2rem 5rem 2rem;
   background: var(--cream);
@@ -1045,7 +1057,9 @@
   border: 1px solid var(--border);
   color: var(--text);
   padding: 0.5rem;
-  border-radius: 25px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -1211,77 +1225,314 @@
   }
 }
 
+/* Mobile Navigation Overlay */
+.nav-overlay {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  /* Mobile Navigation Overlay */
+  .nav-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 900;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Mobile Navigation - Slide out from left */
+  .navigation {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    background: var(--beige);
+    border-right: 1px solid var(--border);
+    border-top: none;
+    z-index: 1000;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .navigation:not(.sidebar-closed) {
+    transform: translateX(0);
+  }
+
+  .navigation.sidebar-closed {
+    transform: translateX(-100%);
+  }
+
+  /* Ensure header/hamburger sit above overlay */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    background: var(--beige);
+  }
+
+  .hamburger-menu {
+    position: relative;
+    z-index: 1101;
+  }
+
+  .nav-logo {
+    display: block;
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .nav-logo .logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .nav-logo .arabic-logo {
+    font-family: 'Amiri', 'Scheherazade New', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
+    font-size: 1.5rem;
+    color: var(--rose);
+    font-weight: 600;
+  }
+
+  .nav-logo .english-logo {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .nav-list {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1rem;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 1rem 4rem;
+    min-width: 100%;
+    margin: 0 auto;
+    border-radius: 15px;
+    gap: 1rem;
+  }
+
+  .nav-item svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .nav-item span {
+    display: block;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .nav-footer {
+    display: block;
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  .nav-footer .nav-item {
+    width: 95%;
+    justify-content: flex-start;
+    margin: 0 auto;
+  }
+
+  /* Hide page headers when sidebar (hamburger) is open on mobile */
+  .dashboard.sidebar-open .app-header,
+  .surah-list.sidebar-open .app-header,
+  .surah-detail.sidebar-open .app-header,
+  .profile-page.sidebar-open .app-header {
+    display: none;
+  }
+
   .dashboard.sidebar-open {
     margin-left: 0;
   }
 
-  .hero-title {
-    font-size: clamp(1.5rem, 5vw, 2.5rem);
+  /* Landing Page Mobile Styles */
+  .landing-header {
+    padding: 1rem 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
-  .cta-buttons {
-    flex-direction: column;
-    align-items: center;
+  .landing-header .logo {
+    flex-direction: row;
+    gap: 0.5rem;
   }
 
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .feature-card {
-    padding: 1.5rem;
-  }
-
-  .feature-showcase {
-    padding: 3rem 1.5rem;
-  }
-
-  .feature-showcase .container {
-    max-width: 95%;
-    min-width: 90%;
-  }
-
-  .feature-showcase h2 {
+  .landing-header .arabic-logo {
     font-size: 1.75rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 0;
   }
 
-  .landing-footer {
-    padding: 2rem 1.5rem;
+  .landing-header .english-logo {
+    font-size: 1.25rem;
+  }
+
+  .landing-header .theme-toggle {
+    width: 40px;
+    height: 40px;
+    padding: 0.4rem;
+  }
+
+  .hero-section {
+    padding: 2rem 1rem 1.5rem 1rem;
   }
 
   .hero-content {
-    max-width: 95%;
-    min-width: 90%;
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  .bismillah-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .bismillah {
+    font-size: 12vw;
+    line-height: 1.8;
+  }
+
+  .hero-title {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(0.9rem, 3.5vw, 1.2rem);
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+    line-height: 1.5;
   }
 
   .quran-verse {
     width: calc(100% - 2rem);
     max-width: calc(100% - 2rem);
     min-width: auto;
-    padding: 1.5rem 1.5rem;
+    padding: 1.25rem 1rem;
+    margin: 2rem auto 1.5rem auto;
   }
 
-  .features-grid {
-    max-width: 95%;
-    min-width: 90%;
+  .quran-verse .verse-arabic {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 2;
   }
 
-  .landing-footer .footer-disclaimer {
-    max-width: 95%;
-    min-width: 90%;
+  .verse-translation {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+
+  .verse-reference {
+    font-size: 0.85rem;
   }
 
   .cta-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
     max-width: 100%;
+    padding: 0 1rem;
+    margin-top: 1rem;
   }
 
-  .btn {
+  .cta-buttons .btn {
     width: 100%;
     max-width: 100%;
-    max-width: 200px;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    min-width: auto;
+  }
+
+  .feature-showcase {
+    padding: 2.5rem 1rem 3rem 1rem;
+  }
+
+  .feature-showcase .container {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .feature-showcase h2 {
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  .feature-card {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .feature-card h3 {
+    font-size: 1.05rem;
+  }
+
+  .feature-card p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .landing-footer {
+    padding: 2rem 1rem;
+  }
+
+  .landing-footer .footer-disclaimer {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  .landing-footer .footer-disclaimer p {
+    font-size: 0.85rem;
+    line-height: 1.6;
   }
 
   .circular-progress-container {
@@ -1350,15 +1601,426 @@
   .week-navigation,
   .month-navigation,
   .year-navigation {
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
   }
   
   .current-week,
   .current-month,
   .current-year {
     min-width: auto;
+    font-size: 0.9rem;
+  }
+
+  /* Dashboard Mobile Styles */
+  .app-header {
+    padding: 1rem 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0;
+    gap: 0.75rem;
+  }
+
+  .hamburger-menu {
+    width: 40px;
+    height: 40px;
+    padding: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-header .theme-toggle {
+    width: 40px;
+    height: 40px;
+    padding: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .guest-warning {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .guest-warning .create-account-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .progress-summary {
+    padding: 1.5rem 1rem;
+  }
+
+  .circular-progress-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .circular-progress {
+    width: 220px;
+    height: 220px;
+  }
+
+  .circular-progress svg {
+    width: 220px;
+    height: 220px;
+  }
+
+  .progress-center {
+    font-size: 0.9rem;
+  }
+
+  .progress-percentage {
+    font-size: 2rem;
+  }
+
+  .progress-subtext {
+    font-size: 0.8rem;
+  }
+
+  .progress-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .stat-item {
+    padding: 1rem;
+    border-radius: 15px;
+  }
+
+  .stat-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  .action-card {
+    padding: 1.25rem;
+    border-radius: 15px;
+  }
+
+  .action-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .action-label {
     font-size: 1rem;
+  }
+
+  .action-detail {
+    font-size: 0.85rem;
+  }
+
+  .action-chevron {
+    width: 18px;
+    height: 18px;
+  }
+
+  .streak-calendar {
+    padding: 1.5rem 1rem;
+    margin: 0 1rem;
+  }
+
+  .activity-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .activity-header h3 {
+    font-size: 1.25rem;
+  }
+
+  .activity-view-toggle {
+    width: 100%;
+    justify-content: stretch;
+    gap: 0.5rem;
+  }
+
+  .view-btn {
+    flex: 1;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .week-navigation,
+  .month-navigation,
+  .year-navigation {
+    padding: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .nav-btn {
+    padding: 0.1rem;
+    width: 48px;
+    height: 48px;
+  }
+
+  .weekly-activity {
+    gap: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .week-day {
+    width: 45px;
+    height: 65px;
+    border-radius: 12px;
+  }
+
+  .week-day .day-name {
+    font-size: 0.65rem;
+  }
+
+  .week-day .day-date {
+    font-size: 0.95rem;
+  }
+
+  .calendar-grid {
+    gap: 2px;
+    margin-bottom: 1rem;
+  }
+
+  .calendar-day {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+
+  .yearly-activity {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .month-square {
+    width: 100%;
+    aspect-ratio: 1;
+    font-size: 0.75rem;
+    border-radius: 8px;
+    padding: 0.5rem;
+  }
+
+  .calendar-legend {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+
+  .legend-item {
+    gap: 0.4rem;
+  }
+
+  .legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+  }
+
+  /* Mobile: match desktop corner rounding for key cards/sections */
+  .progress-summary,
+  .quick-actions .action-card,
+  .streak-calendar,
+  .achievements-section {
+    border-radius: 25px;
+  }
+
+  /* Mobile: tighten Surah Completion card height/spacing */
+  .surah-chart-card {
+    padding: 1rem 1.25rem;
+    height: auto !important;
+    max-height: 150px !important;
+  }
+
+  .surah-chart-card .chart-container {
+    margin-top: 0.5rem;
+    padding: 0;
+  }
+
+  .achievements-section {
+    padding: 1.5rem 1rem;
+    margin: 0 1rem;
+  }
+
+  .achievements-section h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .achievements-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .achievement-badge {
+    padding: 1.25rem;
+    border-radius: 15px;
+  }
+
+  .badge-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .badge-name {
+    font-size: 1rem;
+  }
+
+  .badge-description {
+    font-size: 0.85rem;
+  }
+
+  .badge-lock {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Mobile: center guest warning + CTA */
+  .guest-warning {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .guest-warning .create-account-btn,
+  .create-account-btn {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Mobile: prevent progress stats overflow and center */
+  .progress-summary {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .progress-stats {
+    width: 100%;
+  }
+  /* Mobile: smaller page title */
+  .page-title {
+    font-size: 1.15rem;
+  }
+
+  /* Mobile: reduce stat number size to ~50% of desktop */
+  .stat-value {
+    font-size: 0.75rem !important;
+    line-height: 1.1;
+  }
+
+  /* Mobile: keep progress stats within viewport */
+  .progress-stats {
+    grid-template-columns: 2fr 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    justify-items: start;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    min-height: auto;
+  }
+
+  .stat-item {
+    width: 100%;
+    justify-content: flex-start !important;
+    align-items: center;
+    text-align: left !important;
+    margin-left: 0 !important;
+    gap: 0.5rem;
+  }
+
+  .stat-content {
+    align-items: flex-start;
+  }
+
+  .progress-stats .stat-value {
+    font-size: 1rem !important;
+    line-height: 1.1;
+  }
+
+  .progress-stats .stat-label {
+    font-size: 0.6rem;
+  }
+
+  /* Mobile: center guest warning content and remove left bias */
+  .guest-warning {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .guest-warning .create-account-btn,
+  .create-account-btn {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    text-align: center;
+    margin: 0;
+  }
+
+  /* Mobile: stretch buttons app-wide (exclude view/month/week/year nav and theme buttons) */
+  .btn:not(.view-btn):not(.nav-btn):not(.theme-toggle) {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Mobile: stretch key action buttons across pages */
+  .action-btn,
+  .surah-action-buttons .action-btn,
+  .surah-action-buttons .mark-done-btn,
+  .surah-action-buttons .resume-btn,
+  .surah-action-buttons .start-btn,
+  .onboarding-footer .btn-primary,
+  .onboarding-footer .skip-button,
+  .guest-warning .create-account-btn,
+  .auth-submit,
+  .auth-guest-btn,
+  .btn-google,
+  .export-dialog-btn,
+  .skip-button,
+  .retry-btn,
+  .reset-filters-btn,
+  .bulk-action-btn,
+  .bulk-mode-btn,
+  .toggle-btn:not(.theme-toggle) {
+    width: 100%;
+    max-width: 100%;
   }
 
   /* Calendar Grid Improvements */
@@ -1372,3 +2034,4 @@
     transform: none;
   }
 }
+

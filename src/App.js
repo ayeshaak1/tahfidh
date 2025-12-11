@@ -36,6 +36,34 @@ function AppContent() {
   // Handle authentication state changes: switch between guest and authenticated mode
   // CRITICAL: Guest and Authenticated are COMPLETELY SEPARATE - never mix their data
   useEffect(() => {
+    // Initialize sidebar state per viewport and update on resize
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Prevent background scroll when mobile sidebar is open
+  useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
     // Wait for auth to finish loading before switching modes
     if (authLoading) {
       return;

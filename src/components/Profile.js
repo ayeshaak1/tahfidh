@@ -873,7 +873,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       {/* App Header */}
       <header className="app-header">
         <div className="header-left">
-          <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button 
+            className="hamburger-menu"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSidebarOpen(!sidebarOpen);
+            }}
+          >
             <Menu size={24} />
           </button>
           <h1 className="page-title">Profile & Settings</h1>
@@ -985,22 +992,24 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   )
                 ) : (
                   // Authenticated users: show name with edit profile button
-                  <>
-                    <h2>{userName || 'User Name'}</h2>
+                  <div className="authenticated-user-header">
+                    <div className="authenticated-user-info">
+                      <h2 style={{ marginBottom: '0.5rem' }}>{userName || 'User Name'}</h2>
+                      <p style={{ margin: 0 }}>Premium Member</p>
+                    </div>
                     {isAuthenticated && (
                       <button
                         onClick={handleOpenEditProfile}
-                        className="btn btn-secondary"
-                        style={{ width: 'auto', minWidth: '120px' }}
+                        className="btn btn-secondary edit-profile-btn-auth"
                       >
                         <Edit2 size={16} />
                         Edit Profile
                       </button>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
-            <p>{isGuest ? 'Local progress tracking' : 'Premium Member'}</p>
+            {isGuest && <p>Local progress tracking</p>}
           </div>
         </div>
 
@@ -1073,20 +1082,20 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         <div className="setting-group">
           <h4>Theme & Appearance</h4>
           <div className="setting-item">
-              <div className="theme-header-row">
-                <div className="label-with-help">
-            <label>Theme</label>
-                  <div className="help-tooltip">
-                    <HelpCircle size={16} />
-                    <span className="tooltip-text">Switch between light and dark mode</span>
-                  </div>
-                </div>
-            <button className="theme-toggle-btn" onClick={toggleTheme}>
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                  <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
+            <div className="label-with-help">
+              <label>Theme</label>
+              <div className="help-tooltip">
+                <HelpCircle size={16} />
+                <span className="tooltip-text">Switch between light and dark mode</span>
               </div>
             </div>
+            <div className="toggle-buttons">
+              <button className="toggle-btn theme-toggle-btn" onClick={toggleTheme}>
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+            </div>
+          </div>
           </div>
           
           <div className="setting-group">
@@ -1100,7 +1109,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                     <span className="tooltip-text">Choose Quran font style</span>
                   </div>
                 </div>
-                <div className="toggle-buttons">
+                <div className="toggle-buttons font-toggle-buttons">
               <button
                     className={`toggle-btn ${quranFont === VALID_VALUES.FONT_TYPES.UTHMANI ? 'active' : ''}`}
                     onClick={() => setQuranFont(VALID_VALUES.FONT_TYPES.UTHMANI)}
@@ -1259,7 +1268,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <h4>Export Progress</h4>
               </div>
             <p>Download your progress data as JSON</p>
-          <button className="btn btn-secondary" onClick={() => exportProgress(false)}>
+          <button className="btn btn-secondary file-upload-btn" onClick={() => exportProgress(false)} style={{ width: '100%', justifyContent: 'center' }}>
               <Download size={16} />
               Download Backup
             </button>
