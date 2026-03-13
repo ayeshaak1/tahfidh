@@ -3,7 +3,8 @@
  * Handles fetching and saving user progress to/from the backend database
  */
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import { getApiUrl } from '../utils/apiUrl';
+const API_URL = getApiUrl();
 
 /**
  * Get authentication token from localStorage

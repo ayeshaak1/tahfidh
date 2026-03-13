@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
+import { getApiUrl } from '../utils/apiUrl';
 import LottieLoader from './LottieLoader';
 import { 
   STORAGE_KEYS, 
@@ -243,7 +244,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       setProfileError('');
       try {
         const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/profile`, {
+        const response = await fetch(`${getApiUrl()}/auth/profile`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -299,7 +300,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setProfileError('');
     try {
       const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/profile`, {
+      const response = await fetch(`${getApiUrl()}/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -353,7 +354,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setProfileError('');
     try {
       const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/profile/password`, {
+      const response = await fetch(`${getApiUrl()}/auth/profile/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

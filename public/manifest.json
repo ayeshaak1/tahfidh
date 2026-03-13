@@ -1,0 +1,9 @@
+{
+  "short_name": "Tahfidh",
+  "name": "Tahfidh - Quran Memorization Tracker",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#E2B6B3",
+  "background_color": "#ffffff"
+}

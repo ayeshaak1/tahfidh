@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { STORAGE_KEYS, StorageHelpers } from '../constants/storageConstants';
+import { getApiUrl } from '../utils/apiUrl';
 
 const AuthContext = createContext();
 
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
             
             while (retries >= 0) {
               try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/verify`, {
+                const response = await fetch(`${getApiUrl()}/auth/verify`, {
                   headers: {
                     'Authorization': `Bearer ${token}`,
                   },
@@ -143,7 +144,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/verify`, {
+      const response = await fetch(`${getApiUrl()}/auth/verify`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -182,7 +183,7 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/signin`, {
+      const response = await fetch(`${getApiUrl()}/auth/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -232,7 +233,7 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, name) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/signup`, {
+      const response = await fetch(`${getApiUrl()}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -278,7 +279,7 @@ export const AuthProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       // Redirect to Google OAuth
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const apiUrl = getApiUrl();
       window.location.href = `${apiUrl}/auth/google`;
     } catch (error) {
       console.error('Google sign in error:', error);
@@ -297,7 +298,7 @@ export const AuthProvider = ({ children }) => {
   const completeOnboarding = async (memorizedSurahs, progress = null) => {
     try {
       const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/onboarding`, {
+      const response = await fetch(`${getApiUrl()}/auth/onboarding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -325,7 +326,7 @@ export const AuthProvider = ({ children }) => {
   const deleteAccount = async () => {
     try {
       const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/account`, {
+      const response = await fetch(`${getApiUrl()}/auth/account`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

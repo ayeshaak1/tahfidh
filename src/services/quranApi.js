@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import { getApiUrl } from '../utils/apiUrl';
+const API_BASE_URL = getApiUrl();
 
 // Cache keys
 const CACHE_KEYS = {
