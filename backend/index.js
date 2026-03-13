@@ -316,6 +316,11 @@ async function makeQuranApiCall(endpoint) {
 
 // API Routes
 
+// Root - basic status (avoids 404 when visiting backend URL directly)
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Tahfidh API', api: '/api' });
+});
+
 // Get all surahs/chapters
 app.get('/api/surahs', quranApiLimiter, async (req, res) => {
   try {
