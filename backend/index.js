@@ -112,17 +112,20 @@ const API_CONFIG = (isProduction && !forcePreProd)
 let googleCallbackURL = process.env.GOOGLE_CALLBACK_URL;
 
 if (!googleCallbackURL && isProduction) {
-  // Try to construct from Render service URL
-  const renderServiceUrl = process.env.RENDER_SERVICE_URL || process.env.RENDER_EXTERNAL_URL;
-  if (renderServiceUrl) {
-    googleCallbackURL = `${renderServiceUrl}/api/auth/google/callback`;
-    console.log(`⚠️  GOOGLE_CALLBACK_URL not set. Auto-constructed from RENDER_SERVICE_URL: ${googleCallbackURL}`);
-    console.log(`⚠️  For production, it's recommended to explicitly set GOOGLE_CALLBACK_URL in Render environment variables.`);
+  // Try to construct from platform URL (Render, Railway, etc.)
+  const platformUrl =
+    process.env.RENDER_SERVICE_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null);
+  if (platformUrl) {
+    googleCallbackURL = `${platformUrl.replace(/\/$/, '')}/api/auth/google/callback`;
+    console.log(`⚠️  GOOGLE_CALLBACK_URL not set. Auto-constructed from platform URL: ${googleCallbackURL}`);
+    console.log(`⚠️  For production, it's recommended to explicitly set GOOGLE_CALLBACK_URL in environment variables.`);
   } else {
     googleCallbackURL = `http://localhost:5000/api/auth/google/callback`;
     console.error('❌ ERROR: GOOGLE_CALLBACK_URL not set in production!');
-    console.error('❌ This will cause OAuth redirects to fail. Please set GOOGLE_CALLBACK_URL in Render environment variables.');
-    console.error('❌ Example: https://your-backend-name.onrender.com/api/auth/google/callback');
+    console.error('❌ This will cause OAuth redirects to fail. Please set GOOGLE_CALLBACK_URL in your platform environment variables.');
+    console.error('❌ Example: https://your-backend.up.railway.app/api/auth/google/callback');
   }
 } else if (!googleCallbackURL) {
   googleCallbackURL = `http://localhost:5000/api/auth/google/callback`;
@@ -272,7 +275,7 @@ async function getAccessToken() {
       console.error('2. Credentials are for wrong environment:');
       console.error(`   - You're using ${isProduction ? 'PRODUCTION' : 'PRE-PRODUCTION'} API endpoints`);
       console.error(`   - Make sure your credentials are for ${isProduction ? 'PRODUCTION' : 'PRE-PRODUCTION'}`);
-      console.error('3. Credentials have extra spaces or quotes (check in Render dashboard)');
+      console.error('3. Credentials have extra spaces or quotes (check in your platform dashboard)');
       console.error('4. Credentials expired or revoked');
       console.error('\nExpected configuration:');
       if (isProduction) {
@@ -1614,11 +1617,11 @@ app.listen(PORT, async () => {
   if (isProduction) {
     if (!process.env.GOOGLE_CALLBACK_URL) {
       console.error('⚠️  WARNING: GOOGLE_CALLBACK_URL not explicitly set in production!');
-      console.error('⚠️  Set it in Render environment variables for reliable OAuth redirects.');
+      console.error('⚠️  Set it in your platform environment variables (Railway, Render, etc.) for reliable OAuth redirects.');
     }
     if (!process.env.FRONTEND_URL) {
       console.error('⚠️  WARNING: FRONTEND_URL not set in production!');
-      console.error('⚠️  OAuth redirects will fail. Set it in Render environment variables.');
+      console.error('⚠️  OAuth redirects will fail. Set it in your platform environment variables (Railway, Render, etc.).');
     } else if (!process.env.FRONTEND_URL.startsWith('http://') && !process.env.FRONTEND_URL.startsWith('https://')) {
       console.log('ℹ️  INFO: FRONTEND_URL was missing protocol, auto-added https://');
     }
@@ -1999,7 +2002,7 @@ app.get('/api/auth/google/callback',
       if (!process.env.FRONTEND_URL) {
         if (process.env.NODE_ENV === 'production') {
           console.error('❌ ERROR: FRONTEND_URL not set in production!');
-          console.error('❌ This will cause OAuth redirects to fail. Please set FRONTEND_URL in Render environment variables.');
+          console.error('❌ This will cause OAuth redirects to fail. Please set FRONTEND_URL in your platform environment variables (Railway, Render, etc.).');
           console.error('❌ Example: https://your-app-name.netlify.app');
           frontendUrl = 'http://localhost:3000'; // Fallback, but will fail
         } else {

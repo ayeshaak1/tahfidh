@@ -2,15 +2,23 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 // Create a connection pool with the same config as the main app
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'tahfidh',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  connectionTimeoutMillis: 5000,
-});
+// Support DATABASE_URL (Railway, Heroku) or individual DB_* vars
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 5000,
+    }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      database: process.env.DB_NAME || 'tahfidh',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || '',
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      connectionTimeoutMillis: 5000,
+    };
+const pool = new Pool(poolConfig);
 
 // Colors for console output
 const colors = {

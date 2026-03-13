@@ -2,12 +2,21 @@
 
 This is a comprehensive guide to deploy your Tahfidh Quran Memorization Tracker to production using **free** hosting services. Follow each step carefully.
 
+## Railway Backend (Recommended)
+
+**Render's free tier has been discontinued.** For the backend, use **Railway** instead—it offers a free monthly credit and no spin-down.
+
+→ **[See RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)** for backend deployment.  
+→ Keep your frontend on Netlify; only the backend host changes.
+
+---
+
 ## Table of Contents
 
 1. [Prerequisites & Account Setup](#prerequisites--account-setup)
 2. [Generate Required Secrets](#generate-required-secrets)
 3. [Get Production API Credentials](#get-production-api-credentials)
-4. [Deploy Backend to Render](#deploy-backend-to-render)
+4. [Deploy Backend to Render](#deploy-backend-to-render) _(legacy—prefer [Railway](RAILWAY_DEPLOYMENT.md))_
 5. [Deploy Frontend to Netlify](#deploy-frontend-to-netlify)
 6. [Configure OAuth](#configure-oauth)
 7. [Final Verification](#final-verification)

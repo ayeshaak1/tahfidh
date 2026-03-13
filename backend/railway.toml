@@ -1,0 +1,10 @@
+# Railway config for Tahfidh backend
+# When Root Directory is set to "backend" in Railway, this file is used.
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
