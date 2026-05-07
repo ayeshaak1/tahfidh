@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
+import qfNotesApi from '../services/qfNotesApi';
 import LottieLoader from './LottieLoader';
 import { 
   STORAGE_KEYS, 
@@ -61,6 +62,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const [isUpdating, setIsUpdating] = useState(false);
   const [surahsData, setSurahsData] = useState(null);
   const [juzMapping, setJuzMapping] = useState(null); // Map surah ID to juz number
+  const [qfConnected, setQfConnected] = useState(false);
+  const [qfConnecting, setQfConnecting] = useState(false);
   const { theme, setTheme, toggleTheme, isDark } = useTheme();
   const {
     quranFont,
@@ -83,6 +86,40 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   useEffect(() => {
     setCurrentPath('/profile');
   }, [setCurrentPath]);
+
+  // Quran Foundation connection status (auth users only)
+  useEffect(() => {
+    const checkQf = async () => {
+      if (isGuest || !isAuthenticated) {
+        setQfConnected(false);
+        return;
+      }
+      try {
+        const status = await qfNotesApi.getQfStatus();
+        setQfConnected(!!status.connected);
+        StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
+      } catch (e) {
+        setQfConnected(false);
+      }
+    };
+    checkQf();
+  }, [isGuest, isAuthenticated]);
+
+  const handleConnectQf = async () => {
+    try {
+      setQfConnecting(true);
+      const { url } = await qfNotesApi.startQfOAuth();
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('Missing OAuth URL');
+      }
+    } catch (e) {
+      setProfileError(e.message || 'Failed to connect Quran Foundation');
+    } finally {
+      setQfConnecting(false);
+    }
+  };
 
   // Reset userName when switching between guest and authenticated mode
   // COMPLETELY SEPARATE: Guest uses GUEST_USER_NAME, Auth uses user object from context
@@ -1078,6 +1115,30 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       {/* Settings Panel */}
       <section className="settings-panel">
         <h3>Settings</h3>
+
+        {!isGuest && isAuthenticated && (
+          <div className="setting-group">
+            <h4>Quran Foundation</h4>
+            <div className="setting-item">
+              <div className="label-with-help">
+                <label>Notes Sync</label>
+                <div className="help-tooltip">
+                  <HelpCircle size={16} />
+                  <span className="tooltip-text">Connect to sync your verse notes using Quran Foundation User APIs</span>
+                </div>
+              </div>
+              <div className="toggle-buttons">
+                <button
+                  className={`toggle-btn ${qfConnected ? 'active' : ''}`}
+                  onClick={handleConnectQf}
+                  disabled={qfConnecting || qfConnected}
+                >
+                  {qfConnected ? 'Connected' : (qfConnecting ? 'Connecting…' : 'Connect')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="setting-group">
           <h4>Theme & Appearance</h4>

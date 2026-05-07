@@ -182,7 +182,10 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/signin`, {
+      const apiUrl = process.env.REACT_APP_BACKEND_URL
+        ? `${process.env.REACT_APP_BACKEND_URL.replace(/\/+$/g, '')}/api`
+        : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+      const response = await fetch(`${apiUrl}/auth/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -232,7 +235,10 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, name) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/signup`, {
+      const apiUrl = process.env.REACT_APP_BACKEND_URL
+        ? `${process.env.REACT_APP_BACKEND_URL.replace(/\/+$/g, '')}/api`
+        : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+      const response = await fetch(`${apiUrl}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -278,7 +284,9 @@ export const AuthProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       // Redirect to Google OAuth
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const apiUrl = process.env.REACT_APP_BACKEND_URL
+        ? `${process.env.REACT_APP_BACKEND_URL.replace(/\/+$/g, '')}/api`
+        : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
       window.location.href = `${apiUrl}/auth/google`;
     } catch (error) {
       console.error('Google sign in error:', error);
@@ -297,7 +305,10 @@ export const AuthProvider = ({ children }) => {
   const completeOnboarding = async (memorizedSurahs, progress = null) => {
     try {
       const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/onboarding`, {
+      const apiUrl = process.env.REACT_APP_BACKEND_URL
+        ? `${process.env.REACT_APP_BACKEND_URL.replace(/\/+$/g, '')}/api`
+        : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+      const response = await fetch(`${apiUrl}/auth/onboarding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -325,7 +336,10 @@ export const AuthProvider = ({ children }) => {
   const deleteAccount = async () => {
     try {
       const token = StorageHelpers.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/account`, {
+      const apiUrl = process.env.REACT_APP_BACKEND_URL
+        ? `${process.env.REACT_APP_BACKEND_URL.replace(/\/+$/g, '')}/api`
+        : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+      const response = await fetch(`${apiUrl}/auth/account`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

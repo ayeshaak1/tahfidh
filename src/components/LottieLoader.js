@@ -14,7 +14,7 @@ const LottieLoader = ({ size = 'medium', className = '', showVerse = true }) => 
     if (showVerse) {
       // Preload verses if not already done
       if (!versePreloader.hasPreloaded) {
-        versePreloader.preloadRandomVerses(10).then(() => {
+        versePreloader.preloadRandomVerses(3).then(() => {
           const verse = versePreloader.getRandomVerse();
           setRandomVerse(verse);
         });

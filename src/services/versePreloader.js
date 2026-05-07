@@ -6,6 +6,7 @@ class VersePreloader {
     this.isPreloading = false;
     this.currentIndex = 0;
     this.hasPreloaded = false; // Track if we've already preloaded
+    this.lastPreloadAt = 0;
   }
 
   async preloadRandomVerses(count = 20, force = false) {
@@ -13,25 +14,35 @@ class VersePreloader {
     if (!force && (this.isPreloading || this.hasPreloaded)) {
       return;
     }
+
+    // Avoid hammering the backend (React strict mode + loader mounts)
+    const now = Date.now();
+    const minIntervalMs = 60_000; // 1 minute
+    if (!force && now - this.lastPreloadAt < minIntervalMs) {
+      return;
+    }
     
     this.isPreloading = true;
+    this.lastPreloadAt = now;
     
     // Increase count to get more variety (but still reasonable)
     // Always use a reasonable limit
-    const actualCount = Math.min(count, 10);
+    const actualCount = Math.min(count, 3);
     
     try {
-      const promises = [];
+      const verses = [];
+      // Fetch sequentially with a tiny delay to avoid rate limits
       for (let i = 0; i < actualCount; i++) {
-        promises.push(this.fetchRandomVerse());
+        // In development, prefer defaults if API is rate limited
+        const v = await this.fetchRandomVerse();
+        verses.push(v);
+        // small jitter
+        await new Promise(resolve => setTimeout(resolve, 250));
       }
-      
-      const verses = await Promise.allSettled(promises);
       
       // Filter successful results and check verse length
       this.randomVerses = verses
-        .filter(result => result.status === 'fulfilled' && result.value)
-        .map(result => result.value)
+        .filter(Boolean)
         .filter(verse => verse && verse.verse)
         .filter(verse => {
           // Check if verse has words and calculate total length
@@ -94,11 +105,6 @@ class VersePreloader {
     const randomIndex = Math.floor(Math.random() * this.randomVerses.length);
     const verse = this.randomVerses[randomIndex];
     this.currentIndex++;
-    
-    // Preload more verses when we're halfway through
-    if (this.currentIndex >= Math.floor(this.randomVerses.length / 2)) {
-      this.preloadRandomVerses(10, true); // Force reload more verses
-    }
     
     return verse;
   }
