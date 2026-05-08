@@ -140,10 +140,10 @@
   line-height: 2.2;
   font-weight: 700;
   text-shadow: 0 2px 4px rgba(25, 2, 2, 0.15);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
+  text-align: center;
   width: 100%;
+  max-width: 100%;
 }
 
 .tahfidh-title {

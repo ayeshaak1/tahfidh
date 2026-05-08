@@ -3926,7 +3926,8 @@
   z-index: 1;
   position: relative;
   width: 100%;
-  overflow: hidden;
+  /* Allow the glyph to render fully on small screens */
+  overflow: visible;
 }
 
 .auth-card-split .bismillah-section {
@@ -3936,14 +3937,26 @@
 .auth-card .bismillah-section .bismillah,
 .auth-card-split .bismillah-section .bismillah {
   font-family: 'Amiri', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.75rem, 3vw, 2.6rem);
   color: var(--rose);
   text-align: center;
   opacity: 0.8;
-  line-height: 1.4;
+  line-height: 1.25;
   word-wrap: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
+  display: block;
+}
+
+/* Split-card bismillah: scale down so it never clips in 50/50 layout */
+.auth-card-split .bismillah-section {
+  padding: 0 0.75rem;
+}
+
+.auth-card-split .bismillah-section .bismillah {
+  /* ~1.5x smaller than the unified auth-card sizing */
+  font-size: clamp(1rem, 2vw, 1.75rem);
+  line-height: 1.15;
 }
 
 .lottie-loader-container .bismillah {
@@ -4283,6 +4296,24 @@
   z-index: 1;
 }
 
+/* Mobile: allow scrolling to reach header/bismillah */
+@media (max-width: 600px) {
+  .auth-page {
+    overflow-y: auto;
+  }
+
+  .auth-container {
+    align-items: flex-start;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+  }
+
+  .auth-card {
+    max-width: 100%;
+    padding: 1.75rem 1.25rem;
+  }
+}
+
 .auth-card {
   width: 100%;
   max-width: 80%;
@@ -4313,13 +4344,16 @@
   position: relative;
   z-index: 1;
   overflow: hidden;
-  height: 1200px;
+  /* Keep the split card within the viewport and let sides scroll */
+  height: min(900px, calc(100vh - 120px));
   margin: 0 auto;
 }
 
 /* Auth Side (Left and Right) */
 .auth-side {
-  flex: 1;
+  /* Force a true 50/50 split */
+  flex: 0 0 50%;
+  width: 50%;
   display: flex;
   flex-direction: column;
   padding: 3rem 2.5rem;
@@ -4328,6 +4362,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   height: 100%;
+  min-height: 0;
 }
 
 /* Custom scrollbar for auth sides */
@@ -4353,7 +4388,8 @@
   background: var(--beige);
   border-right: 1px solid var(--border);
   position: relative;
-  overflow: hidden;
+  /* Don't clip the bismillah glyph; scrolling handled by .auth-side */
+  overflow: visible;
 }
 
 .auth-side-signin::before {
@@ -4376,7 +4412,8 @@
 
 /* When sign-in becomes active, slide gradient out to the right */
 .auth-side-signin.active::before {
-  transform: translateX(100%);
+  /* Use >100% to avoid subpixel "sliver" showing */
+  transform: translateX(110%);
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
 }
 
@@ -4398,7 +4435,8 @@
   background: linear-gradient(135deg, var(--rose) 0%, var(--lavender) 100%);
   color: white;
   position: relative;
-  overflow: hidden;
+  /* Don't clip the bismillah glyph; scrolling handled by .auth-side */
+  overflow: visible;
 }
 
 .auth-side-signup::before {
@@ -4422,7 +4460,8 @@
 
 /* When sign-up becomes inactive, slide gradient back to right */
 .auth-side-signup:not(.active)::before {
-  transform: translateX(100%);
+  /* Use >100% to avoid subpixel "sliver" showing */
+  transform: translateX(110%);
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -4714,6 +4753,25 @@
   flex-grow: 0;
   height: auto;
   min-height: 48px;
+}
+
+/* Guest button: ombre outline (not filled) */
+.auth-page .auth-guest-btn.btn-secondary {
+  background: transparent !important;
+  color: var(--rose) !important;
+  border: 2px solid transparent !important;
+  border-radius: 9999px;
+  /* First layer = "fill" matching the card background (looks unfilled) */
+  background-image: linear-gradient(var(--beige), var(--beige)),
+    linear-gradient(135deg, var(--rose), var(--lavender)) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+}
+
+.auth-page .auth-guest-btn.btn-secondary:hover {
+  background-image: linear-gradient(var(--beige), var(--beige)),
+    linear-gradient(135deg, var(--lavender), var(--rose)) !important;
+  transform: translateY(-3px);
 }
 
 .auth-submit {
@@ -5128,7 +5186,7 @@
   }
 
   .auth-container {
-    padding: 1.5rem 1rem;
+    padding: 0;
     align-items: flex-start;
     min-height: calc(100vh - 80px);
   }
@@ -5137,7 +5195,7 @@
   .auth-card-unified,
   .auth-card-split,
   .onboarding-card {
-    padding: 1.75rem 1.25rem;
+    padding: 0;
     max-width: 100%;
     width: 100%;
     border-radius: 20px;
@@ -5145,16 +5203,23 @@
 
   .auth-card-split {
     flex-direction: column;
-    height: auto;
-    min-height: auto;
+    /* Keep the card in-view and split space evenly */
+    height: calc(100vh - 120px);
+    min-height: 0;
     max-height: none;
   }
 
   .auth-side {
-    padding: 1.75rem 1.25rem;
+    padding: 1rem;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    min-height: auto;
+    /* 50/50 vertical split on small screens */
+    flex: 1 1 0;
+    width: 100%;
+    height: 50%;
+    min-height: 0;
+    /* Keep scrollbar from touching inputs */
+    scrollbar-gutter: stable;
   }
 
   .auth-side-signup {
@@ -5163,7 +5228,9 @@
   }
 
   .auth-side-content {
-    padding: 1rem 0;
+    /* Give content space away from the scrollbar */
+    padding: 1rem 1.75rem 1.25rem 1rem;
+    justify-content: flex-start;
   }
 
   .auth-card .bismillah-section,
@@ -5174,6 +5241,12 @@
   .auth-card .bismillah-section .bismillah,
   .auth-card-split .bismillah-section .bismillah {
     font-size: clamp(1.5rem, 6vw, 2.5rem);
+  }
+
+  /* Split auth: make bismillah ~1.5x smaller on small screens */
+  .auth-card-split .bismillah-section .bismillah {
+    font-size: clamp(0.95rem, 4vw, 1.35rem);
+    line-height: 1.1;
   }
 
   .auth-cta-title {
@@ -5266,7 +5339,7 @@
     min-width: 0;
     padding: 0.875rem 1rem;
     font-size: 0.95rem;
-    border-radius: 12px;
+    border-radius: 9999px;
   }
 
   .btn-google {

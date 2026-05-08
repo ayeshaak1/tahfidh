@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -12,6 +12,9 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
   
   // Determine initial mode from URL
   const [activeMode, setActiveMode] = useState(location.pathname === '/signup' ? 'signup' : 'signin');
+
+  const signInSideRef = useRef(null);
+  const signUpSideRef = useRef(null);
   
   // Sign In state
   const [email, setEmail] = useState('');
@@ -46,6 +49,14 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
       setActiveMode('signin');
     }
   }, [location.pathname, setCurrentPath]);
+
+  // When toggling modes, always show the top of the active panel (important on mobile)
+  useEffect(() => {
+    const activeEl = activeMode === 'signup' ? signUpSideRef.current : signInSideRef.current;
+    if (activeEl) {
+      activeEl.scrollTop = 0;
+    }
+  }, [activeMode]);
 
   // Validation functions
   const validateEmail = (emailValue) => {
@@ -247,7 +258,10 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
       <div className="auth-container">
         <div className="auth-card-split">
           {/* Sign In Side */}
-          <div className={`auth-side auth-side-signin ${activeMode === 'signin' ? 'active' : ''}`}>
+          <div
+            ref={signInSideRef}
+            className={`auth-side auth-side-signin ${activeMode === 'signin' ? 'active' : ''}`}
+          >
             {activeMode === 'signin' ? (
               <div className="auth-side-content">
                 <div className="bismillah-section">
@@ -373,7 +387,10 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
           </div>
 
           {/* Sign Up Side */}
-          <div className={`auth-side auth-side-signup ${activeMode === 'signup' ? 'active' : ''}`}>
+          <div
+            ref={signUpSideRef}
+            className={`auth-side auth-side-signup ${activeMode === 'signup' ? 'active' : ''}`}
+          >
             {activeMode === 'signup' ? (
               <div className="auth-side-content">
                 <div className="bismillah-section">
