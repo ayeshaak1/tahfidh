@@ -1314,7 +1314,8 @@
 }
 
 .profile-content {
-  max-width: 1200px;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
 }
 
@@ -2027,7 +2028,8 @@
 }
 
 .profile-footer {
-  max-width: 1200px;
+  width: 100%;
+  max-width: none;
   margin: 3rem auto 0 auto;
   padding: 2rem;
   background: var(--beige);
@@ -5676,14 +5678,15 @@
   }
 
   .heatmap-grid {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 0.5rem;
   }
 
   .heatmap-square {
     aspect-ratio: 1;
     font-size: 0.85rem;
-    border-radius: 6px;
+    border-radius: 3rem;
+    padding: 0.9rem;
   }
 
   .settings-panel {
@@ -5779,7 +5782,7 @@
     width: calc(100% - 2rem);
     max-width: 100%;
     max-height: 90vh;
-    margin: 1rem;
+    margin: 0;
     border-radius: 20px;
     padding: 0;
   }
@@ -5855,6 +5858,24 @@
     border-radius: 25px;
   }
 
+  /* Mobile: consistent container gutters across pages */
+  .surah-card,
+  .feature-card,
+  .quran-verse,
+  .profile-section,
+  .user-card,
+  .juz-heatmap-card,
+  .surah-chart-card,
+  .data-action-card,
+  .danger-zone,
+  .settings-panel,
+  .data-management {
+    width: calc(100% - 2rem);
+    margin-left: 1rem;
+    margin-right: 1rem;
+    box-sizing: border-box;
+  }
+
   /* Mobile: reduce empty space in Surah Completion card (components using chart container) */
   .chart-container {
     margin-top: 0.5rem;
@@ -5891,14 +5912,10 @@
     box-sizing: border-box;
   }
 
-  /* Mobile nav buttons full width */
-  .navigation .nav-item {
-    width: 95% !important;
-    margin: 0 auto;
-  }
-
-  /* Keep theme toggle auto width */
-  .theme-toggle {
+  /* Keep header theme toggles auto width (avoid affecting dashboard circle) */
+  .auth-header .theme-toggle,
+  .landing-header .theme-toggle,
+  .onboarding-header .theme-toggle {
     width: auto !important;
     max-width: none !important;
   }

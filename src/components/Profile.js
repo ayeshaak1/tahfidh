@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
+import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
 import qfNotesApi from '../services/qfNotesApi';
@@ -20,7 +20,7 @@ import {
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, signOut, deleteAccount } = useAuth();
+  const { user, isAuthenticated, deleteAccount } = useAuth();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
@@ -423,14 +423,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setPasswordData({ current: '', new: '', confirm: '' });
     setProfileError('');
     setProfileSuccess('');
-  };
-
-  const handleLogout = () => {
-    // CRITICAL: Logout should clear all auth data and switch to guest mode
-    // The App.js useEffect will handle the mode switch when isAuthenticated becomes false
-    signOut();
-    // Navigate to landing page - the app will automatically switch to guest mode
-    navigate('/');
   };
 
   const handleOpenEditProfile = () => {
@@ -1076,14 +1068,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               {juzHeatmap.map(({ juz, progress }) => (
                 <div
                   key={juz}
-                  className="heatmap-square"
-                  style={{
-                      backgroundColor: progress > 0 
-                        ? `rgba(226, 182, 179, ${Math.max(0.3, progress / 100)})` 
-                        : 'var(--cream)',
-                      border: progress > 0 ? '1px solid var(--rose)' : '1px solid var(--border)',
-                      color: progress > 50 ? 'white' : 'var(--text)'
-                    }}
+                  className={`heatmap-square ${progress >= 75 ? 'intensity-3' : progress >= 40 ? 'intensity-2' : progress > 0 ? 'intensity-1' : 'intensity-0'}`}
                     title={`Juz ${juz}: ${progress}%`}
                 >
                   {juz}
@@ -1401,36 +1386,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         </div>
       </section>
       </div>
-
-      {/* Footer */}
-      <footer className="profile-footer">
-        <div className="footer-content">
-          {!isGuest && isAuthenticated && (
-            <button
-              onClick={handleLogout}
-              className="btn"
-              style={{ 
-                width: '100%',
-                maxWidth: '100%',
-                minWidth: '100%',
-                border: '2px solid var(--error-red)',
-                color: 'var(--error-red)',
-                backgroundColor: 'transparent',
-                boxSizing: 'border-box'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'var(--error-red-light)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent';
-              }}
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
-          )}
-          </div>
-      </footer>
 
       {/* Confirmation Dialog */}
       {showConfirmDialog && (

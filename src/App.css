@@ -778,6 +778,11 @@
   color: white;
 }
 
+/* Light mode: never force white text for intensity-3 */
+:root:not([data-theme="dark"]) .intensity-3 {
+  color: var(--text);
+}
+
 .calendar-legend {
   display: flex;
   justify-content: center;
@@ -1225,156 +1230,34 @@
   }
 }
 
-/* Mobile Navigation Overlay */
+/* Legacy drawer overlay (unused with bottom app bar) */
 .nav-overlay {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 768px) {
-  /* Mobile Navigation Overlay */
-  .nav-overlay {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 900;
-    animation: fadeIn 0.3s ease;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  /* Mobile Navigation - Slide out from left */
-  .navigation {
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 280px;
-    max-width: 85vw;
-    background: var(--beige);
-    border-right: 1px solid var(--border);
-    border-top: none;
-    z-index: 1000;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  }
-
-  .navigation:not(.sidebar-closed) {
-    transform: translateX(0);
-  }
-
-  .navigation.sidebar-closed {
-    transform: translateX(-100%);
-  }
-
-  /* Ensure header/hamburger sit above overlay */
-  .app-header {
-    position: sticky;
-    top: 0;
-    z-index: 1100;
-    background: var(--beige);
-  }
-
-  .hamburger-menu {
-    position: relative;
-    z-index: 1101;
-  }
-
-  .nav-logo {
-    display: block;
-    padding: 1.5rem 1rem;
-    border-bottom: 1px solid var(--border);
-    text-align: center;
-  }
-
-  .nav-logo .logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-  }
-
-  .nav-logo .arabic-logo {
-    font-family: 'Amiri', 'Scheherazade New', 'Noto Nastaliq Urdu', system-ui, -apple-system, sans-serif;
-    font-size: 1.5rem;
-    color: var(--rose);
-    font-weight: 600;
-  }
-
-  .nav-logo .english-logo {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    font-size: 1.1rem;
-    color: var(--text);
-    font-weight: 500;
-  }
-
-  .nav-list {
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 1rem;
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .nav-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    padding: 1rem 4rem;
-    min-width: 100%;
-    margin: 0 auto;
-    border-radius: 15px;
-    gap: 1rem;
-  }
-
-  .nav-item svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .nav-item span {
-    display: block;
-    font-size: 1rem;
-    font-weight: 500;
-  }
-
-  .nav-footer {
-    display: block;
-    padding: 1rem;
-    border-top: 1px solid var(--border);
-    margin-top: auto;
-  }
-
-  .nav-footer .nav-item {
-    width: 95%;
-    justify-content: flex-start;
-    margin: 0 auto;
-  }
-
-  /* Hide page headers when sidebar (hamburger) is open on mobile */
-  .dashboard.sidebar-open .app-header,
-  .surah-list.sidebar-open .app-header,
-  .surah-detail.sidebar-open .app-header,
-  .profile-page.sidebar-open .app-header {
+  /* Bottom app bar: theme toggle lives on Profile settings */
+  .navigation .nav-footer {
     display: none;
   }
 
+  .navigation {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Slightly wider bottom app bar tabs on small screens */
+  .nav-item {
+    min-width: 140px;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  /* Hamburger was for the old slide-out drawer; bottom bar replaces it */
+  .hamburger-menu {
+    display: none !important;
+  }
+
+  /* Bottom bar is not a left sidebar — don't offset page content on mobile */
   .dashboard.sidebar-open {
     margin-left: 0;
   }
@@ -1665,11 +1548,18 @@
 
   .progress-summary {
     padding: 1.5rem 1rem;
+    /* Match Achievements side margins on small screens */
+    margin: 1rem 1rem 1rem 1rem;
+    width: calc(100% - 2rem);
   }
 
   .circular-progress-container {
     flex-direction: column;
     gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   .circular-progress {
@@ -1721,7 +1611,10 @@
   .quick-actions {
     grid-template-columns: 1fr;
     gap: 1rem;
-    padding: 0 1rem;
+    padding: 0;
+    width: calc(100% - 2rem);
+    margin: 0 1rem 1rem 1rem;
+    box-sizing: border-box;
   }
 
   .action-card {
@@ -1749,7 +1642,9 @@
 
   .streak-calendar {
     padding: 1.5rem 1rem;
-    margin: 0 1rem;
+    margin: 0 1rem 1rem 1rem;
+    width: calc(100% - 2rem);
+    box-sizing: border-box;
   }
 
   .activity-header {
@@ -1872,7 +1767,9 @@
 
   .achievements-section {
     padding: 1.5rem 1rem;
-    margin: 0 1rem;
+    margin: 1rem 1rem 0 1rem;
+    width: calc(100% - 2rem);
+    box-sizing: border-box;
   }
 
   .achievements-section h3 {
@@ -1926,7 +1823,7 @@
 
   /* Mobile: prevent progress stats overflow and center */
   .progress-summary {
-    width: 100%;
+    width: calc(100% - 2rem);
     overflow: hidden;
   }
 

@@ -50,19 +50,6 @@ function AppContent() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Prevent background scroll when mobile sidebar is open
-  useEffect(() => {
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile && sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [sidebarOpen]);
-
   useEffect(() => {
     // Wait for auth to finish loading before switching modes
     if (authLoading) {
