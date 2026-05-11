@@ -4768,12 +4768,45 @@
     linear-gradient(135deg, var(--rose), var(--lavender)) !important;
   background-origin: border-box !important;
   background-clip: padding-box, border-box !important;
+  transition: transform 0.2s ease, background-image 0.2s ease, color 0.2s ease;
 }
 
 .auth-page .auth-guest-btn.btn-secondary:hover {
   background-image: linear-gradient(var(--beige), var(--beige)),
     linear-gradient(135deg, var(--lavender), var(--rose)) !important;
   transform: translateY(-3px);
+}
+
+/* Landing guest: same ombre outline + hover as auth; inner fill matches hero (--cream) */
+.landing-page .auth-guest-btn.landing-guest-btn.btn-secondary {
+  background: transparent !important;
+  color: var(--rose) !important;
+  border: 2px solid transparent !important;
+  border-radius: 9999px;
+  background-image: linear-gradient(var(--cream), var(--cream)),
+    linear-gradient(135deg, var(--rose), var(--lavender)) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  transition: transform 0.2s ease, background-image 0.2s ease, color 0.2s ease;
+}
+
+.landing-page .auth-guest-btn.landing-guest-btn.btn-secondary:hover {
+  background-image: linear-gradient(var(--cream), var(--cream)),
+    linear-gradient(135deg, var(--lavender), var(--rose)) !important;
+  transform: translateY(-3px);
+}
+
+/* Hero CTA row: keep guest pill aligned with Start Journey (auth stacks guest full-width) */
+.landing-page .cta-buttons .auth-guest-btn.landing-guest-btn {
+  margin-top: 0;
+}
+
+@media (min-width: 769px) {
+  .landing-page .cta-buttons .auth-guest-btn.landing-guest-btn {
+    width: auto;
+    max-width: 300px;
+    flex: 1 1 auto;
+  }
 }
 
 .auth-submit {

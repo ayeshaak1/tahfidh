@@ -68,7 +68,11 @@ const LandingPage = ({ onGuestMode, setCurrentPath }) => {
           </div>
           
           <div className="cta-buttons">
-            <button className="btn btn-ghost" onClick={handleGuestMode}>
+            <button
+              type="button"
+              className="btn btn-secondary auth-guest-btn landing-guest-btn"
+              onClick={handleGuestMode}
+            >
               Continue as Guest
             </button>
             <button className="btn btn-primary" onClick={() => navigate('/signin')}>
