@@ -174,6 +174,7 @@ export const AuthProvider = ({ children }) => {
     StorageHelpers.removeItem(STORAGE_KEYS.USER_DATA);
     StorageHelpers.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
     StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS); // Auth user cache only
+    StorageHelpers.removeItem(STORAGE_KEYS.QF_CONNECTED);
     // DO NOT clear GUEST_PROGRESS or GUEST_USER_NAME - they belong to guest mode
     setUser(null);
     setIsAuthenticated(false);
