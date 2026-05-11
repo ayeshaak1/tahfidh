@@ -25,6 +25,12 @@ export const STORAGE_KEYS = {
   AUTH_TOKEN: 'authToken',                    // JWT token for authenticated user
   USER_DATA: 'userData',                      // Authenticated user profile (name, email, etc.)
   ONBOARDING_COMPLETE: 'onboardingComplete',  // Whether auth user completed onboarding
+
+  // ============================================================================
+  // QURAN FOUNDATION USER APIs (OAuth-linked to auth users)
+  // ============================================================================
+  // Stored client-side only for UI status; actual tokens are stored server-side.
+  QF_CONNECTED: 'qfConnected',
   
   // ============================================================================
   // SHARED SETTINGS (apply to both user types - UI preferences only)

@@ -8,10 +8,15 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 const { pool, initializeDatabase } = require('./src/config/database');
+const { getQfOAuthConfig } = require('./src/config/qfOAuthConfig');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Needed for correct protocol/host behind proxies (Render, etc.)
+app.set('trust proxy', 1);
 
 // Middleware
 // Normalize FRONTEND_URL to ensure it has a protocol
@@ -63,7 +68,10 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   // Skip rate limiting for successful cached responses
   skip: (req) => {
-    // Don't count requests that hit cache (though we can't easily detect this here)
+    // Dev UX: avoid bricking the app due to React strict-mode double effects
+    if (process.env.NODE_ENV !== 'production') {
+      return true;
+    }
     return false;
   }
 });
@@ -99,12 +107,18 @@ const QURAN_API_CONFIG = {
 };
 
 // Determine which API config to use
-// Use production API when NODE_ENV=production (unless explicitly overridden)
+// Use production API when NODE_ENV=production (unless explicitly overridden).
+// Also allow using production in development by setting QURAN_USE_PREPROD=false.
 const isProduction = process.env.NODE_ENV === 'production';
-const forcePreProd = process.env.QURAN_USE_PREPROD === 'true';
-const API_CONFIG = (isProduction && !forcePreProd)
-  ? QURAN_API_CONFIG.production 
-  : QURAN_API_CONFIG.preProduction;
+const quranUsePreprodRaw = process.env.QURAN_USE_PREPROD;
+const usePreProd =
+  quranUsePreprodRaw === 'true'
+    ? true
+    : quranUsePreprodRaw === 'false'
+      ? false
+      : !isProduction; // default: prelive in dev, production in prod
+
+const API_CONFIG = usePreProd ? QURAN_API_CONFIG.preProduction : QURAN_API_CONFIG.production;
 
 // Determine callback URL for OAuth (needed early for logging)
 // In production, try to construct from RENDER_SERVICE_URL if available
@@ -136,7 +150,7 @@ if (process.env.NODE_ENV === 'production') {
   console.log('=== PRODUCTION MODE ===');
   console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
   console.log(`QURAN_USE_PREPROD: ${process.env.QURAN_USE_PREPROD || 'not set (using production)'}`);
-  console.log(`Selected config: ${(isProduction && !forcePreProd) ? 'PRODUCTION' : 'PRE-PRODUCTION'}`);
+  console.log(`Selected config: ${usePreProd ? 'PRE-PRODUCTION' : 'PRODUCTION'}`);
   console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
   console.log(`Auth URL: ${API_CONFIG.authUrl}`);
   console.log(`Expected Production URL: ${QURAN_API_CONFIG.production.baseUrl}`);
@@ -151,7 +165,7 @@ if (process.env.NODE_ENV === 'production') {
 // Log configuration for debugging
 if (process.env.NODE_ENV !== 'production') {
   console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-  console.log(`Using API config: ${isProduction ? 'PRODUCTION' : 'PRE-PRODUCTION'}`);
+  console.log(`Using API config: ${usePreProd ? 'PRE-PRODUCTION' : 'PRODUCTION'}`);
   console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
   console.log(`Client ID set: ${!!API_CONFIG.clientId}`);
   console.log(`Client Secret set: ${!!API_CONFIG.clientSecret}`);
@@ -247,6 +261,7 @@ async function getAccessToken() {
     const response = await axios({
       method: 'post',
       url: API_CONFIG.authUrl,
+      timeout: 10000, // prevent hanging requests
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -300,6 +315,7 @@ async function makeQuranApiCall(endpoint) {
     const response = await axios({
       method: 'get',
       url: `${API_CONFIG.baseUrl}${endpoint}`,
+      timeout: 15000, // prevent hanging requests
       headers: {
         'x-auth-token': token,
         'x-client-id': API_CONFIG.clientId
@@ -343,6 +359,21 @@ app.get('/api/surahs', quranApiLimiter, async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error in /api/surahs:', error);
+    // Fallback: use public Quran.com API (no auth) if QF API is unavailable.
+    // This keeps the app usable in dev when OAuth or upstream is flaky.
+    try {
+      console.log('Falling back to public Quran.com API for /api/surahs...');
+      const fallbackRes = await axios.get('https://api.quran.com/api/v4/chapters', { timeout: 15000 });
+      const fallbackData = fallbackRes.data;
+      if (fallbackData?.chapters) {
+        // Cache fallback response as well
+        surahCache.allSurahs.data = fallbackData;
+        surahCache.allSurahs.timestamp = Date.now();
+        return res.json(fallbackData);
+      }
+    } catch (fallbackErr) {
+      console.error('Fallback /api/surahs failed:', fallbackErr.response?.data || fallbackErr.message);
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -878,6 +909,84 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
     res.json(surah);
   } catch (error) {
     console.error('Error fetching surah:', error);
+    // Fallback: public Quran.com API to keep app usable when QF Content API is timing out.
+    try {
+      const { id } = req.params;
+
+      console.log(`Falling back to public Quran.com API for /api/surah/${id}...`);
+
+      // Pull translations + transliteration via verses/by_chapter since it includes verse_key.
+      // 85 = Abdul Haleem (English), 57 = English transliteration (per our earlier QF usage)
+      const [chapterRes, uthmaniRes, indopakRes] = await Promise.all([
+        axios.get(`https://api.quran.com/api/v4/chapters/${id}`, { timeout: 15000 }),
+        axios.get(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`, { timeout: 15000 }),
+        axios.get(`https://api.quran.com/api/v4/quran/verses/indopak?chapter_number=${id}`, { timeout: 15000 }),
+      ]);
+
+      const chapter = chapterRes.data?.chapter || {};
+      const uthmaniVerses = uthmaniRes.data?.verses || [];
+      const indopakVerses = indopakRes.data?.verses || [];
+
+      const translations = [];
+      const transliterations = [];
+      try {
+        let page = 1;
+        let hasNext = true;
+        while (hasNext && page <= 20) {
+          const url = `https://api.quran.com/api/v4/verses/by_chapter/${id}?translations=85,57&words=false&per_page=50&page=${page}`;
+          const r = await axios.get(url, { timeout: 15000 });
+          const verses = r.data?.verses || [];
+
+          for (const v of verses) {
+            const verseKey = v.verse_key;
+            const trs = v.translations || [];
+            for (const t of trs) {
+              const text = t.text || '';
+              if (!verseKey) continue;
+              if (t.resource_id === 85) {
+                translations.push({ verse_key: verseKey, text });
+              } else if (t.resource_id === 57) {
+                transliterations.push({ verse_key: verseKey, text });
+              }
+            }
+          }
+
+          const pagination = r.data?.pagination;
+          hasNext = !!pagination?.next_page;
+          page += 1;
+          if (verses.length === 0) break;
+        }
+      } catch (e) {
+        console.error('Fallback translations fetch failed:', e.response?.data || e.message);
+      }
+
+      const mergedVerses = uthmaniVerses.map((u, idx) => {
+        const i = indopakVerses[idx];
+        return {
+          ...u,
+          text_uthmani: u.text_uthmani || u.text || null,
+          text_indopak: i?.text_indopak || i?.text || null,
+        };
+      });
+
+      const surah = {
+        ...chapter,
+        verses: mergedVerses,
+        translation: translations,
+        transliteration: transliterations,
+        juz: null,
+      };
+
+      // Cache fallback response under the requested cache key
+      const { font = 'uthmani' } = req.query;
+      const cacheKey = getSurahCacheKey(id, font);
+      surahCache.surahs.set(cacheKey, { data: surah, timestamp: Date.now() });
+
+      return res.json(surah);
+    } catch (fallbackErr) {
+      console.error('Fallback /api/surah failed:', fallbackErr.response?.data || fallbackErr.message);
+    }
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -1413,6 +1522,18 @@ app.get('/api/verses/random', quranApiLimiter, async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching random verse:', error);
+    // Fallback: public Quran.com API
+    try {
+      const { translations = '85,131' } = req.query;
+      console.log('Falling back to public Quran.com API for /api/verses/random...');
+      const fallbackRes = await axios.get(
+        `https://api.quran.com/api/v4/verses/random?translations=${encodeURIComponent(translations)}&words=true`,
+        { timeout: 15000 }
+      );
+      return res.json(fallbackRes.data);
+    } catch (fallbackErr) {
+      console.error('Fallback /api/verses/random failed:', fallbackErr.response?.data || fallbackErr.message);
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -2428,6 +2549,249 @@ app.delete('/api/auth/account', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   } finally {
     client.release();
+  }
+});
+
+// ============================================================================
+// QURAN FOUNDATION USER APIs (OAuth + Notes proxy)
+// ============================================================================
+
+function base64UrlEncode(buffer) {
+  return buffer
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function sha256Base64Url(input) {
+  const hash = crypto.createHash('sha256').update(input).digest();
+  return base64UrlEncode(hash);
+}
+
+function getPublicBaseUrl(req) {
+  const explicit = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_URL;
+  if (explicit) return explicit.replace(/\/+$/g, '');
+  const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http').toString().split(',')[0].trim();
+  return `${proto}://${req.get('host')}`;
+}
+
+async function getUserQfTokens(userId) {
+  const result = await pool.query(
+    'SELECT qf_access_token, qf_refresh_token, qf_id_token, qf_token_expiry FROM users WHERE id = $1',
+    [userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function updateUserQfTokens(userId, tokens) {
+  const {
+    access_token,
+    refresh_token,
+    id_token,
+    expires_in,
+  } = tokens;
+
+  const expiry = expires_in ? new Date(Date.now() + (expires_in - 60) * 1000) : null; // 60s buffer
+
+  await pool.query(
+    `UPDATE users
+     SET qf_access_token = $1,
+         qf_refresh_token = COALESCE($2, qf_refresh_token),
+         qf_id_token = COALESCE($3, qf_id_token),
+         qf_token_expiry = COALESCE($4, qf_token_expiry),
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = $5`,
+    [access_token || null, refresh_token || null, id_token || null, expiry, userId]
+  );
+}
+
+async function ensureValidQfAccessToken(userId) {
+  const cfg = getQfOAuthConfig();
+  const current = await getUserQfTokens(userId);
+  if (!current || !current.qf_access_token) return null;
+
+  const isExpired = current.qf_token_expiry && new Date(current.qf_token_expiry).getTime() <= Date.now();
+  if (!isExpired) return current.qf_access_token;
+
+  if (!current.qf_refresh_token || !cfg.clientSecret) {
+    return null;
+  }
+
+  const auth = Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64');
+  const response = await axios({
+    method: 'post',
+    url: `${cfg.authBaseUrl}/oauth2/token`,
+    headers: {
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    data: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: current.qf_refresh_token,
+    }).toString(),
+  });
+
+  await updateUserQfTokens(userId, response.data);
+  return response.data.access_token;
+}
+
+// Returns an authorization URL the frontend can redirect to.
+app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
+  try {
+    const cfg = getQfOAuthConfig();
+    const redirectUri = `${getPublicBaseUrl(req)}/api/qf/oauth/callback`;
+
+    const state = base64UrlEncode(crypto.randomBytes(32));
+    const nonce = base64UrlEncode(crypto.randomBytes(32));
+    const codeVerifier = base64UrlEncode(crypto.randomBytes(32));
+    const codeChallenge = sha256Base64Url(codeVerifier);
+
+    req.session.qfOAuth = {
+      state,
+      nonce,
+      codeVerifier,
+      redirectUri,
+      userId: req.user.userId,
+      createdAt: Date.now(),
+    };
+
+    const scope = [
+      'openid',
+      'offline_access',
+      'note.read',
+      'note.create',
+      'note.update',
+      'note.delete',
+    ].join(' ');
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: cfg.clientId,
+      redirect_uri: redirectUri,
+      scope,
+      state,
+      nonce,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+    });
+
+    const url = `${cfg.authBaseUrl}/oauth2/auth?${params.toString()}`;
+    res.json({ success: true, url });
+  } catch (error) {
+    console.error('QF OAuth start error:', error.message || error);
+    res.status(500).json({ success: false, message: 'Failed to start Quran Foundation OAuth' });
+  }
+});
+
+// OAuth callback: exchanges code for tokens and stores them on the user.
+app.get('/api/qf/oauth/callback', async (req, res) => {
+  try {
+    const cfg = getQfOAuthConfig();
+    const { code, state } = req.query;
+    const sessionData = req.session.qfOAuth;
+
+    if (!code || !state || !sessionData || state !== sessionData.state) {
+      return res.status(400).send('Invalid OAuth callback.');
+    }
+
+    const auth = cfg.clientSecret
+      ? Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64')
+      : null;
+
+    const tokenRes = await axios({
+      method: 'post',
+      url: `${cfg.authBaseUrl}/oauth2/token`,
+      headers: {
+        ...(auth ? { 'Authorization': `Basic ${auth}` } : {}),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      data: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code.toString(),
+        redirect_uri: sessionData.redirectUri,
+        code_verifier: sessionData.codeVerifier,
+      }).toString(),
+    });
+
+    await updateUserQfTokens(sessionData.userId, tokenRes.data);
+
+    // Cleanup session
+    req.session.qfOAuth = null;
+
+    const frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+    const redirectTo = `${frontendUrl}/profile?qf=connected`;
+    return res.redirect(redirectTo);
+  } catch (error) {
+    console.error('QF OAuth callback error:', error.response?.data || error.message || error);
+    const frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/profile?qf=failed`);
+  }
+});
+
+// Connection status for UI
+app.get('/api/qf/status', authenticateToken, async (req, res) => {
+  try {
+    const tokens = await getUserQfTokens(req.user.userId);
+    res.json({
+      success: true,
+      connected: !!tokens?.qf_access_token,
+      expiresAt: tokens?.qf_token_expiry || null,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get connection status' });
+  }
+});
+
+// Notes proxy: Get notes by verse (verseKey: "2:255")
+app.get('/api/qf/notes/by-verse/:verseKey', authenticateToken, async (req, res) => {
+  try {
+    const cfg = getQfOAuthConfig();
+    const accessToken = await ensureValidQfAccessToken(req.user.userId);
+    if (!accessToken) {
+      return res.status(401).json({ success: false, message: 'Quran Foundation account not connected' });
+    }
+
+    const verseKey = req.params.verseKey;
+    const url = `${cfg.apiBaseUrl}/auth/v1/notes/by-verse/${encodeURIComponent(verseKey)}`;
+
+    const apiRes = await axios.get(url, {
+      headers: {
+        'x-auth-token': accessToken,
+        'x-client-id': cfg.clientId,
+      },
+    });
+
+    res.json(apiRes.data);
+  } catch (error) {
+    console.error('QF notes by-verse error:', error.response?.data || error.message || error);
+    res.status(500).json({ success: false, message: 'Failed to fetch notes' });
+  }
+});
+
+// Notes proxy: Add note
+app.post('/api/qf/notes', authenticateToken, async (req, res) => {
+  try {
+    const cfg = getQfOAuthConfig();
+    const accessToken = await ensureValidQfAccessToken(req.user.userId);
+    if (!accessToken) {
+      return res.status(401).json({ success: false, message: 'Quran Foundation account not connected' });
+    }
+
+    const url = `${cfg.apiBaseUrl}/auth/v1/notes`;
+    const apiRes = await axios.post(url, req.body, {
+      headers: {
+        'x-auth-token': accessToken,
+        'x-client-id': cfg.clientId,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    res.json(apiRes.data);
+  } catch (error) {
+    console.error('QF add note error:', error.response?.data || error.message || error);
+    const status = error.response?.status || 500;
+    res.status(status).json(error.response?.data || { success: false, message: 'Failed to add note' });
   }
 });
 

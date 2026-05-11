@@ -58,6 +58,11 @@ async function initializeDatabase() {
         auth_provider VARCHAR(50) DEFAULT 'email',
         onboarding_complete BOOLEAN DEFAULT FALSE,
         progress JSONB DEFAULT '{}'::jsonb,
+        qf_access_token TEXT,
+        qf_refresh_token TEXT,
+        qf_id_token TEXT,
+        qf_token_expiry TIMESTAMP,
+        qf_sub VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -90,6 +95,42 @@ async function initializeDatabase() {
           WHERE table_name='users' AND column_name='password' AND is_nullable='NO'
         ) THEN
           ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
+        END IF;
+
+        -- Add Quran Foundation OAuth token columns if they don't exist
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='users' AND column_name='qf_access_token'
+        ) THEN
+          ALTER TABLE users ADD COLUMN qf_access_token TEXT;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='users' AND column_name='qf_refresh_token'
+        ) THEN
+          ALTER TABLE users ADD COLUMN qf_refresh_token TEXT;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='users' AND column_name='qf_id_token'
+        ) THEN
+          ALTER TABLE users ADD COLUMN qf_id_token TEXT;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='users' AND column_name='qf_token_expiry'
+        ) THEN
+          ALTER TABLE users ADD COLUMN qf_token_expiry TIMESTAMP;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='users' AND column_name='qf_sub'
+        ) THEN
+          ALTER TABLE users ADD COLUMN qf_sub VARCHAR(255);
         END IF;
       END $$;
     `);

@@ -120,6 +120,8 @@ p, span, div, a, button, input, textarea, select, label,
 @font-face {
   font-family: 'Amiri';
   src: local('Amiri'),
+       url('https://fonts.gstatic.com/s/amiri/v27/J7aRnpd8CGxBHqUpvrI.woff2') format('woff2'),
+       url('https://fonts.gstatic.com/s/amiri/v27/J7aRnpd8CGxBHqUpvrI.woff') format('woff'),
        url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
   font-weight: 400;
   font-style: normal;
@@ -167,6 +169,21 @@ p, span, div, a, button, input, textarea, select, label,
   font-size: 1.4rem;
   font-weight: 400;
   line-height: 1.8;
+}
+
+/* Mobile-specific Arabic font enforcement (iPhone/Safari) */
+@media (max-width: 768px) {
+  .arabic,
+  .arabic-logo,
+  .surah-arabic-name,
+  .verse-arabic,
+  .bismillah,
+  .surah-title-arabic {
+    font-family: 'Amiri', 'Scheherazade New', 'Noto Nastaliq Urdu', system-ui, -apple-system, serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
 }
 
 /* Utility Classes */

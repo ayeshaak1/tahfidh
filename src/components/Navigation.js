@@ -12,9 +12,16 @@ const Navigation = ({ sidebarOpen, setSidebarOpen }) => {
     navigate('/dashboard');
   };
 
+  const handleNavClick = () => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <nav className={`navigation ${sidebarOpen ? '' : 'sidebar-closed'}`}>
-      {/* Logo Section */}
+      {/* Logo Section (desktop sidebar only) */}
       <div className="nav-logo">
         <NavLink to="/dashboard" className="logo" onClick={handleLogoClick} style={{ textDecoration: 'none', cursor: 'pointer' }}>
           <span className="arabic-logo">تحفيظ</span>
@@ -23,33 +30,36 @@ const Navigation = ({ sidebarOpen, setSidebarOpen }) => {
       </div>
 
       <div className="nav-list">
-        <NavLink 
-          to="/dashboard" 
+        <NavLink
+          to="/dashboard"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={handleNavClick}
         >
           <Home size={20} />
           <span>Dashboard</span>
         </NavLink>
-        
-        <NavLink 
-          to="/surahs" 
+
+        <NavLink
+          to="/surahs"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={handleNavClick}
         >
           <BookOpen size={20} />
           <span>Surahs</span>
         </NavLink>
-        
-        <NavLink 
-          to="/profile" 
+
+        <NavLink
+          to="/profile"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={handleNavClick}
         >
           <User size={20} />
           <span>Profile</span>
         </NavLink>
       </div>
-        
+
       <div className="nav-footer">
-        <button className="nav-item theme-toggle" onClick={toggleTheme}>
+        <button type="button" className="nav-item theme-toggle" onClick={toggleTheme}>
           {isDark ? <Sun size={20} /> : <Moon size={20} />}
           <span>Theme</span>
         </button>

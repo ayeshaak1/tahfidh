@@ -636,35 +636,35 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
             
             <div className="progress-stats">
             <div className="stat-item">
-              <Flame size={20} className="stat-icon" />
+              <Flame className="stat-icon" />
               <div className="stat-content">
                 <div className="stat-value">{realData.currentStreak}</div>
                 <div className="stat-label">days</div>
               </div>
             </div>
             <div className="stat-item">
-              <Calendar size={20} className="stat-icon" />
+              <Calendar className="stat-icon" />
               <div className="stat-content">
                 <div className="stat-value">{realData.weeklyAverage}</div>
                 <div className="stat-label">verses/week</div>
               </div>
             </div>
             <div className="stat-item">
-              <Clock size={20} className="stat-icon" />
+              <Clock className="stat-icon" />
               <div className="stat-content">
                 <div className="stat-value">{realData.lastActivity}</div>
                 <div className="stat-label">last activity</div>
               </div>
             </div>
             <div className="stat-item">
-              <BookOpen size={20} className="stat-icon" />
+              <BookOpen className="stat-icon" />
               <div className="stat-content">
                 <div className="stat-value">{progress.completedSurahs}/{progress.totalSurahs}</div>
                 <div className="stat-label">surahs memorized</div>
               </div>
             </div>
             <div className="stat-item">
-              <Target size={20} className="stat-icon" />
+              <Target className="stat-icon" />
               <div className="stat-content">
                 <div className="stat-value">{progress.memorizedVerses}/{progress.totalVerses}</div>
                 <div className="stat-label">verses memorized</div>

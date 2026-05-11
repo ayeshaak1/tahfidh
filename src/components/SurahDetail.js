@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
-import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, ChevronDown, BookOpenCheck, ChevronUp, X, HelpCircle, StickyNote } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
+import qfNotesApi from '../services/qfNotesApi';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   CONSTRAINTS,
   VALID_VALUES,
@@ -47,6 +49,15 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const [showSettings, setShowSettings] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { isAuthenticated } = useAuth();
+
+  // Notes UI state
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteVerseKey, setNoteVerseKey] = useState(null);
+  const [noteText, setNoteText] = useState('');
+  const [noteHadSavedAtOpen, setNoteHadSavedAtOpen] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteError, setNoteError] = useState('');
   
   // Ref for the font dropdown to handle click outside
   const fontDropdownRef = useRef(null);
@@ -510,6 +521,103 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     }, 100);
   };
 
+  const openNoteForVerse = (verseKey) => {
+    const [, verseNumStr] = verseKey.split(':');
+    const verseNumber = verseNumStr;
+    const existing = userProgress[id]?.verses?.[verseNumber]?.note || '';
+    setNoteVerseKey(verseKey);
+    setNoteText(existing);
+    setNoteHadSavedAtOpen(!!existing.trim());
+    setNoteError('');
+    setShowNoteModal(true);
+  };
+
+  const saveNote = async () => {
+    if (!noteVerseKey) return;
+    const trimmed = (noteText || '').trim();
+
+    // Always save locally (even if empty → clears note)
+    const [, verseNumStr] = noteVerseKey.split(':');
+    setUserProgress(prev => {
+      const next = { ...prev };
+      if (!next[id]) {
+        next[id] = { name: surah.name_simple, verses: {} };
+      }
+      if (!next[id].verses[verseNumStr]) {
+        next[id].verses[verseNumStr] = { memorized: false, lastReviewed: null };
+      }
+      next[id] = {
+        ...next[id],
+        verses: {
+          ...next[id].verses,
+          [verseNumStr]: {
+            ...next[id].verses[verseNumStr],
+            note: trimmed,
+            noteUpdatedAt: new Date().toISOString(),
+          },
+        },
+      };
+      return next;
+    });
+
+    // Optional sync: only if authenticated, connected, and note length meets API constraints (>=6)
+    if (!isAuthenticated) {
+      setShowNoteModal(false);
+      return;
+    }
+
+    // Quran Foundation notes require 6+ chars; show error only when user tries to save.
+    if (trimmed.length > 0 && trimmed.length < 6) {
+      setNoteError('Note must be at least 6 characters to sync. It was saved locally.');
+      return;
+    }
+
+    // If empty, treat as local-only clear.
+    if (trimmed.length === 0) {
+      setShowNoteModal(false);
+      return;
+    }
+
+    setNoteSaving(true);
+    setNoteError('');
+    try {
+      const ranges = [`${noteVerseKey}-${noteVerseKey}`];
+      await qfNotesApi.addNote({ body: trimmed, ranges });
+      setShowNoteModal(false);
+    } catch (e) {
+      // Don't block local save; just show a non-fatal message
+      setNoteError(e.message || 'Saved locally but failed to sync');
+    } finally {
+      setNoteSaving(false);
+    }
+  };
+
+  const deleteNote = () => {
+    if (!noteVerseKey) return;
+    const [, verseNumStr] = noteVerseKey.split(':');
+    setUserProgress(prev => {
+      const next = { ...prev };
+      if (!next[id]) return next;
+      if (!next[id].verses?.[verseNumStr]) return next;
+
+      next[id] = {
+        ...next[id],
+        verses: {
+          ...next[id].verses,
+          [verseNumStr]: {
+            ...next[id].verses[verseNumStr],
+            note: '',
+            noteUpdatedAt: new Date().toISOString(),
+          },
+        },
+      };
+      return next;
+    });
+    setNoteText('');
+    setNoteError('');
+    setShowNoteModal(false);
+  };
+
   // Bulk actions
   const handleBulkSelect = (verseId) => {
     const newSelected = new Set(selectedVerses);
@@ -964,6 +1072,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
           const verseNumber = verse.verse_key.split(':')[1];
           const isMemorized = userProgress[id]?.verses?.[verseNumber]?.memorized || false;
           const isSelected = selectedVerses.has(verseNumber);
+          const hasNote = !!(userProgress[id]?.verses?.[verseNumber]?.note || '').trim();
           
           // Find translation and transliteration for this verse
           const verseTranslation = surah.translation?.find(t => t.verse_key === verse.verse_key);
@@ -986,6 +1095,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
                   )}
                 <div className="verse-number">{verseNumber}</div>
                 <div className="verse-actions">
+                  <button
+                    className={`memorize-btn ${hasNote ? 'memorized' : ''}`}
+                    onClick={() => openNoteForVerse(verse.verse_key)}
+                    title={hasNote ? 'Edit note' : 'Add note'}
+                    style={{ marginRight: '0.5rem' }}
+                  >
+                    <StickyNote size={18} />
+                  </button>
                   <button 
                     className={`memorize-btn ${isMemorized ? 'memorized' : ''}`}
                     onClick={() => toggleVerseMemorization(verseNumber)}
@@ -1054,6 +1171,134 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
           );
         })}
       </div>
+
+      {/* Note Modal */}
+      {showNoteModal && (
+        <>
+          <div className="settings-popup-overlay" onClick={() => setShowNoteModal(false)}></div>
+          <div className="settings-popup" style={{ maxWidth: '720px' }}>
+            <div className="settings-popup-header">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <h3 style={{ marginBottom: 0 }}>Verse Note</h3>
+                {noteVerseKey && (
+                  <div style={{ fontSize: '0.9rem', opacity: 0.75 }}>
+                    {`Note for ${noteVerseKey}`}
+                  </div>
+                )}
+              </div>
+              <button
+                className="settings-close-btn"
+                onClick={() => setShowNoteModal(false)}
+                disabled={noteSaving}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="settings-popup-content">
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                rows={6}
+                style={{
+                  width: '100%',
+                  resize: 'vertical',
+                  padding: '0.9rem 1rem',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--cream)',
+                  color: 'var(--text)',
+                  outline: 'none',
+                }}
+                placeholder="Write a short note to help you revise or memorize…"
+                disabled={noteSaving}
+              />
+              {noteError && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'var(--error-red-light)',
+                  border: '1px solid var(--error-red-border)',
+                  borderRadius: '10px',
+                  color: 'var(--error-red)',
+                  fontSize: '0.9rem'
+                }}>
+                  {noteError}
+                </div>
+              )}
+              <div style={{ marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => setShowNoteModal(false)}
+                      disabled={noteSaving}
+                      style={{
+                        width: '120px',
+                        minWidth: '120px',
+                        maxWidth: '120px',
+                        flex: '0 0 120px',
+                        height: '48px',
+                        padding: 0,
+                        fontSize: '1rem',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    {noteHadSavedAtOpen && (
+                      <button
+                        className="btn"
+                        onClick={deleteNote}
+                        disabled={noteSaving}
+                        style={{
+                          width: '120px',
+                          height: '48px',
+                          minWidth: '120px',
+                          maxWidth: '120px',
+                          flex: '0 0 120px',
+                          padding: 0,
+                          fontSize: '1rem',
+                          justifyContent: 'center',
+                          border: '2px solid var(--error-red)',
+                          color: 'var(--error-red)',
+                          backgroundColor: 'transparent',
+                          boxSizing: 'border-box',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--error-red-light)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    className="btn btn-primary"
+                    onClick={saveNote}
+                    disabled={noteSaving}
+                    style={{
+                      width: '160px',
+                      minWidth: '160px',
+                      maxWidth: '160px',
+                      flex: '0 0 160px',
+                      height: '48px',
+                      padding: 0,
+                      fontSize: '1rem',
+                      justifyContent: 'center',
+                      marginLeft: '1.5rem',
+                    }}
+                  >
+                    {noteSaving ? 'Saving…' : 'Save Note'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Scroll to top button */}
         <button 

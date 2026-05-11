@@ -36,6 +36,21 @@ function AppContent() {
   // Handle authentication state changes: switch between guest and authenticated mode
   // CRITICAL: Guest and Authenticated are COMPLETELY SEPARATE - never mix their data
   useEffect(() => {
+    // Initialize sidebar state per viewport and update on resize
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     // Wait for auth to finish loading before switching modes
     if (authLoading) {
       return;

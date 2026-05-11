@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
+import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
 import { getApiUrl } from '../utils/apiUrl';
+import qfNotesApi from '../services/qfNotesApi';
 import LottieLoader from './LottieLoader';
 import { 
   STORAGE_KEYS, 
@@ -20,7 +21,7 @@ import {
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, signOut, deleteAccount } = useAuth();
+  const { user, isAuthenticated, deleteAccount } = useAuth();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
@@ -62,6 +63,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const [isUpdating, setIsUpdating] = useState(false);
   const [surahsData, setSurahsData] = useState(null);
   const [juzMapping, setJuzMapping] = useState(null); // Map surah ID to juz number
+  const [qfConnected, setQfConnected] = useState(false);
+  const [qfConnecting, setQfConnecting] = useState(false);
   const { theme, setTheme, toggleTheme, isDark } = useTheme();
   const {
     quranFont,
@@ -84,6 +87,40 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   useEffect(() => {
     setCurrentPath('/profile');
   }, [setCurrentPath]);
+
+  // Quran Foundation connection status (auth users only)
+  useEffect(() => {
+    const checkQf = async () => {
+      if (isGuest || !isAuthenticated) {
+        setQfConnected(false);
+        return;
+      }
+      try {
+        const status = await qfNotesApi.getQfStatus();
+        setQfConnected(!!status.connected);
+        StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
+      } catch (e) {
+        setQfConnected(false);
+      }
+    };
+    checkQf();
+  }, [isGuest, isAuthenticated]);
+
+  const handleConnectQf = async () => {
+    try {
+      setQfConnecting(true);
+      const { url } = await qfNotesApi.startQfOAuth();
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('Missing OAuth URL');
+      }
+    } catch (e) {
+      setProfileError(e.message || 'Failed to connect Quran Foundation');
+    } finally {
+      setQfConnecting(false);
+    }
+  };
 
   // Reset userName when switching between guest and authenticated mode
   // COMPLETELY SEPARATE: Guest uses GUEST_USER_NAME, Auth uses user object from context
@@ -387,14 +424,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setPasswordData({ current: '', new: '', confirm: '' });
     setProfileError('');
     setProfileSuccess('');
-  };
-
-  const handleLogout = () => {
-    // CRITICAL: Logout should clear all auth data and switch to guest mode
-    // The App.js useEffect will handle the mode switch when isAuthenticated becomes false
-    signOut();
-    // Navigate to landing page - the app will automatically switch to guest mode
-    navigate('/');
   };
 
   const handleOpenEditProfile = () => {
@@ -874,7 +903,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       {/* App Header */}
       <header className="app-header">
         <div className="header-left">
-          <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button 
+            className="hamburger-menu"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSidebarOpen(!sidebarOpen);
+            }}
+          >
             <Menu size={24} />
           </button>
           <h1 className="page-title">Profile & Settings</h1>
@@ -986,22 +1022,24 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   )
                 ) : (
                   // Authenticated users: show name with edit profile button
-                  <>
-                    <h2>{userName || 'User Name'}</h2>
+                  <div className="authenticated-user-header">
+                    <div className="authenticated-user-info">
+                      <h2 style={{ marginBottom: '0.5rem' }}>{userName || 'User Name'}</h2>
+                      <p style={{ margin: 0 }}>Premium Member</p>
+                    </div>
                     {isAuthenticated && (
                       <button
                         onClick={handleOpenEditProfile}
-                        className="btn btn-secondary"
-                        style={{ width: 'auto', minWidth: '120px' }}
+                        className="btn btn-secondary edit-profile-btn-auth"
                       >
                         <Edit2 size={16} />
                         Edit Profile
                       </button>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
-            <p>{isGuest ? 'Local progress tracking' : 'Premium Member'}</p>
+            {isGuest && <p>Local progress tracking</p>}
           </div>
         </div>
 
@@ -1031,14 +1069,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
               {juzHeatmap.map(({ juz, progress }) => (
                 <div
                   key={juz}
-                  className="heatmap-square"
-                  style={{
-                      backgroundColor: progress > 0 
-                        ? `rgba(226, 182, 179, ${Math.max(0.3, progress / 100)})` 
-                        : 'var(--cream)',
-                      border: progress > 0 ? '1px solid var(--rose)' : '1px solid var(--border)',
-                      color: progress > 50 ? 'white' : 'var(--text)'
-                    }}
+                  className={`heatmap-square ${progress >= 75 ? 'intensity-3' : progress >= 40 ? 'intensity-2' : progress > 0 ? 'intensity-1' : 'intensity-0'}`}
                     title={`Juz ${juz}: ${progress}%`}
                 >
                   {juz}
@@ -1070,24 +1101,48 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       {/* Settings Panel */}
       <section className="settings-panel">
         <h3>Settings</h3>
+
+        {!isGuest && isAuthenticated && (
+          <div className="setting-group">
+            <h4>Quran Foundation</h4>
+            <div className="setting-item">
+              <div className="label-with-help">
+                <label>Notes Sync</label>
+                <div className="help-tooltip">
+                  <HelpCircle size={16} />
+                  <span className="tooltip-text">Connect to sync your verse notes using Quran Foundation User APIs</span>
+                </div>
+              </div>
+              <div className="toggle-buttons">
+                <button
+                  className={`toggle-btn ${qfConnected ? 'active' : ''}`}
+                  onClick={handleConnectQf}
+                  disabled={qfConnecting || qfConnected}
+                >
+                  {qfConnected ? 'Connected' : (qfConnecting ? 'Connecting…' : 'Connect')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="setting-group">
           <h4>Theme & Appearance</h4>
           <div className="setting-item">
-              <div className="theme-header-row">
-                <div className="label-with-help">
-            <label>Theme</label>
-                  <div className="help-tooltip">
-                    <HelpCircle size={16} />
-                    <span className="tooltip-text">Switch between light and dark mode</span>
-                  </div>
-                </div>
-            <button className="theme-toggle-btn" onClick={toggleTheme}>
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                  <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
+            <div className="label-with-help">
+              <label>Theme</label>
+              <div className="help-tooltip">
+                <HelpCircle size={16} />
+                <span className="tooltip-text">Switch between light and dark mode</span>
               </div>
             </div>
+            <div className="toggle-buttons">
+              <button className="toggle-btn theme-toggle-btn" onClick={toggleTheme}>
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+            </div>
+          </div>
           </div>
           
           <div className="setting-group">
@@ -1101,7 +1156,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                     <span className="tooltip-text">Choose Quran font style</span>
                   </div>
                 </div>
-                <div className="toggle-buttons">
+                <div className="toggle-buttons font-toggle-buttons">
               <button
                     className={`toggle-btn ${quranFont === VALID_VALUES.FONT_TYPES.UTHMANI ? 'active' : ''}`}
                     onClick={() => setQuranFont(VALID_VALUES.FONT_TYPES.UTHMANI)}
@@ -1260,7 +1315,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <h4>Export Progress</h4>
               </div>
             <p>Download your progress data as JSON</p>
-          <button className="btn btn-secondary" onClick={() => exportProgress(false)}>
+          <button className="btn btn-secondary file-upload-btn" onClick={() => exportProgress(false)} style={{ width: '100%', justifyContent: 'center' }}>
               <Download size={16} />
               Download Backup
             </button>
@@ -1332,36 +1387,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         </div>
       </section>
       </div>
-
-      {/* Footer */}
-      <footer className="profile-footer">
-        <div className="footer-content">
-          {!isGuest && isAuthenticated && (
-            <button
-              onClick={handleLogout}
-              className="btn"
-              style={{ 
-                width: '100%',
-                maxWidth: '100%',
-                minWidth: '100%',
-                border: '2px solid var(--error-red)',
-                color: 'var(--error-red)',
-                backgroundColor: 'transparent',
-                boxSizing: 'border-box'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'var(--error-red-light)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent';
-              }}
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
-          )}
-          </div>
-      </footer>
 
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
