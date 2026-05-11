@@ -25,7 +25,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
-  const [showDeleteSuccessDialog, setShowDeleteSuccessDialog] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showImportSuccessDialog, setShowImportSuccessDialog] = useState(false);
   const [importError, setImportError] = useState(null);
@@ -854,27 +853,21 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
   const handleConfirmDeleteAccount = async () => {
     setIsDeletingAccount(true);
+    setProfileError('');
     try {
       await deleteAccount();
-      setShowDeleteAccountDialog(false);
-      setShowDeleteSuccessDialog(true);
-      // Clear all local data as well
+      // deleteAccount clears auth via clearAuth(); sync app path so nav/footer update immediately
       setUserProgress(DEFAULT_VALUES.USER_PROGRESS);
       StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS);
-      // Navigate to landing page after a short delay
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
+      setShowDeleteAccountDialog(false);
+      setCurrentPath('/');
+      navigate('/', { replace: true });
     } catch (error) {
       setProfileError(error.message || 'Failed to delete account. Please try again.');
-      setIsDeletingAccount(false);
       setShowDeleteAccountDialog(false);
+    } finally {
+      setIsDeletingAccount(false);
     }
-  };
-
-  const handleCloseDeleteSuccess = () => {
-    setShowDeleteSuccessDialog(false);
-    navigate('/');
   };
 
 
@@ -1326,7 +1319,10 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <h4>Import Progress</h4>
               </div>
             <p>Restore progress from a backup file</p>
-            <label className="file-upload-btn">
+            <label
+              className="btn btn-secondary file-upload-btn"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
               <Upload size={16} />
               Choose File
               <input
@@ -1589,41 +1585,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   disabled={isDeletingAccount}
                 >
                   {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Delete Account Success Dialog */}
-      {showDeleteSuccessDialog && (
-        <>
-          <div className="settings-popup-overlay" onClick={handleCloseDeleteSuccess}></div>
-          <div className="settings-popup confirmation-dialog">
-            <div className="settings-popup-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <CheckCircle size={24} color="var(--rose)" />
-                <h3>Account Deleted</h3>
-              </div>
-              <button 
-                className="settings-close-btn"
-                onClick={handleCloseDeleteSuccess}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="settings-popup-content">
-              <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
-                Your account has been successfully deleted. You will be redirected to the home page.
-              </p>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                <button 
-                  className="btn btn-secondary"
-                  onClick={handleCloseDeleteSuccess}
-                  style={{ width: 'auto', minWidth: '120px' }}
-                >
-                  OK
                 </button>
               </div>
             </div>
