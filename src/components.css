@@ -903,8 +903,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 2.5rem
-  ;
+  margin-top: 2.5rem;
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -968,6 +967,74 @@
 .nav-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Surah prev/next: fixed-width pair (width does not change with surah number); label centered in grid */
+.surah-detail .navigation-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 38rem;
+  margin-left: auto;
+}
+
+.surah-detail .navigation-controls .nav-btn.surah-nav-surah-btn {
+  /* Fits "Surah 114" + chevrons + padding at app font sizes; constant for every surah */
+  --surah-nav-btn-fixed-width: 17.5rem;
+  flex: 0 0 var(--surah-nav-btn-fixed-width);
+  display: grid;
+  grid-template-columns: 1.75rem 1fr 1.75rem;
+  align-items: center;
+  column-gap: 0.35rem;
+  box-sizing: border-box;
+  width: var(--surah-nav-btn-fixed-width);
+  min-width: var(--surah-nav-btn-fixed-width);
+  max-width: var(--surah-nav-btn-fixed-width);
+  padding: 0.55rem 0.75rem;
+}
+
+.surah-detail .navigation-controls .nav-btn.surah-nav-surah-btn .surah-nav-surah-btn__edge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.surah-detail .navigation-controls .nav-btn.surah-nav-surah-btn .surah-nav-surah-btn__edge--spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.surah-detail .navigation-controls .nav-btn.surah-nav-surah-btn .surah-nav-surah-btn__label {
+  text-align: center;
+  justify-self: stretch;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 600px) {
+  .surah-detail .navigation-controls {
+    justify-content: center;
+    max-width: none;
+    margin-left: 0;
+    flex-direction: column;
+  }
+
+  .surah-detail .navigation-controls .nav-btn.surah-nav-surah-btn {
+    /* Same fixed width; allow shrink only if viewport narrower than button */
+    max-width: min(17.5rem, 100%);
+    width: min(17.5rem, 100%);
+    min-width: 0;
+    flex: 0 0 auto;
+  }
 }
 
 .verses-container {

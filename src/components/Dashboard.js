@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { CONSTRAINTS, STORAGE_KEYS, StorageHelpers, ExportHelpers } from '../constants/storageConstants';
 import quranApi from '../services/quranApi';
+import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 import { 
   Menu, 
   Sun, 
@@ -539,7 +540,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       {/* App Header */}
       <header className="app-header">
         <div className="header-left">
-          <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
             <Menu size={24} />
           </button>
           <h1 className="page-title">My Memorization Journey</h1>

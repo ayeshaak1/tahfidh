@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { Home, BookOpen, User, Sun, Moon } from 'lucide-react';
+import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 
 const Navigation = ({ sidebarOpen, setSidebarOpen }) => {
   const { toggleTheme, isDark } = useTheme();
@@ -9,10 +10,14 @@ const Navigation = ({ sidebarOpen, setSidebarOpen }) => {
 
   const handleLogoClick = (e) => {
     e.preventDefault();
+    scrollWindowToTop();
     navigate('/dashboard');
+    requestAnimationFrame(() => scrollWindowToTop());
   };
 
   const handleNavClick = () => {
+    scrollWindowToTop();
+    requestAnimationFrame(() => scrollWindowToTop());
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
     if (isMobile) {
       setSidebarOpen(false);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, Filter, Menu, CheckCircle, Circle, Clock, BookOpen, ChevronDown } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
+import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 
 const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -209,7 +210,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
       <div className={`surah-list ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <header className="app-header">
           <div className="header-left">
-            <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
               <Menu size={24} />
             </button>
             <h1 className="page-title">Surah List</h1>
@@ -229,7 +230,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
       <div className={`surah-list ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <header className="app-header">
           <div className="header-left">
-            <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
               <Menu size={24} />
             </button>
             <h1 className="page-title">Surah List</h1>
@@ -276,7 +277,7 @@ const SurahList = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpen,
       {/* App Header */}
       <header className="app-header">
         <div className="header-left">
-          <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
             <Menu size={24} />
           </button>
           <h1 className="page-title">Surah List</h1>

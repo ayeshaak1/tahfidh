@@ -6,6 +6,7 @@ import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
 import qfNotesApi from '../services/qfNotesApi';
 import { useAuth } from '../contexts/AuthContext';
+import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 import { 
   CONSTRAINTS,
   VALID_VALUES,
@@ -384,7 +385,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       <div className={`surah-detail ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <header className="app-header">
           <div className="header-left">
-            <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
               <Menu size={24} />
             </button>
             <h1 className="page-title">Surah Detail</h1>
@@ -404,7 +405,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       <div className={`surah-detail ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <header className="app-header">
           <div className="header-left">
-            <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
               <Menu size={24} />
             </button>
             <h1 className="page-title">Surah Detail</h1>
@@ -725,7 +726,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       {/* App Header */}
       <header className="app-header">
         <div className="header-left">
-          <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
             <Menu size={24} />
           </button>
           <h1 className="page-title">Surah Detail</h1>
@@ -790,21 +791,33 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         </div>
 
         <div className="navigation-controls">
-          <button 
-              className="nav-btn nav-btn-prev"
+          <button
+            type="button"
+            className="nav-btn nav-btn-prev surah-nav-surah-btn"
             onClick={goToPreviousSurah}
             disabled={parseInt(id) <= 1}
           >
+            <span className="surah-nav-surah-btn__edge" aria-hidden="true">
               <ChevronLeft size={16} />
+            </span>
+            <span className="surah-nav-surah-btn__label">
               {parseInt(id) > 1 ? `Surah ${parseInt(id) - 1}` : 'Previous'}
+            </span>
+            <span className="surah-nav-surah-btn__edge surah-nav-surah-btn__edge--spacer" aria-hidden="true" />
           </button>
-          <button 
-              className="nav-btn nav-btn-next"
+          <button
+            type="button"
+            className="nav-btn nav-btn-next surah-nav-surah-btn"
             onClick={goToNextSurah}
             disabled={parseInt(id) >= CONSTRAINTS.QURAN.TOTAL_SURAHS}
           >
+            <span className="surah-nav-surah-btn__edge surah-nav-surah-btn__edge--spacer" aria-hidden="true" />
+            <span className="surah-nav-surah-btn__label">
               {parseInt(id) < CONSTRAINTS.QURAN.TOTAL_SURAHS ? `Surah ${parseInt(id) + 1}` : 'Next'}
+            </span>
+            <span className="surah-nav-surah-btn__edge" aria-hidden="true">
               <ChevronRight size={16} />
+            </span>
           </button>
           </div>
         </div>

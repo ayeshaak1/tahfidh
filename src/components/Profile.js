@@ -18,6 +18,7 @@ import {
   Validators,
   ExportHelpers 
 } from '../constants/storageConstants';
+import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -877,7 +878,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       <div className={`profile-page ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <header className="app-header">
           <div className="header-left">
-            <button className="hamburger-menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <button className="hamburger-menu" onClick={() => { scrollWindowToTop(); requestAnimationFrame(() => scrollWindowToTop()); setSidebarOpen(!sidebarOpen); }}>
               <Menu size={24} />
             </button>
             <h1 className="page-title">Profile & Settings</h1>
@@ -901,6 +902,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              scrollWindowToTop();
+              requestAnimationFrame(() => scrollWindowToTop());
               setSidebarOpen(!sidebarOpen);
             }}
           >
