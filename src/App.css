@@ -1307,6 +1307,16 @@
     line-height: 1.8;
   }
 
+  /* Landing hero bismillah: same dynamic scale as split sign-in (~1.5x smaller than default mobile) */
+  .landing-page .bismillah-section {
+    padding: 0 0.75rem;
+  }
+
+  .landing-page .bismillah-section .bismillah {
+    font-size: clamp(0.95rem, 4vw, 1.35rem);
+    line-height: 1.1;
+  }
+
   .hero-title {
     font-size: clamp(1.5rem, 6vw, 2.5rem);
     margin-top: 2rem;
