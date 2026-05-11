@@ -1727,7 +1727,7 @@ app.listen(PORT, async () => {
   console.log(`Quran API proxy server running on port ${PORT}`);
   console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
   console.log(`QURAN_USE_PREPROD: ${process.env.QURAN_USE_PREPROD || 'not set'}`);
-  console.log(`Using ${(isProduction && !forcePreProd) ? 'PRODUCTION' : 'PRE-PRODUCTION'} API configuration`);
+  console.log(`Using ${usePreProd ? 'PRE-PRODUCTION' : 'PRODUCTION'} API configuration`);
   console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
   console.log(`Auth URL: ${API_CONFIG.authUrl}`);
   console.log(`Client ID configured: ${!!API_CONFIG.clientId}`);
@@ -1755,7 +1755,7 @@ app.listen(PORT, async () => {
   console.log('===================================\n');
   
   // Verify production config is being used
-  if (isProduction && !forcePreProd) {
+  if (isProduction && !usePreProd) {
     if (API_CONFIG.baseUrl === QURAN_API_CONFIG.production.baseUrl) {
       console.log('✅ Using PRODUCTION API endpoints (correct)');
     } else {
