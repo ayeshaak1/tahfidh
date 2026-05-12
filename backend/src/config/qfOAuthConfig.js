@@ -18,13 +18,14 @@ require('dotenv').config();
  * Use (2)/(3) so Content API can stay on production (`QURAN_CLIENT_ID_PROD`) while Connect uses
  * prelive (`QF_ENV=prelive` + prelive id/secret via PREPROD or QF_OAUTH_*), per Quran Foundation email.
  *
- * Scopes: `QF_OAUTH_SCOPES` overrides. Defaults: full set on **prelive** (QF enables all there);
- * minimal on **production** until they allot scopes (`offline_access note`).
+ * Scopes: `QF_OAUTH_SCOPES` overrides. Defaults: **prelive** and **production** both use the standard
+ * user + note set once production client has those scopes (`openid offline_access user note`).
  *
  * @see https://api-docs.quran.foundation/docs/tutorials/oidc/client-setup/
  */
 const QF_DEFAULT_SCOPES_PRELIVE = 'openid offline_access user note';
-const QF_DEFAULT_SCOPES_PRODUCTION = 'offline_access note';
+/** Matches production OAuth client after QF enables openid, offline_access, user, note. */
+const QF_DEFAULT_SCOPES_PRODUCTION = 'openid offline_access user note';
 
 function resolveQfEnv() {
   return (
