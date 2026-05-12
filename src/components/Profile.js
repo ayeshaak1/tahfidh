@@ -143,7 +143,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         'Quran Foundation connection did not finish. In the QF developer console, register redirect URL: your backend base URL + /api/qf/oauth/callback (must match exactly), then try Connect again.'
       );
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, user?.id]);
 
   const handleConnectQf = async () => {
     try {
