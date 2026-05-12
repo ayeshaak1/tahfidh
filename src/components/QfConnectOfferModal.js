@@ -9,21 +9,34 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
   const [oauthCallbackHint, setOauthCallbackHint] = useState('');
+  const [qfOAuthMeta, setQfOAuthMeta] = useState(null);
 
   useEffect(() => {
     if (!open) {
       setOauthCallbackHint('');
+      setQfOAuthMeta(null);
       return;
     }
     let cancelled = false;
     (async () => {
       try {
         const s = await qfNotesApi.getQfStatus();
-        if (!cancelled && s.oauthCallbackUrl) {
-          setOauthCallbackHint(s.oauthCallbackUrl);
+        if (cancelled) return;
+        if (s.oauthCallbackUrl) setOauthCallbackHint(s.oauthCallbackUrl);
+        if (s.qfOAuthClientId) {
+          setQfOAuthMeta({
+            clientId: s.qfOAuthClientId,
+            environment: s.qfOAuthEnvironment,
+            authBaseUrl: s.qfOAuthAuthBaseUrl,
+          });
+        } else {
+          setQfOAuthMeta(null);
         }
       } catch {
-        if (!cancelled) setOauthCallbackHint('');
+        if (!cancelled) {
+          setOauthCallbackHint('');
+          setQfOAuthMeta(null);
+        }
       }
     })();
     return () => {
@@ -95,8 +108,38 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
                 color: 'var(--text)',
               }}
             >
-              If you see a “redirect” error on the next page, add this <strong>exact</strong> URL in
-              your Quran app / developer settings as an allowed redirect:{' '}
+              If you see a “redirect_uri” error on the next page, add the URL below as an{' '}
+              <strong>allowed redirect</strong> in the Quran Foundation developer console for the{' '}
+              <strong>same OAuth client</strong> as your Railway <code style={{ fontSize: '0.85em' }}>QURAN_CLIENT_ID</code>
+              (exact URL, including <code style={{ fontSize: '0.85em' }}>https://</code> and path).
+              {qfOAuthMeta?.clientId ? (
+                <>
+                  {' '}
+                  This deploy uses Client ID{' '}
+                  <code style={{ fontSize: '0.85em', wordBreak: 'break-all' }}>{qfOAuthMeta.clientId}</code>
+                  {qfOAuthMeta.environment ? (
+                    <>
+                      {' '}
+                      (<strong>{qfOAuthMeta.environment}</strong>
+                      {qfOAuthMeta.authBaseUrl ? (
+                        <>
+                          ,{' '}
+                          <span style={{ wordBreak: 'break-all' }}>{qfOAuthMeta.authBaseUrl}</span>
+                        </>
+                      ) : null}
+                      ).
+                    </>
+                  ) : (
+                    '.'
+                  )}
+                </>
+              ) : (
+                <>
+                  {' '}
+                  Use the OAuth app that matches <code style={{ fontSize: '0.85em' }}>QURAN_CLIENT_ID</code> in
+                  Railway.
+                </>
+              )}
               <code
                 style={{
                   display: 'block',

@@ -2637,14 +2637,14 @@ function sha256Base64Url(input) {
 
 function getPublicBaseUrl(req) {
   let explicit =
-    process.env.BACKEND_URL ||
-    process.env.RENDER_EXTERNAL_URL ||
-    process.env.RENDER_SERVICE_URL;
-  if (!explicit?.trim() && process.env.RAILWAY_PUBLIC_DOMAIN) {
-    const d = process.env.RAILWAY_PUBLIC_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    (process.env.BACKEND_URL || '').trim() ||
+    (process.env.RENDER_EXTERNAL_URL || '').trim() ||
+    (process.env.RENDER_SERVICE_URL || '').trim();
+  if (!explicit && process.env.RAILWAY_PUBLIC_DOMAIN) {
+    const d = process.env.RAILWAY_PUBLIC_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '').trim();
     explicit = `https://${d}`;
   }
-  if (explicit?.trim()) {
+  if (explicit) {
     return explicit.replace(/\/+$/g, '');
   }
   const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http').toString().split(',')[0].trim();
@@ -2696,13 +2696,14 @@ function qfOAuthRedirectUriFromExplicitBase(base) {
 
 function getExplicitBackendBaseForLogs() {
   let b =
-    process.env.BACKEND_URL ||
-    process.env.RENDER_EXTERNAL_URL ||
-    process.env.RENDER_SERVICE_URL;
-  if (!b?.trim() && process.env.RAILWAY_PUBLIC_DOMAIN) {
-    b = `https://${process.env.RAILWAY_PUBLIC_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+    (process.env.BACKEND_URL || '').trim() ||
+    (process.env.RENDER_EXTERNAL_URL || '').trim() ||
+    (process.env.RENDER_SERVICE_URL || '').trim();
+  if (!b && process.env.RAILWAY_PUBLIC_DOMAIN) {
+    const d = process.env.RAILWAY_PUBLIC_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '').trim();
+    b = `https://${d}`;
   }
-  return b?.trim() ? b : null;
+  return b || null;
 }
 
 async function getUserQfTokens(userId) {
@@ -2868,11 +2869,23 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
 app.get('/api/qf/status', authenticateToken, async (req, res) => {
   try {
     const tokens = await getUserQfTokens(req.user.userId);
+    let qfOAuthMeta = {};
+    try {
+      const cfg = getQfOAuthConfig();
+      qfOAuthMeta = {
+        qfOAuthClientId: cfg.clientId,
+        qfOAuthEnvironment: cfg.env,
+        qfOAuthAuthBaseUrl: cfg.authBaseUrl,
+      };
+    } catch {
+      /* credentials missing — still return connection flags */
+    }
     res.json({
       success: true,
       connected: !!tokens?.qf_access_token,
       expiresAt: tokens?.qf_token_expiry || null,
       oauthCallbackUrl: getQfOAuthRedirectUri(req),
+      ...qfOAuthMeta,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get connection status' });
