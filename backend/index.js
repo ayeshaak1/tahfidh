@@ -2838,6 +2838,7 @@ app.get('/api/qf/status', authenticateToken, async (req, res) => {
         qfOAuthClientId: cfg.clientId,
         qfOAuthEnvironment: cfg.env,
         qfOAuthAuthBaseUrl: cfg.authBaseUrl,
+        qfOAuthApiBaseUrl: cfg.apiBaseUrl,
       };
     } catch {
       /* credentials missing — still return connection flags */
