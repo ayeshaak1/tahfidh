@@ -162,6 +162,13 @@ const QURAN_API_CONFIG = {
 // Use production API when NODE_ENV=production (unless explicitly overridden).
 // Also allow using production in development by setting QURAN_USE_PREPROD=false.
 const isProduction = process.env.NODE_ENV === 'production';
+
+/** Verbose Quran proxy / cache logs — off in production unless VERBOSE_LOGS=true */
+function devLog(...args) {
+  if (isProduction && process.env.VERBOSE_LOGS !== 'true') return;
+  console['log'](...args);
+}
+
 const quranUsePreprodRaw = process.env.QURAN_USE_PREPROD;
 const usePreProd =
   quranUsePreprodRaw === 'true'
@@ -185,8 +192,8 @@ if (!googleCallbackURL && isProduction) {
     (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null);
   if (platformUrl) {
     googleCallbackURL = `${platformUrl.replace(/\/$/, '')}/api/auth/google/callback`;
-    console.log(`⚠️  GOOGLE_CALLBACK_URL not set. Auto-constructed from platform URL: ${googleCallbackURL}`);
-    console.log(`⚠️  For production, it's recommended to explicitly set GOOGLE_CALLBACK_URL in environment variables.`);
+    devLog(`⚠️  GOOGLE_CALLBACK_URL not set. Auto-constructed from platform URL: ${googleCallbackURL}`);
+    devLog(`⚠️  For production, it's recommended to explicitly set GOOGLE_CALLBACK_URL in environment variables.`);
   } else {
     googleCallbackURL = `http://localhost:5000/api/auth/google/callback`;
     console.error('❌ ERROR: GOOGLE_CALLBACK_URL not set in production!');
@@ -195,32 +202,6 @@ if (!googleCallbackURL && isProduction) {
   }
 } else if (!googleCallbackURL) {
   googleCallbackURL = `http://localhost:5000/api/auth/google/callback`;
-}
-
-// Debug: Log which config is being used
-if (process.env.NODE_ENV === 'production') {
-  console.log('=== PRODUCTION MODE ===');
-  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
-  console.log(`QURAN_USE_PREPROD: ${process.env.QURAN_USE_PREPROD || 'not set (using production)'}`);
-  console.log(`Selected config: ${usePreProd ? 'PRE-PRODUCTION' : 'PRODUCTION'}`);
-  console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
-  console.log(`Auth URL: ${API_CONFIG.authUrl}`);
-  console.log(`Expected Production URL: ${QURAN_API_CONFIG.production.baseUrl}`);
-  console.log(`Expected Production Auth: ${QURAN_API_CONFIG.production.authUrl}`);
-  if (API_CONFIG.baseUrl !== QURAN_API_CONFIG.production.baseUrl) {
-    console.error('⚠️ WARNING: Not using production API endpoints!');
-    console.error('This should not happen in production mode.');
-  }
-  console.log('======================');
-}
-
-// Log configuration for debugging
-if (process.env.NODE_ENV !== 'production') {
-  console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-  console.log(`Using API config: ${usePreProd ? 'PRE-PRODUCTION' : 'PRODUCTION'}`);
-  console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
-  console.log(`Client ID set: ${!!API_CONFIG.clientId}`);
-  console.log(`Client Secret set: ${!!API_CONFIG.clientSecret}`);
 }
 
 // Validate Quran API credentials
@@ -361,7 +342,7 @@ async function getAccessToken() {
 // Helper function to make authenticated API calls
 async function makeQuranApiCall(endpoint) {
   try {
-    console.log(`Making Quran API call to: ${endpoint}`);
+    devLog(`Making Quran API call to: ${endpoint}`);
     const token = await getAccessToken();
     
     const response = await axios({
@@ -374,7 +355,7 @@ async function makeQuranApiCall(endpoint) {
       }
     });
     
-    console.log(`API call successful for ${endpoint}, response status: ${response.status}`);
+    devLog(`API call successful for ${endpoint}, response status: ${response.status}`);
     return response.data;
   } catch (error) {
     console.error(`Quran API error for ${endpoint}:`, error.response?.data || error.message);
@@ -394,21 +375,18 @@ app.get('/api/surahs', quranApiLimiter, async (req, res) => {
   try {
     // Check cache first
     if (isCacheValid(surahCache.allSurahs, surahCache.allSurahs.ttl)) {
-      console.log('Returning cached surahs list');
+      devLog('Returning cached surahs list');
       return res.json(surahCache.allSurahs.data);
     }
     
-    console.log('Fetching surahs from Quran API...');
+    devLog('Fetching surahs from Quran API...');
     const data = await makeQuranApiCall('/chapters');
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Quran API response:', JSON.stringify(data, null, 2));
-    }
-    console.log(`Returning ${data.chapters ? data.chapters.length : 0} surahs`);
+    devLog('Quran API /chapters:', data?.chapters?.length ?? 0, 'chapters');
     
     // Cache the response
     surahCache.allSurahs.data = data;
     surahCache.allSurahs.timestamp = Date.now();
-    console.log('Surahs list cached for 24 hours');
+    devLog('Surahs list cached for 24 hours');
     
     res.json(data);
   } catch (error) {
@@ -416,7 +394,7 @@ app.get('/api/surahs', quranApiLimiter, async (req, res) => {
     // Fallback: use public Quran.com API (no auth) if QF API is unavailable.
     // This keeps the app usable in dev when OAuth or upstream is flaky.
     try {
-      console.log('Falling back to public Quran.com API for /api/surahs...');
+      devLog('Falling back to public Quran.com API for /api/surahs...');
       const fallbackRes = await axios.get('https://api.quran.com/api/v4/chapters', { timeout: 15000 });
       const fallbackData = fallbackRes.data;
       if (fallbackData?.chapters) {
@@ -435,9 +413,9 @@ app.get('/api/surahs', quranApiLimiter, async (req, res) => {
 // Get all Juzs
 app.get('/api/juzs', async (req, res) => {
   try {
-    console.log('Fetching Juzs from Quran API...');
+    devLog('Fetching Juzs from Quran API...');
     const data = await makeQuranApiCall('/juzs');
-    console.log('Juzs API response:', JSON.stringify(data, null, 2));
+    devLog('Juzs API response:', JSON.stringify(data, null, 2));
     res.json(data);
   } catch (error) {
     console.error('Error in /api/juzs:', error);
@@ -455,7 +433,7 @@ app.get('/api/surahs/by-juz/:juzNumber', quranApiLimiter, async (req, res) => {
     if (surahCache.juzSurahs.has(cacheKey)) {
       const cachedData = surahCache.juzSurahs.get(cacheKey);
       if (isCacheValid(cachedData, surahCache.juzTtl)) {
-        console.log(`Returning cached Juz ${juzNumber} data`);
+        devLog(`Returning cached Juz ${juzNumber} data`);
         return res.json(cachedData.data);
       } else {
         // Remove expired cache entry
@@ -463,7 +441,7 @@ app.get('/api/surahs/by-juz/:juzNumber', quranApiLimiter, async (req, res) => {
       }
     }
     
-    console.log(`Fetching verses for Juz ${juzNumber} from Quran API...`);
+    devLog(`Fetching verses for Juz ${juzNumber} from Quran API...`);
     
     // Get verses for the specific Juz with smart pagination
     let currentPage = 1;
@@ -504,11 +482,11 @@ app.get('/api/surahs/by-juz/:juzNumber', quranApiLimiter, async (req, res) => {
       const pageEndCount = uniqueSurahIds.size;
       const newSurahsFound = pageEndCount - pageStartCount;
       
-      console.log(`Page ${currentPage}: ${versesData.verses.length} verses, ${newSurahsFound} new surahs found`);
+      devLog(`Page ${currentPage}: ${versesData.verses.length} verses, ${newSurahsFound} new surahs found`);
       
       if (newSurahsFound === 0) {
         consecutivePagesWithoutNewSurahs++;
-        console.log(`No new surahs found on page ${currentPage}. Consecutive count: ${consecutivePagesWithoutNewSurahs}`);
+        devLog(`No new surahs found on page ${currentPage}. Consecutive count: ${consecutivePagesWithoutNewSurahs}`);
       } else {
         consecutivePagesWithoutNewSurahs = 0; // Reset counter when we find new surahs
       }
@@ -519,31 +497,31 @@ app.get('/api/surahs/by-juz/:juzNumber', quranApiLimiter, async (req, res) => {
       
       // Early exit: if we've found all 114 surahs, we can stop
       if (uniqueSurahIds.size >= 114) {
-        console.log('Found all 114 surahs, stopping pagination');
+        devLog('Found all 114 surahs, stopping pagination');
         break;
       }
     }
     
     const totalTime = Date.now() - startTime;
-    console.log(`Processing completed in ${totalTime}ms. Pages checked: ${currentPage - 1}, Unique surahs found: ${uniqueSurahIds.size}`);
+    devLog(`Processing completed in ${totalTime}ms. Pages checked: ${currentPage - 1}, Unique surahs found: ${uniqueSurahIds.size}`);
     
     if (uniqueSurahIds.size === 0) {
-      console.log('No surahs found for Juz', juzNumber);
+      devLog('No surahs found for Juz', juzNumber);
       return res.json({ surahs: [] });
     }
     
     const surahIds = Array.from(uniqueSurahIds).sort((a, b) => a - b);
-    console.log('Unique surah IDs found:', surahIds);
+    devLog('Unique surah IDs found:', surahIds);
     
     // Fetch surah details for each unique surah ID (only once per surah)
     const surahsData = [];
     for (const surahId of surahIds) {
       try {
-        console.log(`Fetching surah ${surahId}...`);
+        devLog(`Fetching surah ${surahId}...`);
         const surahData = await makeQuranApiCall(`/chapters/${surahId}`);
         if (surahData.chapter) {
           surahsData.push(surahData.chapter);
-          console.log(`Successfully fetched surah ${surahId}: ${surahData.chapter.name_simple}`);
+          devLog(`Successfully fetched surah ${surahId}: ${surahData.chapter.name_simple}`);
         }
       } catch (err) {
         console.error(`Failed to fetch surah ${surahId}:`, err);
@@ -557,9 +535,9 @@ app.get('/api/surahs/by-juz/:juzNumber', quranApiLimiter, async (req, res) => {
       data: responseData,
       timestamp: Date.now()
     });
-    console.log(`Juz ${juzNumber} data cached for 6 hours`);
+    devLog(`Juz ${juzNumber} data cached for 6 hours`);
     
-    console.log(`Returning ${surahsData.length} unique surahs for Juz ${juzNumber}`);
+    devLog(`Returning ${surahsData.length} unique surahs for Juz ${juzNumber}`);
     res.json(responseData);
   } catch (error) {
     console.error('Error in /api/surahs/by-juz:', error);
@@ -578,41 +556,41 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
     if (!clearCache && !forceRefresh && surahCache.surahs.has(cacheKey)) {
       const cachedData = surahCache.surahs.get(cacheKey);
       if (isCacheValid(cachedData, surahCache.surahTtl)) {
-        console.log(`Returning cached surah ${id} (${font}) data`);
+        devLog(`Returning cached surah ${id} (${font}) data`);
         return res.json(cachedData.data);
       } else {
         // Remove expired cache entry
         surahCache.surahs.delete(cacheKey);
-        console.log(`Expired cache entry removed for surah ${id} (${font})`);
+        devLog(`Expired cache entry removed for surah ${id} (${font})`);
       }
     }
     
     if (clearCache || forceRefresh) {
-      console.log(`Cache cleared for surah ${id} (${font})`);
+      devLog(`Cache cleared for surah ${id} (${font})`);
       surahCache.surahs.delete(cacheKey);
     }
     
     // Force clear cache for testing new resource IDs and prevent overlap
     if (id === '1') {
-      console.log(`Forcing cache clear for surah 1 to test new resource IDs and prevent overlap`);
+      devLog(`Forcing cache clear for surah 1 to test new resource IDs and prevent overlap`);
       surahCache.surahs.delete(cacheKey);
       
       // Also clear any other cache entries that might overlap
       for (const [key, value] of surahCache.surahs.entries()) {
         if (key.includes('surah_1_')) {
           surahCache.surahs.delete(key);
-          console.log(`Cleared overlapping cache entry: ${key}`);
+          devLog(`Cleared overlapping cache entry: ${key}`);
         }
       }
     }
     
     // Always clear cache when switching fonts to ensure fresh data
     if (surahCache.surahs.has(cacheKey)) {
-      console.log(`Clearing cache for surah ${id} with font ${font} to ensure fresh data`);
+      devLog(`Clearing cache for surah ${id} with font ${font} to ensure fresh data`);
       surahCache.surahs.delete(cacheKey);
     }
     
-    console.log(`Fetching surah ${id} with font ${font} from Quran API...`);
+    devLog(`Fetching surah ${id} with font ${font} from Quran API...`);
     
     // Get surah info
     const surahData = await makeQuranApiCall(`/chapters/${id}`);
@@ -622,57 +600,57 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
     try {
       // Get all Juzs and find which one contains this surah
       const juzsResponse = await makeQuranApiCall('/juzs');
-      console.log(`Juzs response for surah ${id}:`, JSON.stringify(juzsResponse, null, 2));
+      devLog(`Juzs response for surah ${id}:`, JSON.stringify(juzsResponse, null, 2));
       
       if (juzsResponse.juzs) {
-        console.log(`Found ${juzsResponse.juzs.length} Juzs in response`);
+        devLog(`Found ${juzsResponse.juzs.length} Juzs in response`);
         
         for (const juz of juzsResponse.juzs) {
-          console.log(`Checking Juz ${juz.juz_number}:`, juz.verse_mapping);
+          devLog(`Checking Juz ${juz.juz_number}:`, juz.verse_mapping);
           
           if (juz.verse_mapping && typeof juz.verse_mapping === 'object') {
             // The verse_mapping is an object like { "1": "1-7", "2": "1-141" }
             // Check if this surah is in this Juz
             const surahId = parseInt(id);
             const juzSurahs = Object.keys(juz.verse_mapping).map(s => parseInt(s)).sort((a, b) => a - b);
-            console.log(`Juz ${juz.juz_number} contains surahs:`, juzSurahs);
+            devLog(`Juz ${juz.juz_number} contains surahs:`, juzSurahs);
             
             if (juz.verse_mapping[surahId]) {
               juzInfo = { juz_number: juz.juz_number };
-              console.log(`✅ Surah ${id} belongs to Juz ${juz.juz_number} (found in verse_mapping)`);
+              devLog(`✅ Surah ${id} belongs to Juz ${juz.juz_number} (found in verse_mapping)`);
               break;
             }
           } else {
-            console.log(`Juz ${juz.juz_number} has no valid verse_mapping:`, juz.verse_mapping);
+            devLog(`Juz ${juz.juz_number} has no valid verse_mapping:`, juz.verse_mapping);
           }
         }
       } else {
-        console.log(`No 'juzs' property found in response:`, Object.keys(juzsResponse));
+        devLog(`No 'juzs' property found in response:`, Object.keys(juzsResponse));
       }
       
       if (!juzInfo) {
-        console.log(`❌ Could not determine Juz for surah ${id} from API`);
+        devLog(`❌ Could not determine Juz for surah ${id} from API`);
       }
     } catch (err) {
-      console.log(`❌ Could not determine Juz for surah ${id}:`, err.message);
+      devLog(`❌ Could not determine Juz for surah ${id}:`, err.message);
     }
     
     // Log the final Juz result
     if (juzInfo) {
-      console.log(`🎯 Final Juz result for surah ${id}: Juz ${juzInfo.juz_number}`);
+      devLog(`🎯 Final Juz result for surah ${id}: Juz ${juzInfo.juz_number}`);
     } else {
-      console.log(`⚠️ No Juz information found for surah ${id}`);
+      devLog(`⚠️ No Juz information found for surah ${id}`);
     }
     
     // Get verses in both fonts simultaneously (14. Load fonts together)
-    console.log(`Fetching verses for surah ${id} in both Uthmani and IndoPak fonts...`);
+    devLog(`Fetching verses for surah ${id} in both Uthmani and IndoPak fonts...`);
     const [uthmaniData, indopakData] = await Promise.all([
       makeQuranApiCall(`/quran/verses/uthmani?chapter_number=${id}`),
       makeQuranApiCall(`/quran/verses/indopak?chapter_number=${id}`)
     ]);
     
-    console.log(`Uthmani verses for surah ${id}:`, uthmaniData.verses?.length || 0, 'verses');
-    console.log(`IndoPak verses for surah ${id}:`, indopakData.verses?.length || 0, 'verses');
+    devLog(`Uthmani verses for surah ${id}:`, uthmaniData.verses?.length || 0, 'verses');
+    devLog(`IndoPak verses for surah ${id}:`, indopakData.verses?.length || 0, 'verses');
     
     // Merge verses with both font texts
     const mergedVerses = (uthmaniData.verses || []).map((uthmaniVerse, index) => {
@@ -684,11 +662,11 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       };
     });
     
-    console.log(`Merged ${mergedVerses.length} verses with both fonts for surah ${id}`);
+    devLog(`Merged ${mergedVerses.length} verses with both fonts for surah ${id}`);
     
     // Log sample verse data to see font fields
     if (mergedVerses.length > 0) {
-      console.log(`Sample merged verse data for surah ${id}:`, {
+      devLog(`Sample merged verse data for surah ${id}:`, {
         verse_key: mergedVerses[0].verse_key,
         text_uthmani: mergedVerses[0].text_uthmani ? 'Available' : 'Not Available',
         text_indopak: mergedVerses[0].text_indopak ? 'Available' : 'Not Available',
@@ -710,7 +688,7 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       
       for (const resourceId of translationResourceIds) {
         try {
-          console.log(`Trying translation resource ID ${resourceId}...`);
+          devLog(`Trying translation resource ID ${resourceId}...`);
           
           // Use the documented endpoint format: /translations/:resource_id/by_chapter/:chapter_number
           // Add pagination query parameters
@@ -722,14 +700,14 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
             // Use query parameters for pagination: ?page=1&per_page=50
             const endpoint = `/translations/${resourceId}/by_chapter/${id}?page=${currentPage}&per_page=50`;
             const response = await makeQuranApiCall(endpoint);
-            console.log(`Translation resource ${resourceId} page ${currentPage} response:`, {
+            devLog(`Translation resource ${resourceId} page ${currentPage} response:`, {
               translationsCount: response.translations?.length || 0,
               pagination: response.pagination
             });
             
             // Log first translation structure for debugging
             if (currentPage === 1 && translations.length === 0 && response.translations && response.translations.length > 0) {
-              console.log(`Sample translation structure (first item):`, JSON.stringify(response.translations[0], null, 2));
+              devLog(`Sample translation structure (first item):`, JSON.stringify(response.translations[0], null, 2));
             }
           
           if (response.translations && response.translations.length > 0) {
@@ -782,7 +760,7 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
               
               // Safety limit: don't fetch more than 300 verses (some surahs are very long)
               if (currentPage > 20) {
-                console.log(`Reached page limit (20) for translations`);
+                devLog(`Reached page limit (20) for translations`);
                 break;
               }
             } else {
@@ -793,28 +771,28 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
           if (translations.length > 0) {
             workingResourceId = resourceId;
             allTranslations = translations;
-            console.log(`✅ Found working translation resource ID: ${resourceId} with ${translations.length} total translations`);
+            devLog(`✅ Found working translation resource ID: ${resourceId} with ${translations.length} total translations`);
             break;
           } else {
-            console.log(`❌ Resource ${resourceId} has no translations`);
+            devLog(`❌ Resource ${resourceId} has no translations`);
           }
         } catch (err) {
-          console.log(`❌ Resource ${resourceId} failed: ${err.message}`);
+          devLog(`❌ Resource ${resourceId} failed: ${err.message}`);
         }
       }
       
       if (workingResourceId && allTranslations.length > 0) {
         translationData = { translations: allTranslations };
-        console.log(`Found ${allTranslations.length} translations using resource ID ${workingResourceId}`);
-        console.log(`Translation source: ${workingResourceId === 131 ? 'Clear Quran (Dr. Mustafa Khattab)' : workingResourceId === 85 ? 'Abdul Haleem (English)' : `Resource ${workingResourceId}`}`);
+        devLog(`Found ${allTranslations.length} translations using resource ID ${workingResourceId}`);
+        devLog(`Translation source: ${workingResourceId === 131 ? 'Clear Quran (Dr. Mustafa Khattab)' : workingResourceId === 85 ? 'Abdul Haleem (English)' : `Resource ${workingResourceId}`}`);
         
         // Log sample verse_keys for debugging
         if (allTranslations.length > 0) {
-          console.log(`Sample translation verse_keys (first 5):`, allTranslations.slice(0, 5).map(t => t.verse_key));
-          console.log(`Sample translation texts (first 3):`, allTranslations.slice(0, 3).map(t => ({ verse_key: t.verse_key, text: t.text?.substring(0, 50) || 'NO TEXT' })));
+          devLog(`Sample translation verse_keys (first 5):`, allTranslations.slice(0, 5).map(t => t.verse_key));
+          devLog(`Sample translation texts (first 3):`, allTranslations.slice(0, 3).map(t => ({ verse_key: t.verse_key, text: t.text?.substring(0, 50) || 'NO TEXT' })));
         }
       } else {
-        console.log(`No translations found for surah ${id} with any resource ID`);
+        devLog(`No translations found for surah ${id} with any resource ID`);
       }
     } catch (err) {
       console.error(`Failed to fetch translation for surah ${id}:`, err);
@@ -825,7 +803,7 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
     let transliterationData = { translations: [] };
     try {
       // Use resource ID 57 for English transliteration
-      console.log(`Fetching transliterations for surah ${id} (resource 57) with pagination...`);
+      devLog(`Fetching transliterations for surah ${id} (resource 57) with pagination...`);
       
       let currentPage = 1;
       let hasMorePages = true;
@@ -836,14 +814,14 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
         // Add pagination query parameters
         const endpoint = `/translations/57/by_chapter/${id}?page=${currentPage}&per_page=50`;
         const response = await makeQuranApiCall(endpoint);
-        console.log(`Transliteration resource 57 page ${currentPage} response:`, {
+        devLog(`Transliteration resource 57 page ${currentPage} response:`, {
           translationsCount: response.translations?.length || 0,
           pagination: response.pagination
         });
         
         // Log first transliteration structure for debugging
         if (currentPage === 1 && allTransliterations.length === 0 && response.translations && response.translations.length > 0) {
-          console.log(`Sample transliteration structure (first item):`, JSON.stringify(response.translations[0], null, 2));
+          devLog(`Sample transliteration structure (first item):`, JSON.stringify(response.translations[0], null, 2));
         }
       
       if (response.translations && response.translations.length > 0) {
@@ -896,7 +874,7 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
           
           // Safety limit: don't fetch more than 300 verses
           if (currentPage > 20) {
-            console.log(`Reached page limit (20) for transliterations`);
+            devLog(`Reached page limit (20) for transliterations`);
             break;
           }
         } else {
@@ -906,15 +884,15 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       
       if (allTransliterations.length > 0) {
         transliterationData = { translations: allTransliterations };
-        console.log(`Found ${allTransliterations.length} transliterations for surah ${id}`);
+        devLog(`Found ${allTransliterations.length} transliterations for surah ${id}`);
         
         // Log sample verse_keys for debugging
         if (allTransliterations.length > 0) {
-          console.log(`Sample transliteration verse_keys (first 5):`, allTransliterations.slice(0, 5).map(t => t.verse_key));
-          console.log(`Sample transliteration texts (first 3):`, allTransliterations.slice(0, 3).map(t => ({ verse_key: t.verse_key, text: t.text?.substring(0, 50) || 'NO TEXT' })));
+          devLog(`Sample transliteration verse_keys (first 5):`, allTransliterations.slice(0, 5).map(t => t.verse_key));
+          devLog(`Sample transliteration texts (first 3):`, allTransliterations.slice(0, 3).map(t => ({ verse_key: t.verse_key, text: t.text?.substring(0, 50) || 'NO TEXT' })));
         }
       } else {
-        console.log(`No transliterations found for surah ${id} with resource 57`);
+        devLog(`No transliterations found for surah ${id} with resource 57`);
       }
     } catch (err) {
       console.error(`Failed to fetch transliteration for surah ${id}:`, err);
@@ -929,7 +907,7 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       juz: juzInfo // Add juz info to the surah object
     };
     
-    console.log(`Final surah data structure:`, {
+    devLog(`Final surah data structure:`, {
       id: surah.id,
       name: surah.name_simple,
       versesCount: surah.verses?.length || 0,
@@ -942,15 +920,15 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       const sampleVerseKeys = surah.verses.slice(0, 5).map(v => v.verse_key);
       const sampleTranslationKeys = surah.translation?.slice(0, 5).map(t => t.verse_key) || [];
       const sampleTransliterationKeys = surah.transliteration?.slice(0, 5).map(t => t.verse_key) || [];
-      console.log(`Sample verse keys:`, sampleVerseKeys);
-      console.log(`Sample translation keys:`, sampleTranslationKeys);
-      console.log(`Sample transliteration keys:`, sampleTransliterationKeys);
+      devLog(`Sample verse keys:`, sampleVerseKeys);
+      devLog(`Sample translation keys:`, sampleTranslationKeys);
+      devLog(`Sample transliteration keys:`, sampleTransliterationKeys);
       
       // Check if first verse has matching translation/transliteration
       const firstVerseKey = surah.verses[0]?.verse_key;
       const hasTranslation = surah.translation?.some(t => t.verse_key === firstVerseKey);
       const hasTransliteration = surah.transliteration?.some(t => t.verse_key === firstVerseKey);
-      console.log(`First verse (${firstVerseKey}) has translation: ${hasTranslation}, transliteration: ${hasTransliteration}`);
+      devLog(`First verse (${firstVerseKey}) has translation: ${hasTranslation}, transliteration: ${hasTransliteration}`);
     }
     
     // Cache the response
@@ -958,7 +936,7 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
       data: surah,
       timestamp: Date.now()
     });
-    console.log(`Surah ${id} (${font}) data cached for 12 hours`);
+    devLog(`Surah ${id} (${font}) data cached for 12 hours`);
     
     res.json(surah);
   } catch (error) {
@@ -967,7 +945,7 @@ app.get('/api/surah/:id', quranApiLimiter, async (req, res) => {
     try {
       const { id } = req.params;
 
-      console.log(`Falling back to public Quran.com API for /api/surah/${id}...`);
+      devLog(`Falling back to public Quran.com API for /api/surah/${id}...`);
 
       // Pull translations + transliteration via verses/by_chapter since it includes verse_key.
       // 85 = Abdul Haleem (English), 57 = English transliteration (per our earlier QF usage)
@@ -1070,14 +1048,14 @@ app.get('/api/surah/:id/translation', quranApiLimiter, async (req, res) => {
 // Test endpoint to check available translations
 app.get('/api/test/translations', async (req, res) => {
   try {
-    console.log('Testing available translations...');
+    devLog('Testing available translations...');
     
     // First, get the list of available translations
     let availableTranslations = [];
     try {
-      console.log('Fetching available translations list...');
+      devLog('Fetching available translations list...');
       const translationsList = await makeQuranApiCall('/resources/translations');
-      console.log('Available translations list:', JSON.stringify(translationsList, null, 2));
+      devLog('Available translations list:', JSON.stringify(translationsList, null, 2));
       availableTranslations = translationsList.translations || [];
     } catch (err) {
       console.error('Failed to get translations list:', err);
@@ -1095,7 +1073,7 @@ app.get('/api/test/translations', async (req, res) => {
     
     for (const endpoint of testEndpoints) {
       try {
-        console.log(`Testing endpoint: ${endpoint}`);
+        devLog(`Testing endpoint: ${endpoint}`);
         const response = await makeQuranApiCall(endpoint);
         results[endpoint] = {
           success: true,
@@ -1103,7 +1081,7 @@ app.get('/api/test/translations', async (req, res) => {
           translationsCount: response.translations ? response.translations.length : 0,
           hasTranslations: response.translations && response.translations.length > 0
         };
-        console.log(`Endpoint ${endpoint} result:`, JSON.stringify(response, null, 2));
+        devLog(`Endpoint ${endpoint} result:`, JSON.stringify(response, null, 2));
       } catch (err) {
         results[endpoint] = {
           success: false,
@@ -1119,7 +1097,7 @@ app.get('/api/test/translations', async (req, res) => {
     
     for (const resourceId of specificResourceIds) {
       try {
-        console.log(`Testing resource ID: ${resourceId}`);
+        devLog(`Testing resource ID: ${resourceId}`);
         const response = await makeQuranApiCall(`/translations/${resourceId}/by_chapter/1`);
         
         testResults[resourceId] = {
@@ -1159,13 +1137,13 @@ app.get('/api/test/translations', async (req, res) => {
 // Simple test endpoint to check if translations work at all
 app.get('/api/test/simple', async (req, res) => {
   try {
-    console.log('Running simple translation test...');
+    devLog('Running simple translation test...');
     
     // Test 1: Get available translations
     let translationsList = null;
     try {
       translationsList = await makeQuranApiCall('/resources/translations');
-      console.log('Translations list response:', JSON.stringify(translationsList, null, 2));
+      devLog('Translations list response:', JSON.stringify(translationsList, null, 2));
     } catch (err) {
       console.error('Failed to get translations list:', err);
     }
@@ -1174,7 +1152,7 @@ app.get('/api/test/simple', async (req, res) => {
     let anyTranslation = null;
     try {
       anyTranslation = await makeQuranApiCall('/translations/131/by_chapter/1');
-      console.log('Any translation response:', JSON.stringify(anyTranslation, null, 2));
+      devLog('Any translation response:', JSON.stringify(anyTranslation, null, 2));
     } catch (err) {
       console.error('Failed to get any translation:', err);
     }
@@ -1183,7 +1161,7 @@ app.get('/api/test/simple', async (req, res) => {
     let versesWithTranslations = null;
     try {
       versesWithTranslations = await makeQuranApiCall('/quran/verses/uthmani?chapter_number=1&translations=131');
-      console.log('Verses with translations response:', JSON.stringify(versesWithTranslations, null, 2));
+      devLog('Verses with translations response:', JSON.stringify(versesWithTranslations, null, 2));
     } catch (err) {
       console.error('Failed to get verses with translations:', err);
     }
@@ -1215,7 +1193,7 @@ app.get('/api/test/simple', async (req, res) => {
 // Test endpoint to check translation API specifically
 app.get('/api/test/translation-131', async (req, res) => {
   try {
-    console.log('Testing translation API for resource 131...');
+    devLog('Testing translation API for resource 131...');
     
     // Test different approaches for surah 1
     const testResults = {};
@@ -1302,14 +1280,14 @@ app.get('/api/test/translation-131', async (req, res) => {
 // Comprehensive endpoint to list all translation resources and find Clear Quran
 app.get('/api/test/all-translations', async (req, res) => {
   try {
-    console.log('🔍 Fetching ALL available translation resources...');
+    devLog('🔍 Fetching ALL available translation resources...');
     
     // Get all available translations
     let allTranslations = [];
     try {
       const resourcesResponse = await makeQuranApiCall('/resources/translations');
       allTranslations = resourcesResponse.translations || [];
-      console.log(`📊 Found ${allTranslations.length} total translation resources`);
+      devLog(`📊 Found ${allTranslations.length} total translation resources`);
     } catch (err) {
       console.error('❌ Failed to get translations list:', err);
       return res.status(500).json({ error: 'Failed to fetch translations list' });
@@ -1341,9 +1319,9 @@ app.get('/api/test/all-translations', async (req, res) => {
       )
     );
     
-    console.log(`🇺🇸 Found ${englishTranslations.length} English translations`);
-    console.log(`📖 Found ${clearQuran.length} Clear Quran translations`);
-    console.log(`🔤 Found ${commonEnglish.length} common English translations`);
+    devLog(`🇺🇸 Found ${englishTranslations.length} English translations`);
+    devLog(`📖 Found ${clearQuran.length} Clear Quran translations`);
+    devLog(`🔤 Found ${commonEnglish.length} common English translations`);
     
     // Test a few promising resource IDs for surah 1
     const testResourceIds = [];
@@ -1368,13 +1346,13 @@ app.get('/api/test/all-translations', async (req, res) => {
       }
     });
     
-    console.log(`🧪 Will test ${testResourceIds.length} resource IDs:`, testResourceIds);
+    devLog(`🧪 Will test ${testResourceIds.length} resource IDs:`, testResourceIds);
     
     const testResults = {};
     
     for (const resourceId of testResourceIds) {
       try {
-        console.log(`\n🔍 Testing resource ID ${resourceId}...`);
+        devLog(`\n🔍 Testing resource ID ${resourceId}...`);
         const response = await makeQuranApiCall(`/translations/${resourceId}/by_chapter/1`);
         
         testResults[resourceId] = {
@@ -1386,17 +1364,17 @@ app.get('/api/test/all-translations', async (req, res) => {
         };
         
         if (response.translations && response.translations.length > 0) {
-          console.log(`✅ Resource ${resourceId} has ${response.translations.length} translations`);
-          console.log(`📝 Sample: "${response.translations[0].text.substring(0, 100)}..."`);
+          devLog(`✅ Resource ${resourceId} has ${response.translations.length} translations`);
+          devLog(`📝 Sample: "${response.translations[0].text.substring(0, 100)}..."`);
         } else {
-          console.log(`❌ Resource ${resourceId} has no translations (but API call succeeded)`);
+          devLog(`❌ Resource ${resourceId} has no translations (but API call succeeded)`);
         }
       } catch (err) {
         testResults[resourceId] = {
           success: false,
           error: err.message
         };
-        console.log(`❌ Resource ${resourceId} failed: ${err.message}`);
+        devLog(`❌ Resource ${resourceId} failed: ${err.message}`);
       }
     }
     
@@ -1407,7 +1385,7 @@ app.get('/api/test/all-translations', async (req, res) => {
         const resource = allTranslations.find(t => t.id === parseInt(resourceId));
         if (resource && resource.language_name && resource.language_name.toLowerCase().includes('english')) {
           bestTranslation = { resourceId: parseInt(resourceId), resource, result };
-          console.log(`🏆 Best working English translation: Resource ${resourceId} - ${resource.resource_name}`);
+          devLog(`🏆 Best working English translation: Resource ${resourceId} - ${resource.resource_name}`);
           break;
         }
       }
@@ -1418,15 +1396,15 @@ app.get('/api/test/all-translations', async (req, res) => {
       result.success && result.hasTranslations
     );
     
-    console.log(`\n📊 SUMMARY:`);
-    console.log(`Total resources tested: ${testResourceIds.length}`);
-    console.log(`Working resources: ${workingResources.length}`);
-    console.log(`Resources with translations: ${workingResources.length}`);
+    devLog(`\n📊 SUMMARY:`);
+    devLog(`Total resources tested: ${testResourceIds.length}`);
+    devLog(`Working resources: ${workingResources.length}`);
+    devLog(`Resources with translations: ${workingResources.length}`);
     
     if (bestTranslation) {
-      console.log(`🎯 Best translation: Resource ${bestTranslation.resourceId} - ${bestTranslation.resource.resource_name}`);
+      devLog(`🎯 Best translation: Resource ${bestTranslation.resourceId} - ${bestTranslation.resource.resource_name}`);
     } else {
-      console.log(`⚠️ No working English translations found!`);
+      devLog(`⚠️ No working English translations found!`);
     }
     
     res.json({
@@ -1462,13 +1440,13 @@ app.get('/api/test/all-translations', async (req, res) => {
 // Simple test endpoint to check what's available
 app.get('/api/test/quick', async (req, res) => {
   try {
-    console.log('Quick test of available resources...');
+    devLog('Quick test of available resources...');
     
     // Test 1: Get available translations list
     let translationsList = null;
     try {
       translationsList = await makeQuranApiCall('/resources/translations');
-      console.log('Translations list:', translationsList.translations?.slice(0, 5));
+      devLog('Translations list:', translationsList.translations?.slice(0, 5));
     } catch (err) {
       console.error('Failed to get translations list:', err);
     }
@@ -1477,7 +1455,7 @@ app.get('/api/test/quick', async (req, res) => {
     let resource1 = null;
     try {
       resource1 = await makeQuranApiCall('/translations/1/by_chapter/1');
-      console.log('Resource 1 test:', resource1);
+      devLog('Resource 1 test:', resource1);
     } catch (err) {
       console.error('Resource 1 failed:', err);
     }
@@ -1486,7 +1464,7 @@ app.get('/api/test/quick', async (req, res) => {
     let resource2 = null;
     try {
       resource2 = await makeQuranApiCall('/translations/2/by_chapter/1');
-      console.log('Resource 2 test:', resource2);
+      devLog('Resource 2 test:', resource2);
     } catch (err) {
       console.error('Resource 2 failed:', err);
     }
@@ -1517,10 +1495,10 @@ app.get('/api/test/quick', async (req, res) => {
 // Quick test for resource 85 (Abdul Haleem)
 app.get('/api/test/resource-85', async (req, res) => {
   try {
-    console.log('🧪 Testing resource 85 (Abdul Haleem)...');
+    devLog('🧪 Testing resource 85 (Abdul Haleem)...');
     
     const response = await makeQuranApiCall('/translations/85/by_chapter/1');
-    console.log('Resource 85 response:', JSON.stringify(response, null, 2));
+    devLog('Resource 85 response:', JSON.stringify(response, null, 2));
     
     res.json({
       message: 'Resource 85 test result',
@@ -1544,10 +1522,10 @@ app.get('/api/test/resource-85', async (req, res) => {
 // Test endpoint to check Juzs API response
 app.get('/api/test/juzs', async (req, res) => {
   try {
-    console.log('🧪 Testing Juzs API endpoint...');
+    devLog('🧪 Testing Juzs API endpoint...');
     
     const juzsResponse = await makeQuranApiCall('/juzs');
-    console.log('Juzs API response:', JSON.stringify(juzsResponse, null, 2));
+    devLog('Juzs API response:', JSON.stringify(juzsResponse, null, 2));
     
     res.json({
       message: 'Juzs API test result',
@@ -1571,7 +1549,7 @@ app.get('/api/test/juzs', async (req, res) => {
 app.get('/api/verses/random', quranApiLimiter, async (req, res) => {
   try {
     const { translations = '85,131' } = req.query;
-    console.log('Fetching random verse with endpoint:', `/verses/random?translations=${translations}&words=true`);
+    devLog('Fetching random verse with endpoint:', `/verses/random?translations=${translations}&words=true`);
     const data = await makeQuranApiCall(`/verses/random?translations=${translations}&words=true`);
     res.json(data);
   } catch (error) {
@@ -1579,7 +1557,7 @@ app.get('/api/verses/random', quranApiLimiter, async (req, res) => {
     // Fallback: public Quran.com API
     try {
       const { translations = '85,131' } = req.query;
-      console.log('Falling back to public Quran.com API for /api/verses/random...');
+      devLog('Falling back to public Quran.com API for /api/verses/random...');
       const fallbackRes = await axios.get(
         `https://api.quran.com/api/v4/verses/random?translations=${encodeURIComponent(translations)}&words=true`,
         { timeout: 15000 }
@@ -1636,7 +1614,7 @@ app.post('/api/cache/clear', (req, res) => {
     surahCache.verses.clear();
     surahCache.translations.clear();
     
-    console.log('All caches cleared');
+    devLog('All caches cleared');
     res.json({ message: 'All caches cleared successfully' });
   } catch (error) {
     console.error('Error clearing cache:', error);
@@ -1651,19 +1629,19 @@ app.post('/api/cache/clear/:type', (req, res) => {
     switch (type) {
       case 'surahs':
         surahCache.surahs.clear();
-        console.log('Surahs cache cleared');
+        devLog('Surahs cache cleared');
         break;
       case 'juz':
         surahCache.juzSurahs.clear();
-        console.log('Juz surahs cache cleared');
+        devLog('Juz surahs cache cleared');
         break;
       case 'verses':
         surahCache.verses.clear();
-        console.log('Verses cache cleared');
+        devLog('Verses cache cleared');
         break;
       case 'translations':
         surahCache.translations.clear();
-        console.log('Translations cache cleared');
+        devLog('Translations cache cleared');
         break;
       case 'all':
         surahCache.allSurahs.data = null;
@@ -1672,7 +1650,7 @@ app.post('/api/cache/clear/:type', (req, res) => {
         surahCache.juzSurahs.clear();
         surahCache.verses.clear();
         surahCache.translations.clear();
-        console.log('All caches cleared');
+        devLog('All caches cleared');
         break;
       default:
         return res.status(400).json({ error: 'Invalid cache type. Use: surahs, juz, verses, translations, or all' });
@@ -1688,14 +1666,14 @@ app.post('/api/cache/clear/:type', (req, res) => {
 // Simple endpoint to list all available translation resources
 app.get('/api/test/list-translations', async (req, res) => {
   try {
-    console.log('📋 Listing all available translation resources...');
+    devLog('📋 Listing all available translation resources...');
     
     // Get all available translations
     let allTranslations = [];
     try {
       const resourcesResponse = await makeQuranApiCall('/resources/translations');
       allTranslations = resourcesResponse.translations || [];
-      console.log(`📊 Found ${allTranslations.length} total translation resources`);
+      devLog(`📊 Found ${allTranslations.length} total translation resources`);
     } catch (err) {
       console.error('❌ Failed to get translations list:', err);
       return res.status(500).json({ error: 'Failed to fetch translations list' });
@@ -1727,9 +1705,9 @@ app.get('/api/test/list-translations', async (req, res) => {
       )
     );
     
-    console.log(`🇺🇸 Found ${englishTranslations.length} English translations`);
-    console.log(`📖 Found ${clearQuran.length} Clear Quran translations`);
-    console.log(`🔤 Found ${commonEnglish.length} common English translations`);
+    devLog(`🇺🇸 Found ${englishTranslations.length} English translations`);
+    devLog(`📖 Found ${clearQuran.length} Clear Quran translations`);
+    devLog(`🔤 Found ${commonEnglish.length} common English translations`);
     
     // Show first 50 translations for reference
     const sampleTranslations = allTranslations.slice(0, 50).map(t => ({
@@ -1777,23 +1755,20 @@ app.get('/api/test/list-translations', async (req, res) => {
 
 // Start server
 app.listen(PORT, async () => {
-  // Always log critical configuration info
-  console.log(`Quran API proxy server running on port ${PORT}`);
-  console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-  console.log(`QURAN_USE_PREPROD: ${process.env.QURAN_USE_PREPROD || 'not set'}`);
-  console.log(`Using ${usePreProd ? 'PRE-PRODUCTION' : 'PRODUCTION'} API configuration`);
-  console.log(`API Base URL: ${API_CONFIG.baseUrl}`);
-  console.log(`Auth URL: ${API_CONFIG.authUrl}`);
-  console.log(`Client ID configured: ${!!API_CONFIG.clientId}`);
-  console.log(`Client Secret configured: ${!!API_CONFIG.clientSecret}`);
-  
-  // Log OAuth and CORS configuration
-  console.log('\n=== GOOGLE OAUTH CONFIGURATION ===');
-  console.log(`GOOGLE_CLIENT_ID configured: ${!!process.env.GOOGLE_CLIENT_ID}`);
-  console.log(`GOOGLE_CLIENT_SECRET configured: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
-  console.log(`GOOGLE_CALLBACK_URL: ${googleCallbackURL}`);
-  console.log(`FRONTEND_URL (raw): ${process.env.FRONTEND_URL || 'NOT SET'}`);
-  console.log(`CORS allowed origins: ${corsOriginForLogs}`);
+  console.log(
+    `Tahfidh API listening on :${PORT} (${usePreProd ? 'preprod' : 'prod'} Quran content API, NODE_ENV=${process.env.NODE_ENV || 'unset'})`
+  );
+
+  const qfCallbackFromEnv = getQfOAuthRedirectUriForStartupLog();
+  if (qfCallbackFromEnv) {
+    console.log(`QF OAuth redirect (register with Quran Foundation): ${qfCallbackFromEnv}`);
+    if (process.env.QF_OAUTH_REDIRECT_URI?.trim()) {
+      console.log('(QF_OAUTH_REDIRECT_URI override in use)');
+    }
+  } else {
+    console.log('QF OAuth redirect: set BACKEND_URL so the callback URL is stable for QF registration.');
+  }
+
   if (isProduction) {
     if (!process.env.GOOGLE_CALLBACK_URL) {
       console.error('⚠️  WARNING: GOOGLE_CALLBACK_URL not explicitly set in production!');
@@ -1803,52 +1778,39 @@ app.listen(PORT, async () => {
       console.error('⚠️  WARNING: FRONTEND_URL not set in production!');
       console.error('⚠️  OAuth redirects will fail. Set it in your platform environment variables (Railway, Render, etc.).');
     } else if (!process.env.FRONTEND_URL.startsWith('http://') && !process.env.FRONTEND_URL.startsWith('https://')) {
-      console.log('ℹ️  INFO: FRONTEND_URL was missing protocol, auto-added https://');
+      devLog('ℹ️  INFO: FRONTEND_URL was missing protocol, auto-added https://');
     }
   }
-  console.log('===================================\n');
 
-  const qfCallbackFromEnv = getQfOAuthRedirectUriForStartupLog();
-  if (qfCallbackFromEnv) {
-    console.log(`QF OAuth redirect_uri (register this exact URL with QF): ${qfCallbackFromEnv}`);
-    if (process.env.QF_OAUTH_REDIRECT_URI?.trim()) {
-      console.log('(using QF_OAUTH_REDIRECT_URI override)');
-    }
-  } else {
-    console.log('QF OAuth redirect_uri: derived per request from Host (set BACKEND_URL for a stable URL to register with QF)');
-  }
+  devLog('\n=== Server config (set VERBOSE_LOGS=true in production for full dump) ===');
+  devLog(`API Base URL: ${API_CONFIG.baseUrl}`);
+  devLog(`Auth URL: ${API_CONFIG.authUrl}`);
+  devLog(`QURAN_USE_PREPROD: ${process.env.QURAN_USE_PREPROD || 'not set'}`);
+  devLog(`Client ID configured: ${!!API_CONFIG.clientId}`);
+  devLog(`Client Secret configured: ${!!API_CONFIG.clientSecret}`);
+  devLog(`GOOGLE_CALLBACK_URL: ${googleCallbackURL}`);
+  devLog(`FRONTEND_URL (raw): ${process.env.FRONTEND_URL || 'NOT SET'}`);
+  devLog(`CORS allowed origins: ${corsOriginForLogs}`);
 
   try {
     const qfCfg = getQfOAuthConfig();
-    console.log('=== QURAN FOUNDATION (USER OAUTH / NOTES) ===');
-    console.log(`QF user auth: ${qfCfg.authBaseUrl} (must match where your OAuth client was registered)`);
-    console.log(`QF user APIs: ${qfCfg.apiBaseUrl}`);
-    console.log(`QF OAuth scopes: ${getQfOAuthScope()}`);
+    devLog(`QF user auth: ${qfCfg.authBaseUrl} | APIs: ${qfCfg.apiBaseUrl} | scopes: ${getQfOAuthScope()}`);
   } catch (e) {
     console.warn('QF OAuth config unavailable:', e.message || e);
   }
-  console.log('=============================================\n');
-  
-  // Verify production config is being used
+
   if (isProduction && !usePreProd) {
-    if (API_CONFIG.baseUrl === QURAN_API_CONFIG.production.baseUrl) {
-      console.log('✅ Using PRODUCTION API endpoints (correct)');
-    } else {
+    if (API_CONFIG.baseUrl !== QURAN_API_CONFIG.production.baseUrl) {
       console.error('❌ ERROR: Should be using PRODUCTION but using PRE-PRODUCTION!');
       console.error(`Expected: ${QURAN_API_CONFIG.production.baseUrl}`);
       console.error(`Actual: ${API_CONFIG.baseUrl}`);
     }
   }
-  
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('Caching enabled with the following TTLs:');
-    console.log(`  - All Surahs: 24 hours`);
-    console.log(`  - Individual Surahs: 12 hours`);
-    console.log(`  - Juz-based Surahs: 6 hours`);
-    console.log(`  - Verses: 6 hours`);
-    console.log(`  - Translations: 24 hours`);
+
+  if (!isProduction) {
+    devLog('Caching TTLs: surahs list 24h, per-surah 12h, juz 6h, verses 6h, translations 24h');
   }
-  
+
   // Initialize database
   try {
     await initializeDatabase();
@@ -1903,7 +1865,7 @@ setInterval(() => {
   }
   
   if (cleanedCount > 0) {
-    console.log(`Cache cleanup: Removed ${cleanedCount} expired entries`);
+    devLog(`Cache cleanup: Removed ${cleanedCount} expired entries`);
   }
 }, 60 * 60 * 1000); // Run every hour
 
@@ -2219,7 +2181,7 @@ app.get('/api/auth/google/callback',
         ? `${frontendUrl}/dashboard?token=${token}`
         : `${frontendUrl}/onboarding?token=${token}`;
 
-      console.log(`🔄 Redirecting to: ${redirectUrl}`);
+      devLog(`🔄 Redirecting to: ${redirectUrl}`);
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('Google OAuth callback error:', error);
@@ -2777,7 +2739,7 @@ app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
       req.session.save((err) => (err ? reject(err) : resolve()));
     });
 
-    console.log('[QF OAuth] start redirect_uri:', redirectUri, 'session:', req.sessionID);
+    devLog('[QF OAuth] start redirect_uri:', redirectUri, 'session:', req.sessionID);
     res.json({ success: true, url, redirectUri });
   } catch (error) {
     console.error('QF OAuth start error:', error.message || error);
@@ -2849,7 +2811,7 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
     }
 
     if (tokenRes.scope) {
-      console.log('[QF OAuth] granted scopes:', tokenRes.scope);
+      devLog('[QF OAuth] granted scopes:', tokenRes.scope);
     }
 
     await updateUserQfTokens(sessionData.userId, tokenRes);

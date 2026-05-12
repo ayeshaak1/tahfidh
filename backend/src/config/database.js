@@ -2,12 +2,8 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 // Support DATABASE_URL (Railway, Heroku, etc.) or individual DB_* vars (Render, custom)
-if (process.env.NODE_ENV === 'production') {
-  if (process.env.DATABASE_URL) {
-    console.log('✅ DATABASE_URL is set (using connection string)');
-  } else {
-    console.error('❌ DATABASE_URL is NOT set! Copy it from tahfidh-db → Variables into tahfidh-backend → Variables, then redeploy.');
-  }
+if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+  console.error('❌ DATABASE_URL is NOT set! Copy it from tahfidh-db → Variables into tahfidh-backend → Variables, then redeploy.');
 }
 const poolConfig = process.env.DATABASE_URL
   ? {
