@@ -1791,8 +1791,7 @@ app.listen(PORT, async () => {
   }
   console.log('===================================\n');
 
-  const qfEnvBase = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_URL;
-  const qfCallbackFromEnv = qfOAuthRedirectUriFromExplicitBase(qfEnvBase);
+  const qfCallbackFromEnv = qfOAuthRedirectUriFromExplicitBase(getExplicitBackendBaseForLogs());
   if (qfCallbackFromEnv) {
     console.log(`QF OAuth redirect_uri (register this exact URL with QF): ${qfCallbackFromEnv}`);
   } else {
@@ -2625,10 +2624,23 @@ function sha256Base64Url(input) {
 }
 
 function getPublicBaseUrl(req) {
-  const explicit = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_URL;
-  if (explicit) return explicit.replace(/\/+$/g, '');
+  let explicit =
+    process.env.BACKEND_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.RENDER_SERVICE_URL;
+  if (!explicit?.trim() && process.env.RAILWAY_PUBLIC_DOMAIN) {
+    const d = process.env.RAILWAY_PUBLIC_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    explicit = `https://${d}`;
+  }
+  if (explicit?.trim()) {
+    return explicit.replace(/\/+$/g, '');
+  }
   const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http').toString().split(',')[0].trim();
-  return `${proto}://${req.get('host')}`;
+  const hostRaw = (req.headers['x-forwarded-host'] || req.headers.host || (req.get && req.get('host')) || '')
+    .toString()
+    .split(',')[0]
+    .trim();
+  return `${proto}://${hostRaw}`;
 }
 
 /**
@@ -2652,6 +2664,17 @@ function getQfOAuthRedirectUri(req) {
 function qfOAuthRedirectUriFromExplicitBase(base) {
   if (!base) return null;
   return `${normalizeBackendOriginForOAuth(base.replace(/\/+$/g, ''))}/api/qf/oauth/callback`;
+}
+
+function getExplicitBackendBaseForLogs() {
+  let b =
+    process.env.BACKEND_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.RENDER_SERVICE_URL;
+  if (!b?.trim() && process.env.RAILWAY_PUBLIC_DOMAIN) {
+    b = `https://${process.env.RAILWAY_PUBLIC_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+  }
+  return b?.trim() ? b : null;
 }
 
 async function getUserQfTokens(userId) {
@@ -2751,7 +2774,8 @@ app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
     });
 
     const url = `${cfg.authBaseUrl}/oauth2/auth?${params.toString()}`;
-    res.json({ success: true, url });
+    console.log('[QF OAuth] start redirect_uri:', redirectUri);
+    res.json({ success: true, url, redirectUri });
   } catch (error) {
     console.error('QF OAuth start error:', error.message || error);
     res.status(500).json({ success: false, message: 'Failed to start Quran Foundation OAuth' });

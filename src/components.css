@@ -2025,6 +2025,45 @@
   font-size: 1.5rem;
 }
 
+.profile-logout-section {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--beige);
+  border-radius: 25px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+}
+
+.profile-logout-section .profile-logout-btn {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.9rem 1.25rem;
+  border: 2px solid var(--error-red);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--error-red);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.profile-logout-section .profile-logout-btn:hover:not(:disabled) {
+  background: var(--error-red-light);
+  color: var(--error-red);
+}
+
+.profile-logout-section .profile-logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .achievements-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

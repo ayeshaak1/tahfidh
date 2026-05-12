@@ -1449,24 +1449,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
       </section>
 
       {!isGuest && isAuthenticated && (
-        <section
-          className="profile-logout-section"
-          style={{
-            marginTop: '2rem',
-            paddingTop: '1.5rem',
-            borderTop: '1px solid var(--border)',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
+        <section className="profile-logout-section">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="profile-logout-btn"
             onClick={() => {
               signOut();
               navigate('/');
             }}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', minWidth: '140px', justifyContent: 'center' }}
           >
             <LogOut size={18} aria-hidden />
             Log out
