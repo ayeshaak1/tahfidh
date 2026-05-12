@@ -2769,7 +2769,13 @@ app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
       createdAt: Date.now(),
     };
 
-    console.log('[QF OAuth] start redirect_uri:', redirectUri);
+    // Async session stores (e.g. connect-pg-simple) may not flush before res.json() ends the
+    // request; the browser can redirect to QF before the row exists → callback "missing session".
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => (err ? reject(err) : resolve()));
+    });
+
+    console.log('[QF OAuth] start redirect_uri:', redirectUri, 'session:', req.sessionID);
     res.json({ success: true, url, redirectUri });
   } catch (error) {
     console.error('QF OAuth start error:', error.message || error);
@@ -2790,10 +2796,13 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
         hasState: !!state,
         hasSession: !!sessionData,
         stateMatch: !!(sessionData && state === sessionData.state),
+        hasCookieHeader: Boolean(req.headers.cookie),
+        sessionId: req.sessionID,
       });
       return res.status(400).send(
-        'Invalid OAuth callback (missing session). Ensure FRONTEND_URL allows your site in CORS, ' +
-          'then try Connect again. If it persists, confirm BACKEND_URL matches the URL registered as redirect with Quran Foundation.'
+        'Invalid OAuth callback (missing session or state mismatch). Use Connect from Tahfidh in this same browser, ' +
+          'wait a second after the modal loads, then try again. Ensure FRONTEND_URL includes your Netlify origin for CORS. ' +
+          'If it persists, confirm SESSION_SECRET is set on the server and redeploy.'
       );
     }
 
