@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
 const { pool, initializeDatabase } = require('./src/config/database');
 const { getQfOAuthConfig } = require('./src/config/qfOAuthConfig');
 const crypto = require('crypto');
@@ -78,8 +79,16 @@ app.use(express.json());
 // Cross-site fetch to /api/qf/oauth/start must receive Set-Cookie; browsers require
 // SameSite=None + Secure for third-party/cross-site cookie writes; otherwise the
 // OAuth callback hits this server with no session → "Invalid OAuth callback."
+// Railway (and similar) may route /oauth/start and /callback to different instances;
+// MemoryStore loses state → use PostgreSQL so any instance can read the session.
 const sessionCookieSecure = process.env.NODE_ENV === 'production';
+const sessionStore = new PgSession({
+  pool,
+  tableName: 'express_session',
+  createTableIfMissing: true,
+});
 app.use(session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your-session-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
