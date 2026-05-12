@@ -31,6 +31,10 @@ export const STORAGE_KEYS = {
   // ============================================================================
   // Stored client-side only for UI status; actual tokens are stored server-side.
   QF_CONNECTED: 'qfConnected',
+  /** JSON: Record<userId, 'skipped' | 'linked'> — Quran Foundation connect onboarding */
+  QF_ONBOARDING_MAP: 'qfOnboardingByUserId',
+  /** Per-user suffix: `${QF_NOTE_REMINDER_PREFIX}${userId}` — one-time note-save reminder after skip */
+  QF_NOTE_REMINDER_PREFIX: 'qfNoteRemind_',
   
   // ============================================================================
   // SHARED SETTINGS (apply to both user types - UI preferences only)

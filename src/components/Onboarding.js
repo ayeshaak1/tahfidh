@@ -6,6 +6,7 @@ import { Check, Sun, Moon, ArrowRight, Upload } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
 import { StorageHelpers, STORAGE_KEYS, ExportHelpers, Validators } from '../constants/storageConstants';
+import { getQfOnboardingChoice, setPendingQfOfferFromNewSession } from '../utils/qfConnectOnboarding';
 
 const Onboarding = ({ setCurrentPath }) => {
   const navigate = useNavigate();
@@ -23,6 +24,13 @@ const Onboarding = ({ setCurrentPath }) => {
   // Most commonly memorized surahs in ascending order of surah number
   // These are the most frequently memorized surahs by everyone
   const commonSurahs = [1, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114];
+
+  const flagQfOfferIfEligible = () => {
+    const ud = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA);
+    if (ud?.id && getQfOnboardingChoice(ud.id) !== 'skipped') {
+      setPendingQfOfferFromNewSession();
+    }
+  };
 
   React.useEffect(() => {
     setCurrentPath('/onboarding');
@@ -110,7 +118,7 @@ const Onboarding = ({ setCurrentPath }) => {
           // Small delay to ensure localStorage write completes before navigation
           await new Promise(resolve => setTimeout(resolve, 50));
           
-          // Navigate to dashboard
+          flagQfOfferIfEligible();
           navigate('/dashboard');
         } else {
           setImportError('Invalid or missing progress data');
@@ -218,6 +226,7 @@ const Onboarding = ({ setCurrentPath }) => {
       // This ensures App.js can read the data when it loads
       await new Promise(resolve => setTimeout(resolve, 50));
       
+      flagQfOfferIfEligible();
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to save your progress. Please try again.');
@@ -243,9 +252,11 @@ const Onboarding = ({ setCurrentPath }) => {
       // Small delay to ensure localStorage write completes
       await new Promise(resolve => setTimeout(resolve, 50));
       
-    navigate('/dashboard');
+      flagQfOfferIfEligible();
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to skip onboarding. Please try again.');
+    } finally {
       setSubmitting(false);
     }
   };

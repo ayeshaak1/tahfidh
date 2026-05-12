@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Mail, Lock, User, Sun, Moon, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { StorageHelpers, STORAGE_KEYS } from '../constants/storageConstants';
+import { getQfOnboardingChoice, setPendingQfOfferFromNewSession } from '../utils/qfConnectOnboarding';
 
 const Auth = ({ setCurrentPath, onGuestMode }) => {
   const navigate = useNavigate();
@@ -110,6 +112,10 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
   const attemptSignIn = async (allowRetry = true) => {
     try {
       const result = await signIn(email.trim(), password);
+      const ud = StorageHelpers.getJSONItem(STORAGE_KEYS.USER_DATA);
+      if (ud?.id && getQfOnboardingChoice(ud.id) !== 'skipped') {
+        setPendingQfOfferFromNewSession();
+      }
       if (result.needsOnboarding) {
         navigate('/onboarding');
       } else {
@@ -197,6 +203,7 @@ const Auth = ({ setCurrentPath, onGuestMode }) => {
     try {
       // DO NOT transfer guest data automatically - user must export and import manually
       const result = await signUp(signUpEmail.trim(), signUpPassword, name.trim());
+      setPendingQfOfferFromNewSession();
       
       if (result.needsOnboarding) {
         navigate('/onboarding');

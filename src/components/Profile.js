@@ -8,6 +8,7 @@ import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
 import { getApiUrl } from '../utils/apiUrl';
 import qfNotesApi from '../services/qfNotesApi';
+import { setQfOnboardingLinked } from '../utils/qfConnectOnboarding';
 import LottieLoader from './LottieLoader';
 import { 
   STORAGE_KEYS, 
@@ -100,12 +101,15 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         const status = await qfNotesApi.getQfStatus();
         setQfConnected(!!status.connected);
         StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
+        if (status.connected && user?.id) {
+          setQfOnboardingLinked(user.id);
+        }
       } catch (e) {
         setQfConnected(false);
       }
     };
     checkQf();
-  }, [isGuest, isAuthenticated]);
+  }, [isGuest, isAuthenticated, user?.id]);
 
   // After QF OAuth redirect: /profile?qf=connected | ?qf=failed
   useEffect(() => {
@@ -126,6 +130,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           const status = await qfNotesApi.getQfStatus();
           setQfConnected(!!status.connected);
           StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
+          if (status.connected && user?.id) {
+            setQfOnboardingLinked(user.id);
+          }
         } catch {
           setQfConnected(false);
         }

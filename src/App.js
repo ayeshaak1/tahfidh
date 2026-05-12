@@ -17,6 +17,16 @@ import LottieLoader from './components/LottieLoader';
 import versePreloader from './services/versePreloader';
 import progressApi from './services/progressApi';
 import { STORAGE_KEYS, DEFAULT_VALUES, StorageHelpers, Validators } from './constants/storageConstants';
+import qfNotesApi from './services/qfNotesApi';
+import {
+  peekPendingQfOffer,
+  clearPendingQfOffer,
+  setPendingQfOfferFromNewSession,
+  getQfOnboardingChoice,
+  setQfOnboardingLinked,
+  setQfOnboardingSkipped,
+} from './utils/qfConnectOnboarding';
+import QfConnectOfferModal from './components/QfConnectOfferModal';
 import './App.css';
 import './components.css';
 
@@ -28,7 +38,8 @@ function AppContent() {
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [progressLoading, setProgressLoading] = useState(false);
   const [forceLoadTrigger, setForceLoadTrigger] = useState(0); // Force load effect to re-run when mode transition completes
-  const { isAuthenticated, hasCompletedOnboarding, loading: authLoading } = useAuth();
+  const { isAuthenticated, hasCompletedOnboarding, loading: authLoading, user } = useAuth();
+  const [qfConnectModalOpen, setQfConnectModalOpen] = useState(false);
   const loadingRef = useRef(false); // Prevent concurrent loads
   const modeRef = useRef(null); // Track current mode to prevent cross-contamination
   const modeTransitionRef = useRef(false); // Track if we're in a mode transition
@@ -158,6 +169,7 @@ function AppContent() {
       // Store token and preserve the current path (onboarding or dashboard)
       const currentPath = window.location.pathname;
       StorageHelpers.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+      setPendingQfOfferFromNewSession();
       // Store the intended path so we can navigate there after auth loads
       if (currentPath === '/onboarding' || currentPath === '/dashboard') {
         StorageHelpers.setItem('oauth_redirect_path', currentPath);
@@ -174,6 +186,48 @@ function AppContent() {
     // Initialize verse preloader - reduced count to avoid rate limiting
     versePreloader.preloadRandomVerses(5);
   }, []);
+
+  // After email/Google auth + onboarding: offer Quran Foundation link (optional)
+  useEffect(() => {
+    if (authLoading || !isAuthenticated || !hasCompletedOnboarding || isGuest || !user?.id) {
+      return;
+    }
+    const uid = user.id;
+    const choice = getQfOnboardingChoice(uid);
+    if (choice === 'linked') {
+      clearPendingQfOffer();
+      return;
+    }
+    if (choice === 'skipped') {
+      clearPendingQfOffer();
+      return;
+    }
+    const pending = peekPendingQfOffer();
+    if (!pending) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const status = await qfNotesApi.getQfStatus();
+        if (cancelled) return;
+        if (status.connected) {
+          setQfOnboardingLinked(uid);
+          clearPendingQfOffer();
+          return;
+        }
+      } catch {
+        if (!cancelled) clearPendingQfOffer();
+        return;
+      }
+      if (cancelled) return;
+      clearPendingQfOffer();
+      setQfConnectModalOpen(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isAuthenticated, hasCompletedOnboarding, isGuest, user?.id]);
 
   // Load progress when auth state is determined
   useEffect(() => {
@@ -603,6 +657,14 @@ function AppContent() {
         {!['/', '/signin', '/signup', '/onboarding'].includes(currentPath) && (
           <Footer sidebarOpen={sidebarOpen} />
         )}
+        <QfConnectOfferModal
+          open={qfConnectModalOpen}
+          userId={user?.id}
+          onDismiss={(uid) => {
+            if (uid) setQfOnboardingSkipped(uid);
+            setQfConnectModalOpen(false);
+          }}
+        />
       </div>
     </Router>
   );

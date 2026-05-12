@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { STORAGE_KEYS, StorageHelpers } from '../constants/storageConstants';
 import { getApiUrl } from '../utils/apiUrl';
+import { clearPendingQfOffer } from '../utils/qfConnectOnboarding';
 
 const AuthContext = createContext();
 
@@ -176,6 +177,7 @@ export const AuthProvider = ({ children }) => {
     StorageHelpers.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
     StorageHelpers.removeItem(STORAGE_KEYS.QURAN_PROGRESS); // Auth user cache only
     StorageHelpers.removeItem(STORAGE_KEYS.QF_CONNECTED);
+    clearPendingQfOffer();
     // DO NOT clear GUEST_PROGRESS or GUEST_USER_NAME - they belong to guest mode
     setUser(null);
     setIsAuthenticated(false);

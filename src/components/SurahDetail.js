@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Settings, BookOpen, Menu, AlertCircle, Chevr
 import quranApi from '../services/quranApi';
 import LottieLoader from './LottieLoader';
 import qfNotesApi from '../services/qfNotesApi';
+import { shouldShowNoteSyncReminder, markNoteSyncReminderShown } from '../utils/qfConnectOnboarding';
 import { useAuth } from '../contexts/AuthContext';
 import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 import { 
@@ -50,7 +51,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
   const [showSettings, setShowSettings] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   // Notes UI state
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -585,9 +586,14 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       try {
         const status = await qfNotesApi.getQfStatus();
         if (!status.connected) {
-          setNoteError(
-            'Saved in this app. To sync this note to Quran Foundation, open Profile → Settings and use “Notes Sync” (Connect).'
-          );
+          let msg =
+            'Saved in this app. To sync this note to Quran Foundation, open Profile → Settings and use “Notes Sync” (Connect).';
+          if (user?.id && shouldShowNoteSyncReminder(user.id)) {
+            markNoteSyncReminderShown(user.id);
+            msg =
+              'Saved in this app. You chose “Skip” when we offered to link Quran Foundation — connect anytime under Profile → Settings → Notes Sync to sync notes like this one across devices.';
+          }
+          setNoteError(msg);
           return;
         }
       } catch {
@@ -600,10 +606,19 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     } catch (e) {
       // Don't block local save; just show a non-fatal message
       const raw = e.message || 'Saved in this app, but cloud sync failed.';
-      const msg =
+      let msg =
         raw === 'Quran Foundation account not connected'
           ? 'Saved in this app. To sync this note to Quran Foundation, open Profile → Settings and use “Notes Sync” (Connect).'
           : raw;
+      if (
+        raw === 'Quran Foundation account not connected' &&
+        user?.id &&
+        shouldShowNoteSyncReminder(user.id)
+      ) {
+        markNoteSyncReminderShown(user.id);
+        msg =
+          'Saved in this app. You chose “Skip” when we offered to link Quran Foundation — connect anytime under Profile → Settings → Notes Sync to sync notes like this one across devices.';
+      }
       setNoteError(msg);
     } finally {
       setNoteSaving(false);
