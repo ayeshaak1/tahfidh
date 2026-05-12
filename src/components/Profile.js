@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
-import { getApiUrl, getQfOAuthCallbackUrlGuess } from '../utils/apiUrl';
+import { getApiUrl } from '../utils/apiUrl';
 import qfNotesApi from '../services/qfNotesApi';
 import { setQfOnboardingLinked } from '../utils/qfConnectOnboarding';
 import LottieLoader from './LottieLoader';
@@ -67,7 +67,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const [juzMapping, setJuzMapping] = useState(null); // Map surah ID to juz number
   const [qfConnected, setQfConnected] = useState(false);
   const [qfConnecting, setQfConnecting] = useState(false);
-  const [qfOAuthCallbackDisplay, setQfOAuthCallbackDisplay] = useState(() => getQfOAuthCallbackUrlGuess());
   const { theme, setTheme, toggleTheme, isDark } = useTheme();
   const {
     quranFont,
@@ -102,9 +101,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         const status = await qfNotesApi.getQfStatus();
         setQfConnected(!!status.connected);
         StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
-        if (status.oauthCallbackUrl) {
-          setQfOAuthCallbackDisplay(status.oauthCallbackUrl);
-        }
         if (status.connected && user?.id) {
           setQfOnboardingLinked(user.id);
         }
@@ -127,16 +123,13 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     if (qf === 'connected') {
       setProfileError('');
       setProfileSuccess(
-        'Quran Foundation connected. Verse notes with 6 or more characters will sync to your QF account.'
+        'Note sync is on. Longer verse notes will stay in sync with your Quran.com account.'
       );
       (async () => {
         try {
           const status = await qfNotesApi.getQfStatus();
           setQfConnected(!!status.connected);
           StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
-          if (status.oauthCallbackUrl) {
-            setQfOAuthCallbackDisplay(status.oauthCallbackUrl);
-          }
           if (status.connected && user?.id) {
             setQfOnboardingLinked(user.id);
           }
@@ -147,7 +140,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     } else if (qf === 'failed') {
       setProfileSuccess('');
       setProfileError(
-        'Quran Foundation connection did not finish. In the QF developer console, register redirect URL: your backend base URL + /api/qf/oauth/callback (must match exactly), then try Connect again.'
+        'Note sync could not finish. Try linking again, or contact support if it keeps failing.'
       );
     }
   }, [searchParams, setSearchParams, user?.id]);
@@ -162,7 +155,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         throw new Error('Missing OAuth URL');
       }
     } catch (e) {
-      setProfileError(e.message || 'Failed to connect Quran Foundation');
+      setProfileError(e.message || 'Could not start sign-in for note sync.');
     } finally {
       setQfConnecting(false);
     }
@@ -1146,13 +1139,15 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
         {!isGuest && isAuthenticated && (
           <div className="setting-group">
-            <h4>Quran Foundation</h4>
+            <h4>Note Sync</h4>
             <div className="setting-item">
               <div className="label-with-help">
-                <label>Notes Sync</label>
+                <label>Quran.com account</label>
                 <div className="help-tooltip">
                   <HelpCircle size={16} />
-                  <span className="tooltip-text">Connect to sync your verse notes using Quran Foundation User APIs</span>
+                  <span className="tooltip-text">
+                    Link once so verse notes can follow you across devices (uses your Quran.com login).
+                  </span>
                 </div>
               </div>
               <div className="toggle-buttons">
@@ -1161,23 +1156,22 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   onClick={handleConnectQf}
                   disabled={qfConnecting || qfConnected}
                 >
-                  {qfConnected ? 'Connected' : (qfConnecting ? 'Connecting…' : 'Connect')}
+                  {qfConnected ? 'Linked' : (qfConnecting ? 'Signing in…' : 'Link account')}
                 </button>
               </div>
               {!qfConnected && (
                 <p
                   style={{
                     marginTop: '0.75rem',
-                    fontSize: '0.85rem',
-                    opacity: 0.88,
-                    lineHeight: 1.45,
+                    fontSize: '0.875rem',
+                    color: 'var(--text)',
+                    opacity: 0.9,
+                    lineHeight: 1.5,
+                    maxWidth: '36rem',
                   }}
                 >
-                  Register this redirect URL with Quran Foundation (exact match, including{' '}
-                  <code style={{ fontSize: '0.8em' }}>/api</code>):{' '}
-                  <code style={{ display: 'block', marginTop: '0.35rem', wordBreak: 'break-all', fontSize: '0.78em' }}>
-                    {qfOAuthCallbackDisplay}
-                  </code>
+                  Optional. Your memorization is already saved here—linking only affects notes you add
+                  on verses.
                 </p>
               )}
             </div>

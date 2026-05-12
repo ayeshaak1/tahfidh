@@ -568,7 +568,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       return;
     }
 
-    // Quran Foundation notes require 6+ chars; show error only when user tries to save.
+    // Remote note API requires 6+ chars; show error only when user tries to save.
     if (trimmed.length > 0 && trimmed.length < 6) {
       setNoteError('Note must be at least 6 characters to sync. It was saved locally.');
       return;
@@ -587,11 +587,11 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
         const status = await qfNotesApi.getQfStatus();
         if (!status.connected) {
           let msg =
-            'Saved in this app. To sync this note to Quran Foundation, open Profile → Settings and use “Notes Sync” (Connect).';
+            'Saved in this app. To sync this note, open Profile → Settings → Note Sync and tap Link account.';
           if (user?.id && shouldShowNoteSyncReminder(user.id)) {
             markNoteSyncReminderShown(user.id);
             msg =
-              'Saved in this app. You chose “Skip” when we offered to link Quran Foundation — connect anytime under Profile → Settings → Notes Sync to sync notes like this one across devices.';
+              'Saved in this app. You skipped linking earlier—you can turn on Note Sync anytime under Profile → Settings.';
           }
           setNoteError(msg);
           return;
@@ -608,7 +608,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       const raw = e.message || 'Saved in this app, but cloud sync failed.';
       let msg =
         raw === 'Quran Foundation account not connected'
-          ? 'Saved in this app. To sync this note to Quran Foundation, open Profile → Settings and use “Notes Sync” (Connect).'
+          ? 'Saved in this app. To sync this note, open Profile → Settings → Note Sync and tap Link account.'
           : raw;
       if (
         raw === 'Quran Foundation account not connected' &&
@@ -617,7 +617,7 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       ) {
         markNoteSyncReminderShown(user.id);
         msg =
-          'Saved in this app. You chose “Skip” when we offered to link Quran Foundation — connect anytime under Profile → Settings → Notes Sync to sync notes like this one across devices.';
+          'Saved in this app. You skipped linking earlier—you can turn on Note Sync anytime under Profile → Settings.';
       }
       setNoteError(msg);
     } finally {

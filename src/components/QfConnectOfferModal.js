@@ -3,50 +3,19 @@ import { X, StickyNote, Link2 } from 'lucide-react';
 import qfNotesApi from '../services/qfNotesApi';
 
 /**
- * Post-auth offer: optional Quran.com account link for verse note backup (same flow as Profile).
+ * Post-auth offer: optional Quran.com link so verse notes can sync across devices.
  */
 const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
-  const [oauthCallbackHint, setOauthCallbackHint] = useState('');
-  const [qfOAuthMeta, setQfOAuthMeta] = useState(null);
 
   useEffect(() => {
-    if (!open) {
-      setOauthCallbackHint('');
-      setQfOAuthMeta(null);
-      return;
-    }
+    if (!open) return;
     setConnecting(false);
     setError('');
-    let cancelled = false;
-    (async () => {
-      try {
-        const s = await qfNotesApi.getQfStatus();
-        if (cancelled) return;
-        if (s.oauthCallbackUrl) setOauthCallbackHint(s.oauthCallbackUrl);
-        if (s.qfOAuthClientId) {
-          setQfOAuthMeta({
-            clientId: s.qfOAuthClientId,
-            environment: s.qfOAuthEnvironment,
-            authBaseUrl: s.qfOAuthAuthBaseUrl,
-          });
-        } else {
-          setQfOAuthMeta(null);
-        }
-      } catch {
-        if (!cancelled) {
-          setOauthCallbackHint('');
-          setQfOAuthMeta(null);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
   }, [open]);
 
-  // Returning from auth.quran.com via back can restore the tab from bfcache with connecting still true.
+  // Returning from auth via back can restore the tab from bfcache with connecting still true.
   useEffect(() => {
     if (!open) return undefined;
     const onPageShow = (e) => {
@@ -69,10 +38,7 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
     setConnecting(true);
     try {
       const body = await qfNotesApi.startQfOAuth();
-      const { url, redirectUri } = body || {};
-      if (redirectUri && oauthCallbackHint && redirectUri !== oauthCallbackHint) {
-        setOauthCallbackHint(redirectUri);
-      }
+      const { url } = body || {};
       if (url) {
         window.location.href = url;
       } else {
@@ -80,10 +46,7 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
       }
     } catch (e) {
       setConnecting(false);
-      setError(
-        e.message ||
-          'Something went wrong. You can try again anytime from your profile, under Settings.'
-      );
+      setError(e.message || 'Something went wrong. You can try again from your profile under Settings.');
     }
   };
 
@@ -94,7 +57,7 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
         <div className="settings-popup-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <StickyNote size={24} color="var(--rose)" aria-hidden />
-            <h3>Back up your verse notes?</h3>
+            <h3>Note Sync</h3>
           </div>
           <button
             type="button"
@@ -107,69 +70,11 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
           </button>
         </div>
         <div className="settings-popup-content">
-          <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
-            If you use Tahfidh on another device later, connecting once helps the notes you jot on
-            verses show up there too. Your memorization is already saved with your account—this step
-            is only for those notes. You can skip and turn it on later from your profile settings.
+          <p style={{ marginBottom: '1.25rem', color: 'var(--text)', lineHeight: 1.55 }}>
+            Sign in once with Quran.com to keep verse notes in sync when you use Tahfidh on another
+            device. Your memorization progress stays on your Tahfidh account—this only covers notes
+            on verses. You can skip and turn this on later in Settings.
           </p>
-          {oauthCallbackHint && (
-            <p
-              style={{
-                marginBottom: '1rem',
-                fontSize: '0.82rem',
-                opacity: 0.88,
-                lineHeight: 1.45,
-                color: 'var(--text)',
-              }}
-            >
-              If you see a “redirect_uri” error on the next page, add the URL below as an{' '}
-              <strong>allowed redirect</strong> in the Quran Foundation developer console for the{' '}
-              <strong>same OAuth client</strong> as your Railway <code style={{ fontSize: '0.85em' }}>QURAN_CLIENT_ID</code>
-              (exact URL, including <code style={{ fontSize: '0.85em' }}>https://</code> and path).
-              {qfOAuthMeta?.clientId ? (
-                <>
-                  {' '}
-                  This deploy uses Client ID{' '}
-                  <code style={{ fontSize: '0.85em', wordBreak: 'break-all' }}>{qfOAuthMeta.clientId}</code>
-                  {qfOAuthMeta.environment ? (
-                    <>
-                      {' '}
-                      (<strong>{qfOAuthMeta.environment}</strong>
-                      {qfOAuthMeta.authBaseUrl ? (
-                        <>
-                          ,{' '}
-                          <span style={{ wordBreak: 'break-all' }}>{qfOAuthMeta.authBaseUrl}</span>
-                        </>
-                      ) : null}
-                      ).
-                    </>
-                  ) : (
-                    '.'
-                  )}
-                </>
-              ) : (
-                <>
-                  {' '}
-                  Use the OAuth app that matches <code style={{ fontSize: '0.85em' }}>QURAN_CLIENT_ID</code> in
-                  Railway.
-                </>
-              )}
-              <code
-                style={{
-                  display: 'block',
-                  marginTop: '0.4rem',
-                  wordBreak: 'break-all',
-                  fontSize: '0.78em',
-                  padding: '0.5rem 0.65rem',
-                  borderRadius: '8px',
-                  background: 'var(--cream)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                {oauthCallbackHint}
-              </code>
-            </p>
-          )}
           {error && (
             <div
               style={{
@@ -194,7 +99,7 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
             }}
           >
             <button type="button" className="skip-button" onClick={dismiss} disabled={connecting}>
-              Skip for Now
+              Not now
             </button>
             <button
               type="button"
@@ -204,7 +109,7 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
               style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Link2 size={16} aria-hidden />
-              {connecting ? 'Connecting…' : 'Connect'}
+              {connecting ? 'Continuing…' : 'Continue'}
             </button>
           </div>
         </div>
