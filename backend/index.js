@@ -9,8 +9,14 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const { pool, initializeDatabase } = require('./src/config/database');
-const { getQfOAuthConfig } = require('./src/config/qfOAuthConfig');
-const crypto = require('crypto');
+const { getQfOAuthConfig, getQfOAuthScope } = require('./src/config/qfOAuthConfig');
+const {
+  buildAuthorizationUrl,
+  exchangeAuthorizationCode,
+  refreshWithRefreshToken,
+  verifyIdTokenNonce,
+  getDecodedSub,
+} = require('./src/qf/oauthFlow');
 require('dotenv').config();
 
 const app = express();
@@ -1815,7 +1821,7 @@ app.listen(PORT, async () => {
     console.log('=== QURAN FOUNDATION (USER OAUTH / NOTES) ===');
     console.log(`QF user auth: ${qfCfg.authBaseUrl} (must match where your OAuth client was registered)`);
     console.log(`QF user APIs: ${qfCfg.apiBaseUrl}`);
-    console.log(`QF OAuth scopes: ${process.env.QF_OAUTH_SCOPES || 'openid offline_access user note (default)'}`);
+    console.log(`QF OAuth scopes: ${getQfOAuthScope()}`);
   } catch (e) {
     console.warn('QF OAuth config unavailable:', e.message || e);
   }
@@ -2622,19 +2628,6 @@ app.delete('/api/auth/account', authenticateToken, async (req, res) => {
 // QURAN FOUNDATION USER APIs (OAuth + Notes proxy)
 // ============================================================================
 
-function base64UrlEncode(buffer) {
-  return buffer
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-}
-
-function sha256Base64Url(input) {
-  const hash = crypto.createHash('sha256').update(input).digest();
-  return base64UrlEncode(hash);
-}
-
 function getPublicBaseUrl(req) {
   let explicit =
     (process.env.BACKEND_URL || '').trim() ||
@@ -2723,6 +2716,7 @@ async function updateUserQfTokens(userId, tokens) {
   } = tokens;
 
   const expiry = expires_in ? new Date(Date.now() + (expires_in - 60) * 1000) : null; // 60s buffer
+  const qfSub = getDecodedSub(id_token);
 
   await pool.query(
     `UPDATE users
@@ -2730,9 +2724,10 @@ async function updateUserQfTokens(userId, tokens) {
          qf_refresh_token = COALESCE($2, qf_refresh_token),
          qf_id_token = COALESCE($3, qf_id_token),
          qf_token_expiry = COALESCE($4, qf_token_expiry),
+         qf_sub = COALESCE($6, qf_sub),
          updated_at = CURRENT_TIMESTAMP
      WHERE id = $5`,
-    [access_token || null, refresh_token || null, id_token || null, expiry, userId]
+    [access_token || null, refresh_token || null, id_token || null, expiry, userId, qfSub]
   );
 }
 
@@ -2744,26 +2739,16 @@ async function ensureValidQfAccessToken(userId) {
   const isExpired = current.qf_token_expiry && new Date(current.qf_token_expiry).getTime() <= Date.now();
   if (!isExpired) return current.qf_access_token;
 
-  if (!current.qf_refresh_token || !cfg.clientSecret) {
+  if (!current.qf_refresh_token) {
+    return null;
+  }
+  if (!cfg.clientSecret) {
     return null;
   }
 
-  const auth = Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64');
-  const response = await axios({
-    method: 'post',
-    url: `${cfg.authBaseUrl}/oauth2/token`,
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    data: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: current.qf_refresh_token,
-    }).toString(),
-  });
-
-  await updateUserQfTokens(userId, response.data);
-  return response.data.access_token;
+  const data = await refreshWithRefreshToken(cfg, current.qf_refresh_token);
+  await updateUserQfTokens(userId, data);
+  return data.access_token;
 }
 
 // Returns an authorization URL the frontend can redirect to.
@@ -2771,38 +2756,19 @@ app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
   try {
     const cfg = getQfOAuthConfig();
     const redirectUri = getQfOAuthRedirectUri(req);
+    const scope = getQfOAuthScope();
 
-    const state = base64UrlEncode(crypto.randomBytes(32));
-    const nonce = base64UrlEncode(crypto.randomBytes(32));
-    const codeVerifier = base64UrlEncode(crypto.randomBytes(32));
-    const codeChallenge = sha256Base64Url(codeVerifier);
+    const { url, pkce } = buildAuthorizationUrl(cfg, { redirectUri, scope });
 
     req.session.qfOAuth = {
-      state,
-      nonce,
-      codeVerifier,
+      state: pkce.state,
+      nonce: pkce.nonce,
+      codeVerifier: pkce.codeVerifier,
       redirectUri,
       userId: req.user.userId,
       createdAt: Date.now(),
     };
 
-    // Match QF docs / official example: `user` + umbrella `note` (not only fine-grained
-    // note.* scopes — many provisioned clients allow `note` but not every sub-scope).
-    // Override with QF_OAUTH_SCOPES="openid offline_access user note" if QF support advises.
-    const scope = (process.env.QF_OAUTH_SCOPES || 'openid offline_access user note').trim();
-
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: cfg.clientId,
-      redirect_uri: redirectUri,
-      scope,
-      state,
-      nonce,
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
-    });
-
-    const url = `${cfg.authBaseUrl}/oauth2/auth?${params.toString()}`;
     console.log('[QF OAuth] start redirect_uri:', redirectUri);
     res.json({ success: true, url, redirectUri });
   } catch (error) {
@@ -2831,26 +2797,24 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
       );
     }
 
-    const auth = cfg.clientSecret
-      ? Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64')
-      : null;
-
-    const tokenRes = await axios({
-      method: 'post',
-      url: `${cfg.authBaseUrl}/oauth2/token`,
-      headers: {
-        ...(auth ? { 'Authorization': `Basic ${auth}` } : {}),
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      data: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code.toString(),
-        redirect_uri: sessionData.redirectUri,
-        code_verifier: sessionData.codeVerifier,
-      }).toString(),
+    const tokenRes = await exchangeAuthorizationCode(cfg, {
+      code: code.toString(),
+      redirectUri: sessionData.redirectUri,
+      codeVerifier: sessionData.codeVerifier,
     });
 
-    await updateUserQfTokens(sessionData.userId, tokenRes.data);
+    const nonceCheck = verifyIdTokenNonce(tokenRes.id_token, sessionData.nonce);
+    if (!nonceCheck.ok) {
+      console.warn('[QF OAuth] id_token nonce validation failed:', nonceCheck.reason);
+      const frontendUrl = primaryFrontendOrigin();
+      return res.redirect(`${frontendUrl}/profile?qf=failed`);
+    }
+
+    if (tokenRes.scope) {
+      console.log('[QF OAuth] granted scopes:', tokenRes.scope);
+    }
+
+    await updateUserQfTokens(sessionData.userId, tokenRes);
 
     // Cleanup session
     req.session.qfOAuth = null;
@@ -2885,6 +2849,7 @@ app.get('/api/qf/status', authenticateToken, async (req, res) => {
       connected: !!tokens?.qf_access_token,
       expiresAt: tokens?.qf_token_expiry || null,
       oauthCallbackUrl: getQfOAuthRedirectUri(req),
+      qfOAuthScopes: getQfOAuthScope(),
       ...qfOAuthMeta,
     });
   } catch (error) {

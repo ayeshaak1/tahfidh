@@ -1,19 +1,40 @@
 require('dotenv').config();
 
-function getQfOAuthConfig() {
-  // Reuse existing env vars (per project convention)
-  // - QURAN_CLIENT_ID / QURAN_CLIENT_SECRET are used for Content APIs
-  // - Hackathon user-related APIs can use the same client if provisioned that way
-  const clientId = process.env.QURAN_CLIENT_ID || process.env.QF_CLIENT_ID;
-  const clientSecret = process.env.QURAN_CLIENT_SECRET || process.env.QF_CLIENT_SECRET;
+/**
+ * Step 1 — OAuth client + environment (do not mix tokens across envs).
+ *
+ * | Variable | Effect |
+ * |----------|--------|
+ * | QF_ENV=production | oauth2.quran.foundation + apis.quran.foundation |
+ * | QF_ENV=prelive | prelive-oauth2 + apis-prelive |
+ * | QURAN_USE_PREPROD=true | Same as prelive (legacy) |
+ * | (default) NODE_ENV=production | production; else prelive for local dev |
+ *
+ * Credentials: QURAN_CLIENT_ID + QURAN_CLIENT_SECRET (or QF_* aliases).
+ * Scopes: QF_OAUTH_SCOPES (space-separated). Default tuned for verse notes User API.
+ *
+ * @see https://api-docs.quran.foundation/docs/tutorials/oidc/client-setup/
+ */
+const DEFAULT_QF_OAUTH_SCOPES = 'openid offline_access user note';
 
-  // Environment selection:
-  // - If QF_ENV is set, honor it
-  // - Otherwise, reuse existing QURAN_USE_PREPROD + NODE_ENV convention
-  const env =
-    (process.env.QF_ENV ||
-      (process.env.QURAN_USE_PREPROD === 'true' ? 'prelive' : (process.env.NODE_ENV === 'production' ? 'production' : 'prelive'))
-    ).toLowerCase();
+function getQfOAuthScope() {
+  return (process.env.QF_OAUTH_SCOPES || DEFAULT_QF_OAUTH_SCOPES).trim();
+}
+
+function getQfOAuthConfig() {
+  const clientId = (process.env.QURAN_CLIENT_ID || process.env.QF_CLIENT_ID || '').trim();
+  const clientSecret = (process.env.QURAN_CLIENT_SECRET || process.env.QF_CLIENT_SECRET || '').trim();
+
+  const env = (
+    process.env.QF_ENV ||
+    (process.env.QURAN_USE_PREPROD === 'true'
+      ? 'prelive'
+      : process.env.NODE_ENV === 'production'
+        ? 'production'
+        : 'prelive')
+  )
+    .toString()
+    .toLowerCase();
 
   if (!clientId) {
     throw new Error(
@@ -26,11 +47,15 @@ function getQfOAuthConfig() {
   return {
     env: isProd ? 'production' : 'prelive',
     clientId,
-    clientSecret,
+    clientSecret: clientSecret || undefined,
     authBaseUrl: isProd ? 'https://oauth2.quran.foundation' : 'https://prelive-oauth2.quran.foundation',
     apiBaseUrl: isProd ? 'https://apis.quran.foundation' : 'https://apis-prelive.quran.foundation',
   };
 }
 
-module.exports = { getQfOAuthConfig };
+/** True for Request Access confidential server clients (default). */
+function isQfConfidentialClient(cfg) {
+  return Boolean(cfg && cfg.clientSecret);
+}
 
+module.exports = { getQfOAuthConfig, getQfOAuthScope, isQfConfidentialClient, DEFAULT_QF_OAUTH_SCOPES };
