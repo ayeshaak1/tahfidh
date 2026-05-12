@@ -813,9 +813,9 @@
 }
 
 .achievements-section h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--text);
-  font-size: 1.2rem !important;
+  font-size: 1.5rem;
 }
 
 .achievements-container {
@@ -1783,8 +1783,8 @@
   }
 
   .achievements-section h3 {
-    font-size: 1.25rem;
-    margin-bottom: 1.25rem;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .achievements-container {

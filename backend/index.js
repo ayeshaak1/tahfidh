@@ -1791,9 +1791,12 @@ app.listen(PORT, async () => {
   }
   console.log('===================================\n');
 
-  const qfCallbackFromEnv = qfOAuthRedirectUriFromExplicitBase(getExplicitBackendBaseForLogs());
+  const qfCallbackFromEnv = getQfOAuthRedirectUriForStartupLog();
   if (qfCallbackFromEnv) {
     console.log(`QF OAuth redirect_uri (register this exact URL with QF): ${qfCallbackFromEnv}`);
+    if (process.env.QF_OAUTH_REDIRECT_URI?.trim()) {
+      console.log('(using QF_OAUTH_REDIRECT_URI override)');
+    }
   } else {
     console.log('QF OAuth redirect_uri: derived per request from Host (set BACKEND_URL for a stable URL to register with QF)');
   }
@@ -2657,8 +2660,24 @@ function normalizeBackendOriginForOAuth(base) {
   return b;
 }
 
+/**
+ * OAuth callback URL sent to QF on /oauth2/auth. Must match a pre-registered URL exactly.
+ * Set QF_OAUTH_REDIRECT_URI on the server if auto-detection (BACKEND_URL / Host) is wrong.
+ */
 function getQfOAuthRedirectUri(req) {
+  const override = process.env.QF_OAUTH_REDIRECT_URI?.trim();
+  if (override) {
+    return override.replace(/\/+$/g, '');
+  }
   return `${normalizeBackendOriginForOAuth(getPublicBaseUrl(req))}/api/qf/oauth/callback`;
+}
+
+function getQfOAuthRedirectUriForStartupLog() {
+  const override = process.env.QF_OAUTH_REDIRECT_URI?.trim();
+  if (override) {
+    return override.replace(/\/+$/g, '');
+  }
+  return qfOAuthRedirectUriFromExplicitBase(getExplicitBackendBaseForLogs());
 }
 
 function qfOAuthRedirectUriFromExplicitBase(base) {

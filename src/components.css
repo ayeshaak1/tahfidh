@@ -2030,9 +2030,15 @@
   box-sizing: border-box;
   background: var(--beige);
   border-radius: 25px;
-  padding: 1.5rem 2rem;
+  padding: 2rem;
   margin-bottom: 2rem;
   border: 1px solid var(--border);
+}
+
+.profile-logout-section h3 {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  font-size: 1.5rem;
 }
 
 .profile-logout-section .profile-logout-btn {

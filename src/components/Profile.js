@@ -1450,6 +1450,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
 
       {!isGuest && isAuthenticated && (
         <section className="profile-logout-section">
+          <h3>Logout</h3>
           <button
             type="button"
             className="profile-logout-btn"

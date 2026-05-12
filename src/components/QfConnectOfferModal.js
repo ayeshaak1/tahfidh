@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, StickyNote, Link2 } from 'lucide-react';
 import qfNotesApi from '../services/qfNotesApi';
 
@@ -8,6 +8,28 @@ import qfNotesApi from '../services/qfNotesApi';
 const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
+  const [oauthCallbackHint, setOauthCallbackHint] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setOauthCallbackHint('');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const s = await qfNotesApi.getQfStatus();
+        if (!cancelled && s.oauthCallbackUrl) {
+          setOauthCallbackHint(s.oauthCallbackUrl);
+        }
+      } catch {
+        if (!cancelled) setOauthCallbackHint('');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -19,7 +41,11 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
     setError('');
     setConnecting(true);
     try {
-      const { url } = await qfNotesApi.startQfOAuth();
+      const body = await qfNotesApi.startQfOAuth();
+      const { url, redirectUri } = body || {};
+      if (redirectUri && oauthCallbackHint && redirectUri !== oauthCallbackHint) {
+        setOauthCallbackHint(redirectUri);
+      }
       if (url) {
         window.location.href = url;
       } else {
@@ -59,6 +85,34 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
             verses show up there too. Your memorization is already saved with your account—this step
             is only for those notes. You can skip and turn it on later from your profile settings.
           </p>
+          {oauthCallbackHint && (
+            <p
+              style={{
+                marginBottom: '1rem',
+                fontSize: '0.82rem',
+                opacity: 0.88,
+                lineHeight: 1.45,
+                color: 'var(--text)',
+              }}
+            >
+              If you see a “redirect” error on the next page, add this <strong>exact</strong> URL in
+              your Quran app / developer settings as an allowed redirect:{' '}
+              <code
+                style={{
+                  display: 'block',
+                  marginTop: '0.4rem',
+                  wordBreak: 'break-all',
+                  fontSize: '0.78em',
+                  padding: '0.5rem 0.65rem',
+                  borderRadius: '8px',
+                  background: 'var(--cream)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                {oauthCallbackHint}
+              </code>
+            </p>
+          )}
           {error && (
             <div
               style={{
