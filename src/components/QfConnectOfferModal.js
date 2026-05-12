@@ -3,7 +3,7 @@ import { X, StickyNote, Link2 } from 'lucide-react';
 import qfNotesApi from '../services/qfNotesApi';
 
 /**
- * Post-auth offer: optional Quran.com link so verse notes can sync across devices.
+ * Post-auth offer: optional account link so verse notes can sync across devices.
  */
 const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
   const [connecting, setConnecting] = useState(false);
@@ -71,9 +71,8 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
         </div>
         <div className="settings-popup-content">
           <p style={{ marginBottom: '1.25rem', color: 'var(--text)', lineHeight: 1.55 }}>
-            Sign in once with Quran.com to keep verse notes in sync when you use Tahfidh on another
-            device. Your memorization progress stays on your Tahfidh account—this only covers notes
-            on verses. You can skip and turn this on later in Settings.
+            Link your account once so verse notes stay in sync when you use Tahfidh on another device.
+            You can skip and turn this on later in Settings.
           </p>
           {error && (
             <div

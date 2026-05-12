@@ -607,11 +607,11 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
       // Don't block local save; just show a non-fatal message
       const raw = e.message || 'Saved in this app, but cloud sync failed.';
       let msg =
-        raw === 'Quran Foundation account not connected'
+        raw === 'Note sync is not linked'
           ? 'Saved in this app. To sync this note, open Profile → Settings → Note Sync and tap Link account.'
           : raw;
       if (
-        raw === 'Quran Foundation account not connected' &&
+        raw === 'Note sync is not linked' &&
         user?.id &&
         shouldShowNoteSyncReminder(user.id)
       ) {

@@ -27,11 +27,11 @@ export const STORAGE_KEYS = {
   ONBOARDING_COMPLETE: 'onboardingComplete',  // Whether auth user completed onboarding
 
   // ============================================================================
-  // QURAN FOUNDATION USER APIs (OAuth-linked to auth users)
+  // NOTE SYNC (server-linked; client stores UI flags only)
   // ============================================================================
   // Stored client-side only for UI status; actual tokens are stored server-side.
   QF_CONNECTED: 'qfConnected',
-  /** JSON: Record<userId, 'skipped' | 'linked'> — Quran Foundation connect onboarding */
+  /** JSON: Record<userId, 'skipped' | 'linked'> — note sync onboarding */
   QF_ONBOARDING_MAP: 'qfOnboardingByUserId',
   /** Per-user suffix: `${QF_NOTE_REMINDER_PREFIX}${userId}` — one-time note-save reminder after skip */
   QF_NOTE_REMINDER_PREFIX: 'qfNoteRemind_',

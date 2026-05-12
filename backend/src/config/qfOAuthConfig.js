@@ -77,7 +77,7 @@ function getQfOAuthConfig() {
 
   if (!clientId) {
     throw new Error(
-      'Missing Quran Foundation user OAuth credentials. Set QF_OAUTH_CLIENT_ID or (for prelive) QURAN_CLIENT_ID_PREPROD / QURAN_CLIENT_ID. Request access: https://api-docs.quran.foundation/request-access'
+      'Missing note sync OAuth credentials. Set QF_OAUTH_CLIENT_ID / QF_OAUTH_CLIENT_SECRET, or QURAN_CLIENT_ID_PREPROD / QURAN_CLIENT_ID (and matching secrets) per your server docs.'
     );
   }
 

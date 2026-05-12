@@ -187,7 +187,7 @@ function AppContent() {
     versePreloader.preloadRandomVerses(5);
   }, []);
 
-  // After email/Google auth + onboarding: offer Quran Foundation link (optional)
+  // After email/Google auth + onboarding: offer optional note sync link
   useEffect(() => {
     if (authLoading || !isAuthenticated || !hasCompletedOnboarding || isGuest || !user?.id) {
       return;

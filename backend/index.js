@@ -1761,7 +1761,7 @@ app.listen(PORT, async () => {
 
   const qfCallbackFromEnv = getQfOAuthRedirectUriForStartupLog();
   if (qfCallbackFromEnv) {
-    console.log(`QF OAuth redirect (register with Quran Foundation): ${qfCallbackFromEnv}`);
+    console.log(`Note sync OAuth redirect (register with your identity provider): ${qfCallbackFromEnv}`);
     if (process.env.QF_OAUTH_REDIRECT_URI?.trim()) {
       console.log('(QF_OAUTH_REDIRECT_URI override in use)');
     }
@@ -2743,7 +2743,7 @@ app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
     res.json({ success: true, url, redirectUri });
   } catch (error) {
     console.error('QF OAuth start error:', error.message || error);
-    res.status(500).json({ success: false, message: 'Failed to start Quran Foundation OAuth' });
+    res.status(500).json({ success: false, message: 'Failed to start note sync' });
   }
 });
 
@@ -2774,10 +2774,10 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
         sessionId: req.sessionID,
       });
       return res.status(400).type('html').send(
-        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Quran connect</title></head><body>' +
-          '<p>This address is only used <strong>after</strong> Quran Foundation sends you back here with a <code>code</code> in the URL.</p>' +
-          `<p>If you opened this link directly, go to <a href="${frontendUrl}">Tahfidh</a> → Profile (or the notes prompt) → <strong>Connect</strong>.</p>` +
-          '<p>If the browser showed a <strong>redirect_uri</strong> error on auth.quran.com, Quran Foundation must allow this exact redirect for your Client ID:</p>' +
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Note sync</title></head><body>' +
+          '<p>This address is only used <strong>after</strong> sign-in sends you back here with a <code>code</code> in the URL.</p>' +
+          `<p>If you opened this link directly, open <a href="${frontendUrl}">Tahfidh</a> → Profile → Settings → <strong>Note Sync</strong> → <strong>Link account</strong>.</p>` +
+          '<p>If you saw a <strong>redirect_uri</strong> error, the OAuth app for this server must allow this exact redirect URL:</p>' +
           `<p><code style="word-break:break-all">${registeredUri}</code></p>` +
           '</body></html>'
       );
@@ -2793,8 +2793,8 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
         sessionId: req.sessionID,
       });
       return res.status(400).send(
-        'Invalid OAuth callback (missing session or state mismatch). Click Connect from Tahfidh, complete login on Quran in the same browser, ' +
-          'and do not bookmark this callback URL. Ensure FRONTEND_URL includes your Netlify origin. Confirm SESSION_SECRET is set on Railway.'
+        'Invalid note sync callback (missing session or state mismatch). Open Tahfidh, use Link account under Profile → Settings → Note Sync, ' +
+          'complete sign-in in the same browser, and do not bookmark this callback URL. Ensure FRONTEND_URL matches your site and SESSION_SECRET is set on the server.'
       );
     }
 
@@ -2862,7 +2862,7 @@ app.get('/api/qf/notes/by-verse/:verseKey', authenticateToken, async (req, res) 
     const cfg = getQfOAuthConfig();
     const accessToken = await ensureValidQfAccessToken(req.user.userId);
     if (!accessToken) {
-      return res.status(401).json({ success: false, message: 'Quran Foundation account not connected' });
+      return res.status(401).json({ success: false, message: 'Note sync is not linked' });
     }
 
     const verseKey = req.params.verseKey;
@@ -2888,7 +2888,7 @@ app.post('/api/qf/notes', authenticateToken, async (req, res) => {
     const cfg = getQfOAuthConfig();
     const accessToken = await ensureValidQfAccessToken(req.user.userId);
     if (!accessToken) {
-      return res.status(401).json({ success: false, message: 'Quran Foundation account not connected' });
+      return res.status(401).json({ success: false, message: 'Note sync is not linked' });
     }
 
     const url = `${cfg.apiBaseUrl}/auth/v1/notes`;

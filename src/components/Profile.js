@@ -90,7 +90,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     setCurrentPath('/profile');
   }, [setCurrentPath]);
 
-  // Quran Foundation connection status (auth users only)
+  // Note sync link status (auth users only)
   useEffect(() => {
     const checkQf = async () => {
       if (isGuest || !isAuthenticated) {
@@ -111,7 +111,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     checkQf();
   }, [isGuest, isAuthenticated, user?.id]);
 
-  // After QF OAuth redirect: /profile?qf=connected | ?qf=failed
+  // After note sync redirect: /profile?qf=connected | ?qf=failed
   useEffect(() => {
     const qf = searchParams.get('qf');
     if (!qf) return;
@@ -123,7 +123,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     if (qf === 'connected') {
       setProfileError('');
       setProfileSuccess(
-        'Note sync is on. Longer verse notes will stay in sync with your Quran.com account.'
+        'Note sync is on. Longer verse notes will stay in sync across your devices.'
       );
       (async () => {
         try {
@@ -1142,11 +1142,11 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
             <h4>Note Sync</h4>
             <div className="setting-item">
               <div className="label-with-help">
-                <label>Quran.com account</label>
+                <label>Account link</label>
                 <div className="help-tooltip">
                   <HelpCircle size={16} />
                   <span className="tooltip-text">
-                    Link once so verse notes can follow you across devices (uses your Quran.com login).
+                    Link once so verse notes can follow you when you use Tahfidh on another device.
                   </span>
                 </div>
               </div>
@@ -1159,21 +1159,6 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   {qfConnected ? 'Linked' : (qfConnecting ? 'Signing in…' : 'Link account')}
                 </button>
               </div>
-              {!qfConnected && (
-                <p
-                  style={{
-                    marginTop: '0.75rem',
-                    fontSize: '0.875rem',
-                    color: 'var(--text)',
-                    opacity: 0.9,
-                    lineHeight: 1.5,
-                    maxWidth: '36rem',
-                  }}
-                >
-                  Optional. Your memorization is already saved here—linking only affects notes you add
-                  on verses.
-                </p>
-              )}
             </div>
           </div>
         )}
