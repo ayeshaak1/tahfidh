@@ -17,6 +17,8 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
       setQfOAuthMeta(null);
       return;
     }
+    setConnecting(false);
+    setError('');
     let cancelled = false;
     (async () => {
       try {
@@ -42,6 +44,18 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
     return () => {
       cancelled = true;
     };
+  }, [open]);
+
+  // Returning from auth.quran.com via back can restore the tab from bfcache with connecting still true.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPageShow = (e) => {
+      if (e.persisted) {
+        setConnecting(false);
+      }
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
   }, [open]);
 
   if (!open) return null;
