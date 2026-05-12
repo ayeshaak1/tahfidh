@@ -1466,6 +1466,40 @@
   gap: 1rem;
 }
 
+/* Auth profile: name + badge on the left, Edit Profile on the right (overridden below 769px) */
+.authenticated-user-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  flex: 1;
+  min-width: 0;
+}
+
+.authenticated-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.authenticated-user-info h2 {
+  margin: 0 0 0.25rem 0;
+}
+
+.authenticated-user-badge {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+
+.edit-profile-btn-auth {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .user-name-container h2 {
   margin: 0;
   flex: 0 1 auto;
@@ -1711,6 +1745,13 @@
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 2px;
+}
+
+@media (min-width: 769px) {
+  .heatmap-grid {
+    row-gap: 0.65rem;
+    column-gap: 0.4rem;
+  }
 }
 
 .heatmap-square {

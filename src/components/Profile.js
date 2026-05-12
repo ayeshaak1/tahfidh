@@ -1059,8 +1059,8 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   // Authenticated users: show name with edit profile button
                   <div className="authenticated-user-header">
                     <div className="authenticated-user-info">
-                      <h2 style={{ marginBottom: '0.5rem' }}>{userName || 'User Name'}</h2>
-                      <p style={{ margin: 0 }}>Premium Member</p>
+                      <h2>{userName || 'User Name'}</h2>
+                      <p className="authenticated-user-badge">Premium Member</p>
                     </div>
                     {isAuthenticated && (
                       <button
