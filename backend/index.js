@@ -400,7 +400,9 @@ app.get('/api/surahs', quranApiLimiter, async (req, res) => {
     
     console.log('Fetching surahs from Quran API...');
     const data = await makeQuranApiCall('/chapters');
-    console.log('Quran API response:', JSON.stringify(data, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Quran API response:', JSON.stringify(data, null, 2));
+    }
     console.log(`Returning ${data.chapters ? data.chapters.length : 0} surahs`);
     
     // Cache the response
@@ -2785,24 +2787,52 @@ app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
 
 // OAuth callback: exchanges code for tokens and stores them on the user.
 app.get('/api/qf/oauth/callback', async (req, res) => {
+  const frontendUrl = primaryFrontendOrigin();
   try {
     const cfg = getQfOAuthConfig();
-    const { code, state } = req.query;
+    const { code, state, error: oauthError, error_description: oauthErrDesc } = req.query;
     const sessionData = req.session.qfOAuth;
 
-    if (!code || !state || !sessionData || state !== sessionData.state) {
+    if (oauthError) {
+      const desc = typeof oauthErrDesc === 'string' ? oauthErrDesc.slice(0, 300) : '';
+      console.warn('[QF OAuth] Provider error redirect', { oauthError, desc });
+      return res.redirect(
+        `${frontendUrl}/profile?qf=failed&qf_reason=${encodeURIComponent(String(oauthError))}`
+      );
+    }
+
+    const hasCode = Boolean(code);
+    const hasState = Boolean(state);
+
+    if (!hasCode && !hasState) {
+      const registeredUri = getQfOAuthRedirectUri(req);
+      console.warn('[QF OAuth] Callback hit without ?code= or ?state= (not a full OAuth return)', {
+        hasSession: !!sessionData,
+        hasCookieHeader: Boolean(req.headers.cookie),
+        sessionId: req.sessionID,
+      });
+      return res.status(400).type('html').send(
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Quran connect</title></head><body>' +
+          '<p>This address is only used <strong>after</strong> Quran Foundation sends you back here with a <code>code</code> in the URL.</p>' +
+          `<p>If you opened this link directly, go to <a href="${frontendUrl}">Tahfidh</a> → Profile (or the notes prompt) → <strong>Connect</strong>.</p>` +
+          '<p>If the browser showed a <strong>redirect_uri</strong> error on auth.quran.com, Quran Foundation must allow this exact redirect for your Client ID:</p>' +
+          `<p><code style="word-break:break-all">${registeredUri}</code></p>` +
+          '</body></html>'
+      );
+    }
+
+    if (!sessionData || !hasCode || !hasState || state !== sessionData.state) {
       console.warn('[QF OAuth] Invalid callback', {
-        hasCode: !!code,
-        hasState: !!state,
+        hasCode,
+        hasState,
         hasSession: !!sessionData,
         stateMatch: !!(sessionData && state === sessionData.state),
         hasCookieHeader: Boolean(req.headers.cookie),
         sessionId: req.sessionID,
       });
       return res.status(400).send(
-        'Invalid OAuth callback (missing session or state mismatch). Use Connect from Tahfidh in this same browser, ' +
-          'wait a second after the modal loads, then try again. Ensure FRONTEND_URL includes your Netlify origin for CORS. ' +
-          'If it persists, confirm SESSION_SECRET is set on the server and redeploy.'
+        'Invalid OAuth callback (missing session or state mismatch). Click Connect from Tahfidh, complete login on Quran in the same browser, ' +
+          'and do not bookmark this callback URL. Ensure FRONTEND_URL includes your Netlify origin. Confirm SESSION_SECRET is set on Railway.'
       );
     }
 
@@ -2815,7 +2845,6 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
     const nonceCheck = verifyIdTokenNonce(tokenRes.id_token, sessionData.nonce);
     if (!nonceCheck.ok) {
       console.warn('[QF OAuth] id_token nonce validation failed:', nonceCheck.reason);
-      const frontendUrl = primaryFrontendOrigin();
       return res.redirect(`${frontendUrl}/profile?qf=failed`);
     }
 
@@ -2828,12 +2857,10 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
     // Cleanup session
     req.session.qfOAuth = null;
 
-    const frontendUrl = primaryFrontendOrigin();
     const redirectTo = `${frontendUrl}/profile?qf=connected`;
     return res.redirect(redirectTo);
   } catch (error) {
     console.error('QF OAuth callback error:', error.response?.data || error.message || error);
-    const frontendUrl = primaryFrontendOrigin();
     return res.redirect(`${frontendUrl}/profile?qf=failed`);
   }
 });
