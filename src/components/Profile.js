@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,6 +22,7 @@ import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isAuthenticated, deleteAccount } = useAuth();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -105,6 +106,37 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     };
     checkQf();
   }, [isGuest, isAuthenticated]);
+
+  // After QF OAuth redirect: /profile?qf=connected | ?qf=failed
+  useEffect(() => {
+    const qf = searchParams.get('qf');
+    if (!qf) return;
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('qf');
+    setSearchParams(next, { replace: true });
+
+    if (qf === 'connected') {
+      setProfileError('');
+      setProfileSuccess(
+        'Quran Foundation connected. Verse notes with 6 or more characters will sync to your QF account.'
+      );
+      (async () => {
+        try {
+          const status = await qfNotesApi.getQfStatus();
+          setQfConnected(!!status.connected);
+          StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
+        } catch {
+          setQfConnected(false);
+        }
+      })();
+    } else if (qf === 'failed') {
+      setProfileSuccess('');
+      setProfileError(
+        'Quran Foundation connection did not finish. In the QF developer console, register redirect URL: your backend base URL + /api/qf/oauth/callback (must match exactly), then try Connect again.'
+      );
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleConnectQf = async () => {
     try {
@@ -1118,6 +1150,22 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   {qfConnected ? 'Connected' : (qfConnecting ? 'Connecting…' : 'Connect')}
                 </button>
               </div>
+              {!qfConnected && (
+                <p
+                  style={{
+                    marginTop: '0.75rem',
+                    fontSize: '0.85rem',
+                    opacity: 0.88,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Register this redirect URL with Quran Foundation (exact match, including{' '}
+                  <code style={{ fontSize: '0.8em' }}>/api</code>):{' '}
+                  <code style={{ display: 'block', marginTop: '0.35rem', wordBreak: 'break-all', fontSize: '0.78em' }}>
+                    {`${getApiUrl().replace(/\/+$/, '')}/qf/oauth/callback`}
+                  </code>
+                </p>
+              )}
             </div>
           </div>
         )}

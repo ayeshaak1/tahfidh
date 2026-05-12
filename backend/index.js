@@ -73,16 +73,23 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Session configuration for Passport
+// Session configuration for Passport + QF OAuth (PKCE/state lives in session).
+// Frontend is often on a different origin (e.g. Netlify) than this API (Railway).
+// Cross-site fetch to /api/qf/oauth/start must receive Set-Cookie; browsers require
+// SameSite=None + Secure for third-party/cross-site cookie writes; otherwise the
+// OAuth callback hits this server with no session → "Invalid OAuth callback."
+const sessionCookieSecure = process.env.NODE_ENV === 'production';
 app.use(session({
   secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your-session-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: sessionCookieSecure,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: sessionCookieSecure ? 'none' : 'lax',
+  },
 }));
 
 // Initialize Passport
@@ -2721,7 +2728,16 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
     const sessionData = req.session.qfOAuth;
 
     if (!code || !state || !sessionData || state !== sessionData.state) {
-      return res.status(400).send('Invalid OAuth callback.');
+      console.warn('[QF OAuth] Invalid callback', {
+        hasCode: !!code,
+        hasState: !!state,
+        hasSession: !!sessionData,
+        stateMatch: !!(sessionData && state === sessionData.state),
+      });
+      return res.status(400).send(
+        'Invalid OAuth callback (missing session). Ensure FRONTEND_URL allows your site in CORS, ' +
+          'then try Connect again. If it persists, confirm BACKEND_URL matches the URL registered as redirect with Quran Foundation.'
+      );
     }
 
     const auth = cfg.clientSecret
