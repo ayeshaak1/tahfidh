@@ -11,13 +11,12 @@ require('dotenv').config();
  * | (default) NODE_ENV=production | production; else prelive for local dev |
  *
  * Credentials: QURAN_CLIENT_ID + QURAN_CLIENT_SECRET (or QF_* aliases).
- * Scopes: QF_OAUTH_SCOPES (space-separated). Default: notes + refresh without openid
- * (many Request Access clients are not allowed `openid` until OIDC is enabled; add
- * `openid` to QF_OAUTH_SCOPES when Quran Foundation approves it for your client).
+ * Default avoids umbrella scopes some Request Access clients do not have yet
+ * (e.g. `openid`, `user`). Add scopes when QF approves them; see QF_OAUTH_SCOPES.
  *
  * @see https://api-docs.quran.foundation/docs/tutorials/oidc/client-setup/
  */
-const DEFAULT_QF_OAUTH_SCOPES = 'offline_access user note';
+const DEFAULT_QF_OAUTH_SCOPES = 'offline_access note';
 
 function getQfOAuthScope() {
   return (process.env.QF_OAUTH_SCOPES || DEFAULT_QF_OAUTH_SCOPES).trim();
