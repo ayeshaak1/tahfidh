@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, StickyNote, LogIn } from 'lucide-react';
 import qfNotesApi from '../services/qfNotesApi';
 
 /**
- * Post-auth offer: link Quran Foundation for verse note sync (same OAuth as Profile → Connect).
+ * Post-auth offer: optional Quran.com account link for verse note backup (same flow as Profile).
  */
 const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
   const [connecting, setConnecting] = useState(false);
@@ -27,20 +27,21 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
       }
     } catch (e) {
       setConnecting(false);
-      setError(e.message || 'Could not start connection. Try again from Profile → Settings.');
+      setError(
+        e.message ||
+          'Something went wrong. You can try again anytime from your profile, under Settings.'
+      );
     }
   };
 
   return (
     <>
       <div className="settings-popup-overlay" onClick={connecting ? undefined : dismiss} />
-      <div className="settings-popup" style={{ maxWidth: '480px', zIndex: 10002 }}>
+      <div className="settings-popup confirmation-dialog">
         <div className="settings-popup-header">
-          <div>
-            <h3 style={{ marginBottom: '0.35rem' }}>Sync verse notes</h3>
-            <div style={{ fontSize: '0.9rem', opacity: 0.8, fontWeight: 400 }}>
-              Optional — link your Quran Foundation account
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <StickyNote size={24} color="var(--rose)" aria-hidden />
+            <h3>Back up your verse notes?</h3>
           </div>
           <button
             type="button"
@@ -53,15 +54,15 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
           </button>
         </div>
         <div className="settings-popup-content">
-          <p style={{ margin: 0, lineHeight: 1.55, fontSize: '0.95rem' }}>
-            Link once so verse notes (6+ characters) can sync with your Quran Foundation account,
-            alongside your progress in this app. You can always connect later under{' '}
-            <strong>Profile → Settings</strong>.
+          <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
+            If you use Tahfidh on another device later, a quick sign-in helps the notes you jot on
+            verses show up there too. Your memorization is already saved with your account—this step
+            is only for those notes. You can skip and turn it on later from your profile settings.
           </p>
           {error && (
             <div
               style={{
-                marginTop: '1rem',
+                marginBottom: '1rem',
                 padding: '0.75rem 1rem',
                 backgroundColor: 'var(--error-red-light)',
                 border: '1px solid var(--error-red-border)',
@@ -75,28 +76,24 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
           )}
           <div
             style={{
-              marginTop: '1.25rem',
               display: 'flex',
+              gap: '1rem',
+              justifyContent: 'space-between',
               flexWrap: 'wrap',
-              gap: '0.75rem',
-              justifyContent: 'flex-end',
             }}
           >
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={dismiss}
-              disabled={connecting}
-            >
-              Skip for now
+            <button type="button" className="skip-button" onClick={dismiss} disabled={connecting}>
+              Skip for Now
             </button>
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary export-dialog-btn"
               onClick={handleConnect}
               disabled={connecting}
+              style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
-              {connecting ? 'Connecting…' : 'Connect Quran Foundation'}
+              <LogIn size={16} aria-hidden />
+              {connecting ? 'One moment…' : 'Sign in to back up notes'}
             </button>
           </div>
         </div>
