@@ -8,7 +8,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
-const { pool, initializeDatabase } = require('./src/config/database');
+const { pool, initializeDatabaseWithRetry } = require('./src/config/database');
 const { getQfOAuthConfig, getQfOAuthScope } = require('./src/config/qfOAuthConfig');
 const {
   buildAuthorizationUrl,
@@ -1811,9 +1811,9 @@ app.listen(PORT, async () => {
     devLog('Caching TTLs: surahs list 24h, per-surah 12h, juz 6h, verses 6h, translations 24h');
   }
 
-  // Initialize database
+  // Initialize database (retry while Postgres / network is still coming up on deploy)
   try {
-    await initializeDatabase();
+    await initializeDatabaseWithRetry();
   } catch (error) {
     console.error('Failed to initialize database:', error);
     process.exit(1);

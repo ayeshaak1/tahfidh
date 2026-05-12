@@ -181,8 +181,61 @@ async function initializeDatabase() {
   }
 }
 
+/** Postgres / network errors that often clear after Railway DB or networking comes up */
+function isTransientDbStartupError(error) {
+  if (!error) return false;
+  const c = error.code;
+  if (c === 'ETIMEDOUT' || c === 'ECONNREFUSED' || c === 'ECONNRESET' || c === '57P03') return true;
+  const msg = String(error.message || '');
+  if (msg.includes('the database system is starting up')) return true;
+  if (Array.isArray(error.errors)) {
+    return error.errors.some((e) => isTransientDbStartupError(e));
+  }
+  return false;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Run migrations/schema init with backoff (avoids crash loops when Postgres starts after the web process).
+ * @param {object} [opts]
+ * @param {number} [opts.maxWaitMs] default 120000
+ */
+async function initializeDatabaseWithRetry(opts = {}) {
+  const maxWaitMs = opts.maxWaitMs ?? 120000;
+  const start = Date.now();
+  let attempt = 0;
+  let delayMs = 1000;
+  const maxDelayMs = 8000;
+
+  for (;;) {
+    try {
+      await initializeDatabase();
+      if (attempt > 0) {
+        console.log(`[database] connected after ${attempt} retries (${Date.now() - start}ms)`);
+      }
+      return;
+    } catch (error) {
+      const elapsed = Date.now() - start;
+      if (!isTransientDbStartupError(error) || elapsed >= maxWaitMs) {
+        throw error;
+      }
+      attempt += 1;
+      console.warn(
+        `[database] transient startup error (attempt ${attempt}), retry in ${delayMs}ms:`,
+        error.code || error.message
+      );
+      await sleep(delayMs);
+      delayMs = Math.min(maxDelayMs, Math.floor(delayMs * 1.5));
+    }
+  }
+}
+
 module.exports = {
   pool,
   initializeDatabase,
+  initializeDatabaseWithRetry,
 };
 
