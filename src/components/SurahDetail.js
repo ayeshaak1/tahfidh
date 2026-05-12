@@ -582,12 +582,29 @@ const SurahDetail = ({ userProgress, setUserProgress, setCurrentPath, sidebarOpe
     setNoteSaving(true);
     setNoteError('');
     try {
+      try {
+        const status = await qfNotesApi.getQfStatus();
+        if (!status.connected) {
+          setNoteError(
+            'Saved in this app. To sync this note to Quran Foundation, open Profile → Settings and use “Notes Sync” (Connect).'
+          );
+          return;
+        }
+      } catch {
+        // Status check failed; still try sync (e.g. transient network)
+      }
+
       const ranges = [`${noteVerseKey}-${noteVerseKey}`];
       await qfNotesApi.addNote({ body: trimmed, ranges });
       setShowNoteModal(false);
     } catch (e) {
       // Don't block local save; just show a non-fatal message
-      setNoteError(e.message || 'Saved locally but failed to sync');
+      const raw = e.message || 'Saved in this app, but cloud sync failed.';
+      const msg =
+        raw === 'Quran Foundation account not connected'
+          ? 'Saved in this app. To sync this note to Quran Foundation, open Profile → Settings and use “Notes Sync” (Connect).'
+          : raw;
+      setNoteError(msg);
     } finally {
       setNoteSaving(false);
     }
