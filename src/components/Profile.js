@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
-import { getApiUrl } from '../utils/apiUrl';
+import { getApiUrl, getQfOAuthCallbackUrlGuess } from '../utils/apiUrl';
 import qfNotesApi from '../services/qfNotesApi';
 import { setQfOnboardingLinked } from '../utils/qfConnectOnboarding';
 import LottieLoader from './LottieLoader';
@@ -67,6 +67,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
   const [juzMapping, setJuzMapping] = useState(null); // Map surah ID to juz number
   const [qfConnected, setQfConnected] = useState(false);
   const [qfConnecting, setQfConnecting] = useState(false);
+  const [qfOAuthCallbackDisplay, setQfOAuthCallbackDisplay] = useState(() => getQfOAuthCallbackUrlGuess());
   const { theme, setTheme, toggleTheme, isDark } = useTheme();
   const {
     quranFont,
@@ -101,6 +102,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
         const status = await qfNotesApi.getQfStatus();
         setQfConnected(!!status.connected);
         StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
+        if (status.oauthCallbackUrl) {
+          setQfOAuthCallbackDisplay(status.oauthCallbackUrl);
+        }
         if (status.connected && user?.id) {
           setQfOnboardingLinked(user.id);
         }
@@ -130,6 +134,9 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           const status = await qfNotesApi.getQfStatus();
           setQfConnected(!!status.connected);
           StorageHelpers.setItem(STORAGE_KEYS.QF_CONNECTED, status.connected ? 'true' : 'false');
+          if (status.oauthCallbackUrl) {
+            setQfOAuthCallbackDisplay(status.oauthCallbackUrl);
+          }
           if (status.connected && user?.id) {
             setQfOnboardingLinked(user.id);
           }
@@ -1169,7 +1176,7 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
                   Register this redirect URL with Quran Foundation (exact match, including{' '}
                   <code style={{ fontSize: '0.8em' }}>/api</code>):{' '}
                   <code style={{ display: 'block', marginTop: '0.35rem', wordBreak: 'break-all', fontSize: '0.78em' }}>
-                    {`${getApiUrl().replace(/\/+$/, '')}/qf/oauth/callback`}
+                    {qfOAuthCallbackDisplay}
                   </code>
                 </p>
               )}

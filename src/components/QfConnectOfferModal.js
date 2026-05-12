@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, StickyNote, LogIn } from 'lucide-react';
+import { X, StickyNote, Link2 } from 'lucide-react';
 import qfNotesApi from '../services/qfNotesApi';
 
 /**
@@ -55,7 +55,7 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
         </div>
         <div className="settings-popup-content">
           <p style={{ marginBottom: '1.5rem', color: 'var(--text)', lineHeight: '1.6' }}>
-            If you use Tahfidh on another device later, a quick sign-in helps the notes you jot on
+            If you use Tahfidh on another device later, connecting once helps the notes you jot on
             verses show up there too. Your memorization is already saved with your account—this step
             is only for those notes. You can skip and turn it on later from your profile settings.
           </p>
@@ -92,8 +92,8 @@ const QfConnectOfferModal = ({ open, userId, onDismiss }) => {
               disabled={connecting}
               style={{ width: 'auto', minWidth: '120px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
-              <LogIn size={16} aria-hidden />
-              {connecting ? 'One moment…' : 'Sign in to back up notes'}
+              <Link2 size={16} aria-hidden />
+              {connecting ? 'Connecting…' : 'Connect'}
             </button>
           </div>
         </div>

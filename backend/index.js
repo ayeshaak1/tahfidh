@@ -1791,6 +1791,14 @@ app.listen(PORT, async () => {
   }
   console.log('===================================\n');
 
+  const qfEnvBase = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_URL;
+  const qfCallbackFromEnv = qfOAuthRedirectUriFromExplicitBase(qfEnvBase);
+  if (qfCallbackFromEnv) {
+    console.log(`QF OAuth redirect_uri (register this exact URL with QF): ${qfCallbackFromEnv}`);
+  } else {
+    console.log('QF OAuth redirect_uri: derived per request from Host (set BACKEND_URL for a stable URL to register with QF)');
+  }
+
   try {
     const qfCfg = getQfOAuthConfig();
     console.log('=== QURAN FOUNDATION (USER OAUTH / NOTES) ===');
@@ -2623,6 +2631,29 @@ function getPublicBaseUrl(req) {
   return `${proto}://${req.get('host')}`;
 }
 
+/**
+ * BACKEND_URL is sometimes set to ".../api" (matching the browser API base). OAuth redirect must be
+ * exactly one "/api" before "/qf/oauth/callback" — otherwise we send ".../api/api/qf/..." and QF
+ * rejects: redirect_uri does not match pre-registered URLs.
+ */
+function normalizeBackendOriginForOAuth(base) {
+  if (!base) return '';
+  let b = base.replace(/\/+$/g, '');
+  if (b.endsWith('/api')) {
+    b = b.slice(0, -4).replace(/\/+$/g, '');
+  }
+  return b;
+}
+
+function getQfOAuthRedirectUri(req) {
+  return `${normalizeBackendOriginForOAuth(getPublicBaseUrl(req))}/api/qf/oauth/callback`;
+}
+
+function qfOAuthRedirectUriFromExplicitBase(base) {
+  if (!base) return null;
+  return `${normalizeBackendOriginForOAuth(base.replace(/\/+$/g, ''))}/api/qf/oauth/callback`;
+}
+
 async function getUserQfTokens(userId) {
   const result = await pool.query(
     'SELECT qf_access_token, qf_refresh_token, qf_id_token, qf_token_expiry FROM users WHERE id = $1',
@@ -2687,7 +2718,7 @@ async function ensureValidQfAccessToken(userId) {
 app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
   try {
     const cfg = getQfOAuthConfig();
-    const redirectUri = `${getPublicBaseUrl(req)}/api/qf/oauth/callback`;
+    const redirectUri = getQfOAuthRedirectUri(req);
 
     const state = base64UrlEncode(crypto.randomBytes(32));
     const nonce = base64UrlEncode(crypto.randomBytes(32));
@@ -2789,6 +2820,7 @@ app.get('/api/qf/status', authenticateToken, async (req, res) => {
       success: true,
       connected: !!tokens?.qf_access_token,
       expiresAt: tokens?.qf_token_expiry || null,
+      oauthCallbackUrl: getQfOAuthRedirectUri(req),
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to get connection status' });
