@@ -1790,6 +1790,17 @@ app.listen(PORT, async () => {
     }
   }
   console.log('===================================\n');
+
+  try {
+    const qfCfg = getQfOAuthConfig();
+    console.log('=== QURAN FOUNDATION (USER OAUTH / NOTES) ===');
+    console.log(`QF user auth: ${qfCfg.authBaseUrl} (must match where your OAuth client was registered)`);
+    console.log(`QF user APIs: ${qfCfg.apiBaseUrl}`);
+    console.log(`QF OAuth scopes: ${process.env.QF_OAUTH_SCOPES || 'openid offline_access user note (default)'}`);
+  } catch (e) {
+    console.warn('QF OAuth config unavailable:', e.message || e);
+  }
+  console.log('=============================================\n');
   
   // Verify production config is being used
   if (isProduction && !usePreProd) {
@@ -2692,14 +2703,10 @@ app.get('/api/qf/oauth/start', authenticateToken, async (req, res) => {
       createdAt: Date.now(),
     };
 
-    const scope = [
-      'openid',
-      'offline_access',
-      'note.read',
-      'note.create',
-      'note.update',
-      'note.delete',
-    ].join(' ');
+    // Match QF docs / official example: `user` + umbrella `note` (not only fine-grained
+    // note.* scopes — many provisioned clients allow `note` but not every sub-scope).
+    // Override with QF_OAUTH_SCOPES="openid offline_access user note" if QF support advises.
+    const scope = (process.env.QF_OAUTH_SCOPES || 'openid offline_access user note').trim();
 
     const params = new URLSearchParams({
       response_type: 'code',
