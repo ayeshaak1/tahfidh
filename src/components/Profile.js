@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail } from 'lucide-react';
+import { Download, Upload, Trash2, User, Sun, Moon, Menu, X, Star, BookOpenCheck, Target, Flame, Trophy, Lock, AlertTriangle, Edit2, Check, HelpCircle, CheckCircle, Mail, LogOut } from 'lucide-react';
 import quranApi from '../services/quranApi';
 import progressApi from '../services/progressApi';
 import { getApiUrl, getQfOAuthCallbackUrlGuess } from '../utils/apiUrl';
@@ -24,7 +24,7 @@ import { scrollWindowToTop } from '../utils/scrollWindowToTop';
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, isAuthenticated, deleteAccount } = useAuth();
+  const { user, isAuthenticated, deleteAccount, signOut } = useAuth();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
@@ -1447,6 +1447,32 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
           ))}
         </div>
       </section>
+
+      {!isGuest && isAuthenticated && (
+        <section
+          className="profile-logout-section"
+          style={{
+            marginTop: '2rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              signOut();
+              navigate('/');
+            }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', minWidth: '140px', justifyContent: 'center' }}
+          >
+            <LogOut size={18} aria-hidden />
+            Log out
+          </button>
+        </section>
+      )}
       </div>
 
       {/* Confirmation Dialog */}
