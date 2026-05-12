@@ -19,24 +19,54 @@ const PORT = process.env.PORT || 5000;
 app.set('trust proxy', 1);
 
 // Middleware
-// Normalize FRONTEND_URL to ensure it has a protocol
+// Normalize FRONTEND_URL to ensure it has a protocol (no trailing slash for CORS matching)
 const normalizeOrigin = (url) => {
   if (!url) return 'http://localhost:3000';
+  let u = url.trim();
   // If URL doesn't start with http:// or https://, add https://
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    // In production, default to https
+  if (!u.startsWith('http://') && !u.startsWith('https://')) {
     if (process.env.NODE_ENV === 'production') {
-      return `https://${url}`;
+      u = `https://${u}`;
+    } else {
+      u = `http://${u}`;
     }
-    return `http://${url}`;
   }
-  return url;
+  return u.replace(/\/+$/, '');
 };
 
-const corsOrigin = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+// One or more allowed browser origins (comma-separated). Required in production for Netlify etc.
+// Example: FRONTEND_URL=https://tahfidh.netlify.app,https://www.example.com
+const parseCorsOrigins = () => {
+  const raw = process.env.FRONTEND_URL || process.env.CORS_ORIGINS || '';
+  if (!raw.trim()) {
+    return [normalizeOrigin('http://localhost:3000')];
+  }
+  return raw
+    .split(',')
+    .map((s) => normalizeOrigin(s.trim()))
+    .filter(Boolean);
+};
+
+const corsAllowedOrigins = parseCorsOrigins();
+const corsOriginForLogs = corsAllowedOrigins.join(', ');
+/** First listed origin — OAuth / QF redirects (comma-separated FRONTEND_URL uses first entry) */
+const primaryFrontendOrigin = () => corsAllowedOrigins[0] || 'http://localhost:3000';
 
 app.use(cors({
-  origin: corsOrigin,
+  origin(origin, callback) {
+    // Mobile apps / curl / same-origin server calls may omit Origin
+    if (!origin) {
+      return callback(null, true);
+    }
+    const normalized = origin.replace(/\/+$/, '');
+    if (corsAllowedOrigins.includes(normalized)) {
+      return callback(null, true);
+    }
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(`[CORS] Blocked origin: ${origin} (allowed: ${corsOriginForLogs})`);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -1739,7 +1769,7 @@ app.listen(PORT, async () => {
   console.log(`GOOGLE_CLIENT_SECRET configured: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
   console.log(`GOOGLE_CALLBACK_URL: ${googleCallbackURL}`);
   console.log(`FRONTEND_URL (raw): ${process.env.FRONTEND_URL || 'NOT SET'}`);
-  console.log(`CORS Origin (normalized): ${corsOrigin}`);
+  console.log(`CORS allowed origins: ${corsOriginForLogs}`);
   if (isProduction) {
     if (!process.env.GOOGLE_CALLBACK_URL) {
       console.error('⚠️  WARNING: GOOGLE_CALLBACK_URL not explicitly set in production!');
@@ -2121,11 +2151,10 @@ app.get('/api/auth/google/callback',
       // Generate JWT token
       const token = generateToken({ id: user.id.toString(), email: user.email });
 
-      // Redirect to frontend with token
-      // Use the normalizeOrigin function to ensure protocol is included
-      let frontendUrl = normalizeOrigin(process.env.FRONTEND_URL);
-      
-      if (!process.env.FRONTEND_URL) {
+      // Redirect to frontend with token (first origin if FRONTEND_URL is comma-separated)
+      let frontendUrl = primaryFrontendOrigin();
+
+      if (!process.env.FRONTEND_URL?.trim()) {
         if (process.env.NODE_ENV === 'production') {
           console.error('❌ ERROR: FRONTEND_URL not set in production!');
           console.error('❌ This will cause OAuth redirects to fail. Please set FRONTEND_URL in your platform environment variables (Railway, Render, etc.).');
@@ -2149,8 +2178,8 @@ app.get('/api/auth/google/callback',
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('Google OAuth callback error:', error);
-      let frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
-      if (!process.env.FRONTEND_URL && process.env.NODE_ENV === 'production') {
+      let frontendUrl = primaryFrontendOrigin();
+      if (!process.env.FRONTEND_URL?.trim() && process.env.NODE_ENV === 'production') {
         console.error('❌ ERROR: FRONTEND_URL not set in production!');
       }
       // Ensure we have a valid URL with protocol
@@ -2164,7 +2193,7 @@ app.get('/api/auth/google/callback',
 
 // Google OAuth failure handler
 app.get('/api/auth/google/failure', (req, res) => {
-  let frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+  let frontendUrl = primaryFrontendOrigin();
   // Ensure we have a valid URL with protocol
   if (!frontendUrl.startsWith('http://') && !frontendUrl.startsWith('https://')) {
     frontendUrl = `https://${frontendUrl}`;
@@ -2719,12 +2748,12 @@ app.get('/api/qf/oauth/callback', async (req, res) => {
     // Cleanup session
     req.session.qfOAuth = null;
 
-    const frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+    const frontendUrl = primaryFrontendOrigin();
     const redirectTo = `${frontendUrl}/profile?qf=connected`;
     return res.redirect(redirectTo);
   } catch (error) {
     console.error('QF OAuth callback error:', error.response?.data || error.message || error);
-    const frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || 'http://localhost:3000';
+    const frontendUrl = primaryFrontendOrigin();
     return res.redirect(`${frontendUrl}/profile?qf=failed`);
   }
 });
