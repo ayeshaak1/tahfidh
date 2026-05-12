@@ -26,6 +26,7 @@ import {
   setQfOnboardingLinked,
   setQfOnboardingSkipped,
 } from './utils/qfConnectOnboarding';
+import { mergeUserProgressPreferMemorized } from './utils/mergeUserProgress';
 import QfConnectOfferModal from './components/QfConnectOfferModal';
 import './App.css';
 import './components.css';
@@ -330,20 +331,25 @@ function AppContent() {
           // This ensures we catch progress saved by onboarding even if it happened during the async operation
           const existingProgress = StorageHelpers.getJSONItem(STORAGE_KEYS.QURAN_PROGRESS);
           const hasExistingProgress = existingProgress && Object.keys(existingProgress).length > 0;
-          
-          // Determine which progress to use: backend (if valid) or existing localStorage (if backend empty)
+
+          const backendOk =
+            backendProgress !== null &&
+            backendProgress !== undefined &&
+            Validators.isValidUserProgress(backendProgress) &&
+            Object.keys(backendProgress).length > 0;
+          const localOk =
+            hasExistingProgress && Validators.isValidUserProgress(existingProgress);
+
+          // Never prefer a stale server-only snapshot over fresher localStorage: merge when both exist.
           let finalProgress = null;
-          
-          // Check if backend returned valid progress
-          if (backendProgress !== null && backendProgress !== undefined && Validators.isValidUserProgress(backendProgress) && Object.keys(backendProgress).length > 0) {
-            // Backend has data - use it (source of truth)
+          if (backendOk && localOk) {
+            const merged = mergeUserProgressPreferMemorized(existingProgress, backendProgress);
+            finalProgress = Validators.isValidUserProgress(merged) ? merged : backendProgress;
+          } else if (backendOk) {
             finalProgress = backendProgress;
-          } else if (hasExistingProgress && Validators.isValidUserProgress(existingProgress)) {
-            // Backend is empty but localStorage has data (e.g., just completed onboarding)
-            // Use localStorage data - backend will sync on next save
+          } else if (localOk) {
             finalProgress = existingProgress;
           } else {
-            // Both are empty - start fresh
             finalProgress = DEFAULT_VALUES.USER_PROGRESS;
           }
           

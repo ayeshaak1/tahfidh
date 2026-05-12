@@ -2406,6 +2406,22 @@ app.put('/api/auth/profile/password', authenticateToken, async (req, res) => {
   }
 });
 
+/** Normalize verse JSON from DB so `memorized` is always boolean (client validator is strict). */
+function normalizeVerseProgressMap(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (!v || typeof v !== 'object') continue;
+    const memorized = v.memorized === true || v.memorized === 'true';
+    const lastReviewed = typeof v.lastReviewed === 'string' ? v.lastReviewed : undefined;
+    out[String(k)] = {
+      memorized,
+      ...(lastReviewed ? { lastReviewed } : {}),
+    };
+  }
+  return out;
+}
+
 // Get user progress endpoint
 app.get('/api/auth/progress', authenticateToken, async (req, res) => {
   const client = await pool.connect();
@@ -2430,10 +2446,11 @@ app.get('/api/auth/progress', authenticateToken, async (req, res) => {
 
     // Build progress object from database
     const progress = {};
-    progressResult.rows.forEach(row => {
-      progress[row.surah_id] = {
+    progressResult.rows.forEach((row) => {
+      const sid = String(row.surah_id);
+      progress[sid] = {
         name: row.surah_name,
-        verses: row.verses || {}
+        verses: normalizeVerseProgressMap(row.verses),
       };
     });
 
