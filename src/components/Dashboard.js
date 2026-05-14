@@ -5,6 +5,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { CONSTRAINTS, STORAGE_KEYS, StorageHelpers, ExportHelpers } from '../constants/storageConstants';
 import quranApi from '../services/quranApi';
 import { scrollWindowToTop } from '../utils/scrollWindowToTop';
+import { verseCountMapFromChapters, countFullyCompletedSurahs } from '../utils/surahCompletion';
 import { 
   Menu, 
   Sun, 
@@ -53,6 +54,8 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     return startOfWeek;
   });
   const [surahNamesCache, setSurahNamesCache] = useState({});
+  /** Official verse counts per surah (from API) — required to know when a surah is fully memorized */
+  const [surahVerseCountMap, setSurahVerseCountMap] = useState({});
   const [showExportDialog, setShowExportDialog] = useState(false);
 
   // Export guest progress function - GUEST ONLY
@@ -103,6 +106,23 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     setCurrentPath('/dashboard');
   }, [setCurrentPath]);
 
+  // Load official verse counts per surah (needed so "completed surahs" != "all tracked verses memorized")
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await quranApi.getSurahs();
+        if (cancelled || !data?.chapters?.length) return;
+        setSurahVerseCountMap(verseCountMapFromChapters(data.chapters));
+      } catch (e) {
+        console.error('Failed to load surah verse counts for dashboard:', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Fetch surah names for surahs that are missing names in userProgress
   useEffect(() => {
     const fetchMissingSurahNames = async () => {
@@ -140,15 +160,13 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
     const totalSurahs = CONSTRAINTS.QURAN.TOTAL_SURAHS;
     const totalVerses = CONSTRAINTS.QURAN.TOTAL_VERSES;
     
-    let completedSurahs = 0;
+    const completedSurahs = countFullyCompletedSurahs(userProgress, surahVerseCountMap);
+
     let memorizedVerses = 0;
-    
-    Object.values(userProgress).forEach(surah => {
+    Object.values(userProgress).forEach((surah) => {
       if (surah.verses) {
         const surahVerses = Object.values(surah.verses);
-        const completed = surahVerses.every(verse => verse.memorized);
-        if (completed) completedSurahs++;
-        memorizedVerses += surahVerses.filter(verse => verse.memorized).length;
+        memorizedVerses += surahVerses.filter((verse) => verse.memorized).length;
       }
     });
     
@@ -163,7 +181,7 @@ const Dashboard = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sid
       surahPercentage,
       versePercentage
     };
-  }, [userProgress]);
+  }, [userProgress, surahVerseCountMap]);
 
   const progress = useMemo(() => calculateProgress(), [calculateProgress]);
 

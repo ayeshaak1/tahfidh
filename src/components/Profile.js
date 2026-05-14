@@ -20,6 +20,7 @@ import {
   ExportHelpers 
 } from '../constants/storageConstants';
 import { scrollWindowToTop } from '../utils/scrollWindowToTop';
+import { verseCountMapFromChapters, countFullyCompletedSurahs } from '../utils/surahCompletion';
 
 const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -492,21 +493,14 @@ const Profile = ({ isGuest, userProgress, setUserProgress, setCurrentPath, sideb
     const totalSurahs = CONSTRAINTS.QURAN.TOTAL_SURAHS;
     const totalVerses = CONSTRAINTS.QURAN.TOTAL_VERSES;
     
-    let completedSurahs = 0;
+    const verseCountMap = verseCountMapFromChapters(surahsData || []);
+    const completedSurahs = countFullyCompletedSurahs(userProgress, verseCountMap);
+
     let memorizedVerses = 0;
-    
-    Object.values(userProgress).forEach(surah => {
+    Object.values(userProgress).forEach((surah) => {
       if (surah.verses) {
         const surahVerses = Object.values(surah.verses);
-        const memorizedCount = surahVerses.filter(verse => verse.memorized).length;
-        memorizedVerses += memorizedCount;
-        
-        // Check if surah is completed (all verses memorized)
-        // Need to check against actual surah verse count, not just tracked verses
-        // For now, we'll use a simplified check
-        if (surahVerses.length > 0 && surahVerses.every(verse => verse.memorized)) {
-          completedSurahs++;
-        }
+        memorizedVerses += surahVerses.filter((verse) => verse.memorized).length;
       }
     });
     
